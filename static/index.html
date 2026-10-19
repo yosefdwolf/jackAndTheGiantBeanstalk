@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f5efe0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16201a" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>You and the Beanstalk</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌱</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<header class="hero">
+  <div class="hero-inner">
+    <span class="badge" id="mockBadge" hidden>Mock mode · no API calls</span>
+    <h1>You <em>and the</em> Beanstalk</h1>
+    <p>Upload a photo and step into the fairy tale as Jack, in two storybook scenes.</p>
+  </div>
+  <svg class="vine" viewBox="0 0 1200 80" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M0 60 C 150 10, 300 90, 450 45 S 750 10, 900 50 S 1100 80, 1200 30" />
+  </svg>
+</header>
+
+<main>
+  <form id="form" novalidate>
+    <!-- Step 1 -->
+    <section class="card">
+      <div class="step-head"><span class="num">1</span><h2>Your photo</h2></div>
+
+      <div id="drop" class="drop" tabindex="0" role="button" aria-label="Choose a photo">
+        <div class="drop-empty">
+          <div class="drop-icon" aria-hidden="true">📸</div>
+          <p class="drop-title">Drop a photo here</p>
+          <p class="muted">or use the buttons below · JPG, PNG or HEIC</p>
+        </div>
+        <img id="preview" alt="Your uploaded photo" hidden>
+      </div>
+
+      <div class="pick-row">
+        <label class="btn btn-ghost">
+          <input type="file" id="fileInput" accept="image/*,.heic,.heif" hidden>
+          Choose photo
+        </label>
+        <label class="btn btn-ghost only-touch">
+          <input type="file" id="cameraInput" accept="image/*" capture="user" hidden>
+          Take a selfie
+        </label>
+      </div>
+
+      <ul class="tips">
+        <li>Just you, facing the camera</li>
+        <li>Good light, face not covered</li>
+        <li>Close up, like a selfie</li>
+      </ul>
+    </section>
+
+    <!-- Step 2 -->
+    <section class="card">
+      <div class="step-head"><span class="num">2</span><h2>Cartoon style</h2></div>
+      <div class="styles" role="radiogroup" aria-label="Cartoon style">
+        <label class="style-tile">
+          <input type="radio" name="style" value="storybook" checked>
+          <span class="swatch sw-storybook" aria-hidden="true"></span>
+          <span class="style-name">Storybook</span>
+          <span class="style-desc">Soft watercolor & ink</span>
+        </label>
+        <label class="style-tile">
+          <input type="radio" name="style" value="animated3d">
+          <span class="swatch sw-3d" aria-hidden="true"></span>
+          <span class="style-name">3D animated</span>
+          <span class="style-desc">Family-movie look</span>
+        </label>
+        <label class="style-tile">
+          <input type="radio" name="style" value="comic">
+          <span class="swatch sw-comic" aria-hidden="true"></span>
+          <span class="style-name">Comic book</span>
+          <span class="style-desc">Bold lines, flat color</span>
+        </label>
+        <label class="style-tile">
+          <input type="radio" name="style" value="papercut">
+          <span class="swatch sw-paper" aria-hidden="true"></span>
+          <span class="style-name">Paper cutout</span>
+          <span class="style-desc">Layered collage</span>
+        </label>
+      </div>
+
+      <div class="field">
+        <span class="field-label" id="strengthLabel">How cartoony?</span>
+        <div class="segmented" role="radiogroup" aria-labelledby="strengthLabel">
+          <label><input type="radio" name="strength" value="1"><span>Light</span></label>
+          <label><input type="radio" name="strength" value="2" checked><span>Medium</span></label>
+          <label><input type="radio" name="strength" value="3"><span>Strong</span></label>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 3 -->
+    <section class="card">
+      <div class="step-head"><span class="num">3</span><h2>Your scenes</h2></div>
+      <div class="scene-picks" role="radiogroup" aria-label="Which scenes to draw">
+        <label class="scene-pick">
+          <input type="radio" name="which" value="1">
+          <span class="scene-num">1</span>
+          <span class="scene-text"><strong>Jack is planting the seed.</strong>
+            <span class="scene-desc" data-scene="0"></span></span>
+        </label>
+        <label class="scene-pick">
+          <input type="radio" name="which" value="2">
+          <span class="scene-num">2</span>
+          <span class="scene-text"><strong>Jack is climbing the beanstalk.</strong>
+            <span class="scene-desc" data-scene="1"></span></span>
+        </label>
+        <label class="scene-pick scene-both">
+          <input type="radio" name="which" value="both" checked>
+          <span class="scene-num">★</span>
+          <span class="scene-text"><strong>Both scenes</strong>
+            <span class="scene-desc">The whole story, start to sky. Two pictures, twice the cost.</span></span>
+        </label>
+      </div>
+    </section>
+
+    <div class="submit-bar">
+      <button class="btn btn-primary" id="go" type="submit" disabled>Make my scenes</button>
+      <p class="error" id="error" role="alert" hidden></p>
+    </div>
+  </form>
+
+  <section id="resultsWrap" hidden aria-live="polite">
+    <div class="results-head">
+      <h2>Your story</h2>
+      <span class="muted" id="timer"></span>
+    </div>
+    <div class="results" id="results"></div>
+    <div class="again"><button class="btn btn-ghost" id="again" type="button">Try another photo</button></div>
+  </section>
+</main>
+
+<footer class="muted">Your photo is sent to OpenAI to draw these pictures. This app doesn't store it.</footer>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
