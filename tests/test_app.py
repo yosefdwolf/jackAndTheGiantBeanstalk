@@ -9,7 +9,7 @@ from PIL import Image
 import app.generate
 import app.main
 from app.faces import PreparedPhoto
-from app.prompts import SCENES, STRENGTH, STYLES, build_prompt
+from app.prompts import SCENES, STRENGTH, STYLES, build_portrait_prompt, build_prompt
 
 client = TestClient(app.main.app)
 
@@ -79,11 +79,23 @@ def test_scene_text_from_client_is_ignored(mock_pipeline):
 @pytest.mark.parametrize("scene", SCENES)
 @pytest.mark.parametrize("style", STYLES)
 @pytest.mark.parametrize("strength", STRENGTH)
-def test_prompt_contains_caption_and_identity(scene, style, strength):
-    p = build_prompt(scene, style, strength, "short black hair")
+def test_scene_prompt_uses_the_cartoon_character(scene, style, strength):
+    p = build_prompt(scene, style, strength)
     assert scene in p
-    assert p.startswith("IDENTITY:")
+    assert p.startswith("CHARACTER:")
+    assert "photograph" in p  # forbids a photographic look
+
+
+@pytest.mark.parametrize("style", STYLES)
+def test_portrait_prompt_redraws_instead_of_editing(style):
+    p = build_portrait_prompt(style, 2, "short black hair")
+    assert "do not edit, trace or filter the photo" in p
     assert "short black hair" in p
+
+
+def test_response_holds_only_the_scenes(mock_pipeline):
+    r = client.post("/api/generate", files={"photo": ("x.jpg", jpeg(), "image/jpeg")})
+    assert "portrait_b64" not in r.json()
 
 
 @pytest.mark.parametrize("which,expected", [("both", SCENES), ("1", SCENES[:1]), ("2", SCENES[1:])])
@@ -98,3 +110,22 @@ def test_rejects_unknown_scene_choice():
     r = client.post("/api/generate", files={"photo": ("x.jpg", jpeg(), "image/jpeg")},
                     data={"which": "Jack robs a bank."})
     assert r.status_code == 400
+
+
+def test_jane_swaps_the_name_in_captions(mock_pipeline):
+    r = client.post("/api/generate", files={"photo": ("x.jpg", jpeg(), "image/jpeg")}, data={"hero": "jane"})
+    images = r.json()["images"]
+    assert [i["caption"] for i in images] == ["Jane is planting the seed.", "Jane is climbing the beanstalk."]
+    assert all("Jack" not in i["description"] for i in images)
+
+
+def test_rejects_unknown_hero():
+    r = client.post("/api/generate", files={"photo": ("x.jpg", jpeg(), "image/jpeg")}, data={"hero": "Bob"})
+    assert r.status_code == 400
+
+
+@pytest.mark.parametrize("scene", SCENES)
+def test_jane_prompt_names_jane(scene):
+    p = build_prompt(scene, "storybook", 2, hero="jane")
+    assert "Jane is" in p and "Jack is" not in p
+    assert "Jack and the Beanstalk" in p  # the story title stays

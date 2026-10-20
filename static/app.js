@@ -8,11 +8,23 @@
   let scenes = [...document.querySelectorAll('.scene-pick:not(.scene-both) strong')]
     .map((el) => ({ caption: el.textContent, description: '' }));
 
+  // Scenes are written for Jack; Jane swaps the name, the same way the server does.
+  const hero = () => new FormData(form).get('hero');
+  const cast = (text) => (hero() === 'jane' ? text.replaceAll('Jack', 'Jane') : text);
+  const castScene = (s) => ({ caption: cast(s.caption), description: cast(s.description) });
+
+  function renderScenePicks() {
+    document.querySelectorAll('.scene-pick:not(.scene-both) strong').forEach((el, i) => {
+      if (scenes[i]) el.textContent = cast(scenes[i].caption);
+    });
+    document.querySelectorAll('.scene-desc[data-scene]').forEach((el) => {
+      el.textContent = cast(scenes[+el.dataset.scene].description);
+    });
+  }
+
   fetch('/api/options').then((r) => r.json()).then((o) => {
     scenes = o.scenes;
-    document.querySelectorAll('.scene-desc[data-scene]').forEach((el) => {
-      el.textContent = scenes[+el.dataset.scene].description;
-    });
+    renderScenePicks();
     $('mockBadge').hidden = !o.mock;
   }).catch(() => {});
 
@@ -55,6 +67,45 @@
     error.hidden = !msg;
   }
 
+  // Selfie: phones open the front camera through the file input; computers use the webcam.
+  const camera = $('camera'), video = $('cameraVideo'), cameraError = $('cameraError');
+  let stream = null;
+
+  function stopCamera() {
+    stream?.getTracks().forEach((t) => t.stop());
+    stream = null;
+    if (camera.open) camera.close();
+  }
+
+  $('selfieBtn').addEventListener('click', async () => {
+    if (matchMedia('(pointer: coarse)').matches || !navigator.mediaDevices?.getUserMedia) {
+      $('cameraInput').click();
+      return;
+    }
+    cameraError.hidden = true;
+    $('cameraShoot').disabled = true;
+    camera.showModal();
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 1280 } } });
+      video.srcObject = stream;
+      $('cameraShoot').disabled = false;
+    } catch {
+      cameraError.textContent = 'We could not open your camera. Allow camera access, or choose a photo instead.';
+      cameraError.hidden = false;
+    }
+  });
+
+  $('cameraShoot').addEventListener('click', () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    canvas.toBlob((blob) => { if (blob) setFile(new File([blob], 'selfie.jpg', { type: 'image/jpeg' })); }, 'image/jpeg', 0.92);
+    stopCamera();
+  });
+  $('cameraCancel').addEventListener('click', stopCamera);
+  camera.addEventListener('close', stopCamera);
+
   for (const input of [$('fileInput'), $('cameraInput')]) {
     input.addEventListener('change', () => { setFile(input.files[0]); input.value = ''; });
   }
@@ -96,6 +147,16 @@
     setTimeout(() => URL.revokeObjectURL(a.href), 10000);
   }
 
+  function fill(fig, b64, alt, filename) {
+    const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+    const blob = new Blob([bytes], { type: 'image/png' });
+    const el = Object.assign(document.createElement('img'), { src: URL.createObjectURL(blob), alt });
+    fig.querySelector('.frame').replaceChildren(el);
+    const btn = Object.assign(document.createElement('button'), { type: 'button', className: 'btn btn-ghost', textContent: 'Save image' });
+    btn.addEventListener('click', () => save(blob, filename));
+    fig.querySelector('.actions').replaceChildren(btn);
+  }
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!photo) return showError('Choose a photo first.');
@@ -103,7 +164,7 @@
     go.disabled = true;
     go.textContent = 'Drawing…';
 
-    const cards = selectedScenes().map(card);
+    const cards = selectedScenes().map(castScene).map(card);
     results.replaceChildren(...cards);
     resultsWrap.hidden = false;
     $('again').hidden = true;
@@ -119,15 +180,8 @@
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.detail || `Something went wrong (${res.status}).`);
       data.images.forEach((img, i) => {
-        const bytes = Uint8Array.from(atob(img.image_b64), (c) => c.charCodeAt(0));
-        const blob = new Blob([bytes], { type: 'image/png' });
-        const el = Object.assign(document.createElement('img'), { src: URL.createObjectURL(blob), alt: img.caption });
-        const fig = cards[i];
-        fig.querySelector('.frame').replaceChildren(el);
-        setCaption(fig, img);  // title is exactly the scene that was sent
-        const btn = Object.assign(document.createElement('button'), { type: 'button', className: 'btn btn-ghost', textContent: 'Save image' });
-        btn.addEventListener('click', () => save(blob, `jack-scene-${i + 1}.png`));
-        fig.querySelector('.actions').replaceChildren(btn);
+        fill(cards[i], img.image_b64, img.caption, `${hero()}-scene-${i + 1}.png`);
+        setCaption(cards[i], img);  // title is exactly the scene that was sent
       });
       timer.textContent = `Done in ${Math.round((Date.now() - started) / 1000)}s`;
     } catch (err) {
@@ -145,7 +199,10 @@
   function updateButton() {
     go.textContent = selectedScenes().length === 2 ? 'Make my 2 scenes' : 'Make my scene';
   }
-  form.addEventListener('change', (e) => { if (e.target.name === 'which') updateButton(); });
+  form.addEventListener('change', (e) => {
+    if (e.target.name === 'which') updateButton();
+    if (e.target.name === 'hero') renderScenePicks();
+  });
   updateButton();
 
   $('again').addEventListener('click', () => {

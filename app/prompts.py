@@ -98,52 +98,98 @@ SCENE_BRIEFS = {
     ),
 }
 
+# Each style also says how to draw the FACE in that style, so the face never looks like a
+# photo pasted onto a cartoon body.
 STYLES = {
-    "storybook": "classic children's storybook illustration, soft watercolor and ink",
-    "animated3d": "modern 3D animated family-movie style, soft lighting",
-    "comic": "bold comic-book style with clean ink outlines and flat colors",
-    "papercut": "layered paper-cutout collage style",
+    "storybook": (
+        "classic children's storybook illustration, soft watercolor and ink",
+        "painted in the same soft watercolor washes and ink lines as the rest of the picture",
+    ),
+    "animated3d": (
+        "modern 3D animated family-movie style, soft lighting",
+        "fully rendered as a 3D animated-film character face: smooth stylized skin, slightly "
+        "enlarged expressive eyes, simplified features, the same soft shading and lighting as "
+        "the body; never photographic skin texture",
+    ),
+    "comic": (
+        "bold comic-book style with clean ink outlines and flat colors",
+        "drawn with the same bold ink outlines and flat colors as the rest of the picture",
+    ),
+    "papercut": (
+        "layered paper-cutout collage style",
+        "built from the same cut-paper shapes and textures as the rest of the picture",
+    ),
 }
 
-# Capped on purpose: past "strong", faces stop looking like the person.
+# Every level is a real cartoon; the photo is never reproduced. Higher = more exaggerated.
 STRENGTH = {
-    1: "lightly stylized, close to the real proportions",
-    2: "clearly cartoon, but with realistic facial proportions",
-    3: "strongly stylized cartoon, while keeping the facial features faithful",
+    1: "a gently stylized cartoon: simplified features, clean drawn shapes, painted rather "
+       "than photographic skin, close to real head proportions",
+    2: "a clear cartoon character: simplified, rounded features, slightly larger head and eyes, "
+       "drawn outlines or painted shapes, no realistic skin texture, pores or photo lighting",
+    3: "a fully cartoon character, like an animated TV show: big expressive eyes, bold "
+       "exaggerated simplified features, big head and small body, bold simple shapes",
 }
 
+# Jack for boys, Jane for girls. The scenes above are written for Jack; cast() swaps the name.
+HEROES = ("jack", "jane")
 
-def build_prompt(scene: str, style: str, strength: int, face_description: str = "",
-                 with_closeup: bool = False) -> str:
-    brief = SCENE_BRIEFS[scene]
-    style_text = STYLES.get(style, STYLES["storybook"])
-    strength_text = STRENGTH.get(strength, STRENGTH[2])
+NO_TEXT = ("A wordless, full-bleed illustration: no text, letters, title, caption, banner or "
+           "border anywhere in the image.")
+
+
+def cast(text: str, hero: str) -> str:
+    return text.replace("Jack", "Jane") if hero == "jane" else text
+
+
+def _style(style: str, strength: int) -> str:
+    style_text, face_style = STYLES.get(style, STYLES["storybook"])
+    return (f"STYLE: {style_text}. The character is {STRENGTH.get(strength, STRENGTH[2])}. The "
+            f"face is {face_style}. Nothing in the picture may look like a photograph.")
+
+
+def build_portrait_prompt(style: str, strength: int, face_description: str = "",
+                          with_closeup: bool = False, hero: str = "jack") -> str:
+    """Step 1: turn the photo into a cartoon character. The scenes are drawn from this, not the photo."""
+    refs = ("The reference photos (image 1 the full photo, image 2 a close-up of the face) are "
+            "only a guide") if with_closeup else "The reference photo is only a guide"
     described = f" Their distinctive features: {face_description}." if face_description else ""
-    refs = ("the reference photos (image 1 is the full photo; image 2 is a close-up of their "
-            "face, so copy the face from image 2)") if with_closeup else "the reference photo"
     return "\n".join([
-        f"IDENTITY: This is a portrait of one specific real person, not a generic character. "
-        f"The main character, Jack, is the person shown in {refs}. Reproduce their face "
-        "faithfully: the same face shape, jawline, chin and cheekbones; the same eye shape, "
-        "size and spacing; the same nose width and length; the same lip shape; the same brow "
-        "shape, hairline, hairstyle and hair color; the same skin tone, age, and any glasses, "
-        "freckles, moles or facial hair. A friend must recognize them instantly. Do not make "
-        "them younger, prettier or more generic, and do not change their gender, age or "
-        "ethnicity." + described,
-        f"STYLE: {style_text}; {strength_text}. The style applies to the whole picture, but the "
-        "face must stay faithful to the reference. A wordless, full-bleed illustration: no "
-        "text, letters, title, caption, banner or border anywhere in the image.",
+        f"Create a brand-new cartoon character portrait of the person in the photo, to be "
+        f"{cast('Jack', hero)} in a Jack and the Beanstalk picture book. {refs}: do not edit, "
+        "trace or filter the photo. Redraw the person from scratch as a cartoon.",
+        "LIKENESS: Keep what makes them recognizable, the way a good caricaturist does: their "
+        "hairstyle and hair color, skin tone, face shape, the character of their eyes, nose, "
+        "brows and smile, their apparent age and gender, and any glasses or facial hair. Simplify "
+        "everything else." + described,
+        _style(style, strength),
+        "FRAMING: Head and shoulders, facing the viewer with a friendly smile, wearing a simple "
+        "patched linen peasant tunic, on a plain soft pastel background.",
+        NO_TEXT,
+    ])
+
+
+def build_prompt(scene: str, style: str, strength: int, hero: str = "jack") -> str:
+    """Step 2: put the cartoon character from step 1 into a scene."""
+    brief = SCENE_BRIEFS[scene]
+    name = cast("Jack", hero)
+    return "\n".join([
+        f"CHARACTER: The reference image is the cartoon character {name}. Draw exactly this "
+        "character: the same face, hairstyle, hair color, skin tone, glasses or facial hair, "
+        "proportions and drawing style. Do not make them more realistic.",
+        _style(style, strength) + " " + NO_TEXT,
         # The caption is added by the app outside the image, so it is phrased as a moment, not a caption.
-        f"SCENE from Jack and the Beanstalk. Illustrate this moment: {scene}",
-        f"ACTION: {brief.action}",
-        f"SETTING: {brief.setting}",
-        f"PROPS: {brief.props}",
+        f"SCENE from the fairy tale Jack and the Beanstalk, with {name} as the hero. "
+        f"Illustrate this moment: {cast(scene, hero)}",
+        f"ACTION: {cast(brief.action, hero)}",
+        f"SETTING: {cast(brief.setting, hero)}",
+        f"PROPS: {cast(brief.props, hero)}",
         "WARDROBE: Simple fairy-tale peasant clothes: a patched linen tunic, brown trousers, "
         "a rope belt, worn leather boots.",
-        f"POSE: {brief.pose}",
-        f"CAMERA: {brief.camera}",
+        f"POSE: {cast(brief.pose, hero)}",
+        f"CAMERA: {cast(brief.camera, hero)}",
         f"LIGHTING: {brief.lighting}",
-        f"AVOID: {brief.avoid} Never write any words in the picture.",
+        f"AVOID: {cast(brief.avoid, hero)} Never write any words in the picture.",
     ])
 
 

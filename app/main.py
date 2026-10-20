@@ -11,7 +11,7 @@ from fastapi.staticfiles import StaticFiles  # noqa: E402
 
 from .faces import UploadError, prepare  # noqa: E402
 from .generate import MOCK, generate  # noqa: E402
-from .prompts import SCENE_DESCRIPTIONS, SCENES, STRENGTH, STYLES  # noqa: E402
+from .prompts import HEROES, SCENE_DESCRIPTIONS, SCENES, STRENGTH, STYLES  # noqa: E402
 
 STATIC = Path(__file__).resolve().parent.parent / "static"
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024  # phone photos can be large; they are downscaled on arrival
@@ -29,7 +29,7 @@ def index():
 def options():
     return {
         "scenes": [{"caption": s, "description": SCENE_DESCRIPTIONS[s]} for s in SCENES],
-        "styles": list(STYLES), "strengths": list(STRENGTH), "mock": MOCK,
+        "styles": list(STYLES), "strengths": list(STRENGTH), "heroes": list(HEROES), "mock": MOCK,
     }
 
 
@@ -43,12 +43,15 @@ async def generate_route(
     style: str = Form("storybook"),
     strength: int = Form(2),
     which: str = Form("both"),
+    hero: str = Form("jack"),
 ):
     data = await photo.read()
     if len(data) > MAX_UPLOAD_BYTES:
         raise HTTPException(413, "That photo is too large (max 25 MB).")
     if style not in STYLES or strength not in STRENGTH:
         raise HTTPException(400, "Unknown style or strength.")
+    if hero not in HEROES:
+        raise HTTPException(400, "Choose Jack or Jane.")
     if which not in SCENE_CHOICES:
         raise HTTPException(400, "Unknown scene choice.")
 
@@ -58,7 +61,7 @@ async def generate_route(
         raise HTTPException(422, str(e))
 
     try:
-        return await generate(prepared, style, strength, SCENE_CHOICES[which])
+        return await generate(prepared, style, strength, SCENE_CHOICES[which], hero)
     except openai.BadRequestError as e:
         # A content-policy rejection of the photo, or a setting the model doesn't support.
         raise HTTPException(400, f"The image service rejected this request: {e.message}")

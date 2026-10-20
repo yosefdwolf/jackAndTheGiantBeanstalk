@@ -33,12 +33,14 @@ pip install -r requirements-dev.txt
 python -m pytest
 ```
 
-## How likeness is kept
-1. **Upload checks before any API call** (`app/faces.py`): fix orientation, convert HEIC, require exactly one large face, make a face close-up.
-2. **One call per scene, always from the original photo**: never chained, run in parallel, no retry loops.
-3. **`gpt-image-2.5-flare` edit at medium quality**, from the original photo. We tried other models: `gpt-image-1-mini` lost the face entirely, and `gpt-image-1` at low quality was blurry and costlier. Flare looked clearly like the person.
-4. **Written face description**: a cheap vision model describes the face, and that text goes into the prompt.
-5. **Fully art-directed scenes** (`app/prompts.py`): identity first, then style, action, setting, props, wardrobe, pose, camera, lighting, and what to avoid. The medium close shot keeps the face large. Cartoon strength is capped.
+## How it works
+1. **Upload checks before any API call** (`app/faces.py`): fix orientation, convert HEIC, require one clear face (a background pattern isn't counted as a second person), make a face close-up.
+2. **Cartoonify once**: `gpt-image-2.5-flare` redraws the photo from scratch as a cartoon portrait in the chosen style and strength. A cheap vision model first writes a short description of the face, which goes into the prompt.
+3. **Scenes from the cartoon, not the photo**: each scene is one call that uses the cartoon portrait as the character, so it can't copy the realistic face, and both scenes show the same character. The scenes run in parallel, with no retry loops.
+4. **Fully art-directed scenes** (`app/prompts.py`): action, setting, props, wardrobe, pose, camera, lighting, and what to avoid. A medium close shot keeps the face large.
+5. **Jack or Jane**: the toggle swaps the name in the captions and prompts. The story title stays "Jack and the Beanstalk."
+
+Models tried: `gpt-image-1-mini` lost the face; `gpt-image-1` at low quality was blurry and cost more. Editing the photo directly kept the face too photographic, which is why the app cartoonifies first.
 
 ## Deploy on Railway
 Connect the repo. The `Procfile` provides the start command and `.python-version` pins Python 3.12. Under **Variables**, set `OPENAI_API_KEY` (and optionally `IMAGE_MODEL`, `IMAGE_QUALITY`, `VISION_MODEL`). Leave `MOCK` unset.
@@ -54,4 +56,4 @@ Put photos of several different people (with consent) in `eval/photos/`. That fo
 
 Edit `app/prompts.py`, re-run, and compare reports until both requirements pass for everyone.
 
-Cost: about $0.02 per scene at `gpt-image-2.5-flare` medium (measured), so about $0.04 for both scenes. Every call prints its token cost in the server log as `[cost] …`.
+Cost: about $0.02 per image at `gpt-image-2.5-flare` medium (measured), so about $0.06 for the cartoon portrait plus both scenes. Every call prints its token cost in the server log as `[cost] …`.

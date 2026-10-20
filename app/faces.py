@@ -15,6 +15,7 @@ register_heif_opener()  # iPhone photos arrive as HEIC when sent from the Files 
 MAX_SIDE = 1024
 MIN_FACE_FRACTION = 0.12  # face width must be at least this share of image width
 CASCADE = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+EYES = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_eye.xml")
 
 
 class UploadError(ValueError):
@@ -33,6 +34,20 @@ def _to_png(img: Image.Image) -> bytes:
     return buf.getvalue()
 
 
+def _overlaps(a, b) -> bool:
+    ax, ay, aw, ah = a
+    bx, by, bw, bh = b
+    return ax < bx + bw and bx < ax + aw and ay < by + bh and by < ay + ah
+
+
+def _is_second_person(gray, main, other) -> bool:
+    x, y, w, h = other
+    if w * h < 0.6 * main[2] * main[3] or _overlaps(main, other):
+        return False
+    eyes = EYES.detectMultiScale(gray[y:y + h // 2 + h // 6, x:x + w], scaleFactor=1.1, minNeighbors=8)
+    return len(eyes) > 0
+
+
 def prepare(upload: bytes) -> PreparedPhoto:
     try:
         img = Image.open(io.BytesIO(upload))
@@ -48,7 +63,9 @@ def prepare(upload: bytes) -> PreparedPhoto:
         raise UploadError("We couldn't find a face. Use a clear, front-facing photo with good light.")
     faces = sorted(faces, key=lambda f: f[2] * f[3], reverse=True)
     x, y, w, h = faces[0]
-    if len(faces) > 1 and faces[1][2] * faces[1][3] > 0.4 * w * h:
+    # Haar often "sees" faces in shirts, posters or shadows, so a second detection only counts
+    # as another person when it is nearly as big, separate from the main face, and has an eye.
+    if any(_is_second_person(gray, faces[0], f) for f in faces[1:]):
         raise UploadError("We found more than one face. Upload a photo with just you in it.")
     if w < MIN_FACE_FRACTION * img.width:
         raise UploadError("Your face is too small in this photo. Use a closer shot, like a selfie.")

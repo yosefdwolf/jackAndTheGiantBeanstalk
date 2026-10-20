@@ -1,5 +1,6 @@
-"""OpenAI calls. One describe call per upload, then exactly one image call per scene — no retries.
+"""OpenAI calls, no retries: describe the face, cartoonify the photo once, then one call per scene.
 
+The scenes are drawn from the cartoon portrait, not the photo, so they can't copy the real face.
 Set MOCK=1 to skip OpenAI entirely and return placeholder images (free local UI testing).
 """
 import asyncio
@@ -11,7 +12,8 @@ from openai import AsyncOpenAI
 from PIL import Image, ImageDraw, ImageOps
 
 from .faces import PreparedPhoto
-from .prompts import DESCRIBE_FACE_PROMPT, SCENE_DESCRIPTIONS, SCENES, build_prompt
+from .prompts import (DESCRIBE_FACE_PROMPT, SCENE_DESCRIPTIONS, SCENES, build_portrait_prompt,
+                      build_prompt, cast)
 
 IMAGE_MODEL = os.getenv("IMAGE_MODEL", "gpt-image-2.5-flare")
 IMAGE_QUALITY = os.getenv("IMAGE_QUALITY", "medium")
@@ -19,7 +21,7 @@ IMAGE_SIZE = os.getenv("IMAGE_SIZE", "1024x1024")  # 1024x1536 costs ~50% more o
 VISION_MODEL = os.getenv("VISION_MODEL", "gpt-4.1-mini")
 # input_fidelity="high" keeps faces close on gpt-image-1; mini rejects it; the 2.5 docs don't list it.
 HIGH_FIDELITY = os.getenv("INPUT_FIDELITY", "high" if IMAGE_MODEL == "gpt-image-1" else "") == "high"
-# A second, face close-up reference. Cheap on mini; on other models check image_in in the [cost] log.
+# A second, face close-up reference for the portrait. Cheap on mini; elsewhere check the [cost] log.
 FACE_CLOSEUP = os.getenv("FACE_CLOSEUP", "1" if IMAGE_MODEL == "gpt-image-1-mini" else "0") == "1"
 MOCK = os.getenv("MOCK", "").lower() in {"1", "true", "yes"}
 
@@ -49,13 +51,7 @@ async def describe_face(photo: PreparedPhoto) -> str:
     return (resp.choices[0].message.content or "").strip()
 
 
-async def render_scene(photo: PreparedPhoto, scene: str, style: str, strength: int,
-                       face_description: str) -> dict:
-    with_closeup = FACE_CLOSEUP
-    images = [("photo.png", photo.full_png, "image/png")]
-    if with_closeup:
-        images.append(("face.png", photo.face_png, "image/png"))
-    prompt = build_prompt(scene, style, strength, face_description, with_closeup)
+async def _edit(label: str, images: list, prompt: str) -> str:
     resp = await client().images.edit(
         model=IMAGE_MODEL,
         image=images,
@@ -64,8 +60,23 @@ async def render_scene(photo: PreparedPhoto, scene: str, style: str, strength: i
         quality=IMAGE_QUALITY,
         size=IMAGE_SIZE,
     )
-    log_cost(scene, resp.usage)
-    return {"caption": scene, "description": SCENE_DESCRIPTIONS[scene], "image_b64": resp.data[0].b64_json}
+    log_cost(label, resp.usage)
+    return resp.data[0].b64_json
+
+
+async def cartoonify(photo: PreparedPhoto, style: str, strength: int, face_description: str,
+                     hero: str) -> str:
+    images = [("photo.png", photo.full_png, "image/png")]
+    if FACE_CLOSEUP:
+        images.append(("face.png", photo.face_png, "image/png"))
+    prompt = build_portrait_prompt(style, strength, face_description, FACE_CLOSEUP, hero)
+    return await _edit("portrait", images, prompt)
+
+
+async def render_scene(portrait_png: bytes, scene: str, style: str, strength: int, hero: str) -> dict:
+    b64 = await _edit(scene, [("character.png", portrait_png, "image/png")],
+                      build_prompt(scene, style, strength, hero))
+    return {**_caption(scene, hero), "image_b64": b64}
 
 
 # List prices, USD per 1M tokens (text in, image in, image out). Check OpenAI's pricing page.
@@ -78,7 +89,7 @@ PRICES = {
 PRICE_TEXT_IN, PRICE_IMAGE_IN, PRICE_OUT = PRICES.get(IMAGE_MODEL, PRICES["gpt-image-1"])
 
 
-def log_cost(scene: str, usage) -> None:
+def log_cost(label: str, usage) -> None:
     if usage is None:
         return
     details = usage.input_tokens_details
@@ -86,29 +97,44 @@ def log_cost(scene: str, usage) -> None:
         return
     cost = (details.text_tokens * PRICE_TEXT_IN + details.image_tokens * PRICE_IMAGE_IN
             + usage.output_tokens * PRICE_OUT) / 1e6
-    print(f"[cost] {scene!r}: text_in={details.text_tokens} image_in={details.image_tokens} "
+    print(f"[cost] {label!r}: text_in={details.text_tokens} image_in={details.image_tokens} "
           f"out={usage.output_tokens} ≈ ${cost:.3f}", flush=True)
 
 
-def _mock_scene(photo: PreparedPhoto, scene: str, index: int) -> dict:
+def _caption(scene: str, hero: str) -> dict:
+    return {"caption": cast(scene, hero), "description": cast(SCENE_DESCRIPTIONS[scene], hero)}
+
+
+def _mock_image(photo: PreparedPhoto, color: str, label: str) -> str:
     face = Image.open(io.BytesIO(photo.face_png)).convert("RGB")
-    canvas = Image.new("RGB", (1024, 1024), ("#cfe3b8", "#f2d9a6")[index % 2])
-    poster = ImageOps.posterize(ImageOps.fit(face, (640, 640)), 3)
-    canvas.paste(poster, (192, 120))
-    ImageDraw.Draw(canvas).text((60, 860), f"MOCK — {scene}", fill="#22301f", font_size=40)
+    canvas = Image.new("RGB", (1024, 1024), color)
+    canvas.paste(ImageOps.posterize(ImageOps.fit(face, (560, 560)), 3), (232, 200))
+    draw = ImageDraw.Draw(canvas)
+    draw.rectangle((0, 40, 1024, 150), fill="#c0392b")
+    draw.text((512, 95), "MOCK · not a real image", fill="white", font_size=56, anchor="mm")
+    draw.text((512, 860), label, fill="#22301f", font_size=40, anchor="mm")
     buf = io.BytesIO()
     canvas.save(buf, format="PNG")
-    return {"caption": scene, "description": SCENE_DESCRIPTIONS[scene], "image_b64": base64.b64encode(buf.getvalue()).decode()}
+    return base64.b64encode(buf.getvalue()).decode()
 
 
-async def generate(photo: PreparedPhoto, style: str, strength: int, scenes=SCENES) -> dict:
+async def generate(photo: PreparedPhoto, style: str, strength: int, scenes=SCENES,
+                   hero: str = "jack") -> dict:
     if MOCK:
         await asyncio.sleep(1.5)
-        return {"face_description": "mock", "images": [_mock_scene(photo, s, SCENES.index(s)) for s in scenes]}
+        return {
+            "face_description": "mock",
+            "images": [{**_caption(s, hero),
+                        "image_b64": _mock_image(photo, ("#cfe3b8", "#f2d9a6")[SCENES.index(s)], cast(s, hero))}
+                       for s in scenes],
+        }
 
     face_description = await describe_face(photo)
-    # The scenes are independent, so they run in parallel: one call each, both from the original photo.
+    portrait_b64 = await cartoonify(photo, style, strength, face_description, hero)
+    portrait_png = base64.b64decode(portrait_b64)
+    # The scenes are independent, so they run in parallel: one call each, both from the same cartoon.
     results = await asyncio.gather(
-        *(render_scene(photo, s, style, strength, face_description) for s in scenes)
+        *(render_scene(portrait_png, s, style, strength, hero) for s in scenes)
     )
+    # The portrait is only the scenes' character reference; the page shows just the scenes.
     return {"face_description": face_description, "images": list(results)}

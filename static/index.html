@@ -18,7 +18,7 @@
   <div class="hero-inner">
     <span class="badge" id="mockBadge" hidden>Mock mode · no API calls</span>
     <h1>You <em>and the</em> Beanstalk</h1>
-    <p>Upload a photo and step into the fairy tale as Jack, in two storybook scenes.</p>
+    <p>Upload a photo and step into the fairy tale as Jack or Jane, in two storybook scenes.</p>
   </div>
   <svg class="vine" viewBox="0 0 1200 80" preserveAspectRatio="none" aria-hidden="true">
     <path d="M0 60 C 150 10, 300 90, 450 45 S 750 10, 900 50 S 1100 80, 1200 30" />
@@ -35,20 +35,16 @@
         <div class="drop-empty">
           <div class="drop-icon" aria-hidden="true">📸</div>
           <p class="drop-title">Drop a photo here</p>
-          <p class="muted">or use the buttons below · JPG, PNG or HEIC</p>
+          <p class="muted">or click to choose one · JPG, PNG or HEIC</p>
         </div>
         <img id="preview" alt="Your uploaded photo" hidden>
       </div>
 
+      <input type="file" id="fileInput" accept="image/*,.heic,.heif" hidden>
+      <input type="file" id="cameraInput" accept="image/*" capture="user" hidden>
       <div class="pick-row">
-        <label class="btn btn-ghost">
-          <input type="file" id="fileInput" accept="image/*,.heic,.heif" hidden>
-          Choose photo
-        </label>
-        <label class="btn btn-ghost only-touch">
-          <input type="file" id="cameraInput" accept="image/*" capture="user" hidden>
-          Take a selfie
-        </label>
+        <span class="muted or">or</span>
+        <button type="button" class="btn btn-ghost" id="selfieBtn">📷 Take a selfie</button>
       </div>
 
       <ul class="tips">
@@ -86,6 +82,14 @@
           <span class="style-name">Paper cutout</span>
           <span class="style-desc">Layered collage</span>
         </label>
+      </div>
+
+      <div class="field">
+        <span class="field-label" id="heroLabel">Who are you in the story?</span>
+        <div class="segmented two" role="radiogroup" aria-labelledby="heroLabel">
+          <label><input type="radio" name="hero" value="jack" checked><span>Jack</span></label>
+          <label><input type="radio" name="hero" value="jane"><span>Jane</span></label>
+        </div>
       </div>
 
       <div class="field">
@@ -140,6 +144,15 @@
 </main>
 
 <footer class="muted">Your photo is sent to OpenAI to draw these pictures. This app doesn't store it.</footer>
+
+<dialog id="camera" aria-label="Take a selfie">
+  <video id="cameraVideo" autoplay playsinline muted></video>
+  <p class="error" id="cameraError" hidden></p>
+  <div class="camera-actions">
+    <button type="button" class="btn btn-ghost" id="cameraCancel">Cancel</button>
+    <button type="button" class="btn btn-primary" id="cameraShoot">Take photo</button>
+  </div>
+</dialog>
 
 <script src="/static/app.js"></script>
 </body>
