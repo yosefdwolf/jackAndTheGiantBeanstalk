@@ -50,6 +50,23 @@
     go.disabled = false;
   }
 
+  // Wrong password: say so right at the field, clear it and put the cursor there.
+  function showPasswordError(msg) {
+    const field = form.password, note = $('passwordError');
+    note.textContent = msg;
+    note.hidden = false;
+    field.setAttribute('aria-invalid', 'true');
+    field.value = '';
+    try { localStorage.removeItem(PASSWORD_KEY); } catch {}
+    field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    field.focus({ preventScroll: true });
+  }
+
+  form.password.addEventListener('input', () => {
+    $('passwordError').hidden = true;
+    form.password.removeAttribute('aria-invalid');
+  });
+
   function showError(msg) {
     error.textContent = msg;
     error.hidden = !msg;
@@ -107,7 +124,7 @@
     e.preventDefault();
     if (!photo) return showError('Choose a photo first.');
     if (!form.name.value.trim()) return showError("Please enter the child's name.");
-    if (!form.password.value) return showError('Enter the password to make a book.');
+    if (!form.password.value) return showPasswordError('Enter the password to make a book.');
     showError('');
     go.disabled = true;
     go.textContent = 'Making your book…';
@@ -125,10 +142,12 @@
     body.append('photo', photo, photo.name || 'photo.jpg');
 
     try {
-      const res = await fetch('/api/book', { method: 'POST', body, headers: { 'X-App-Password': form.password.value } });
+      // Longer than the server's worst case (2 min for the cartoon + 2 min for the pages).
+      const res = await fetch('/api/book', { method: 'POST', body, headers: { 'X-App-Password': form.password.value },
+                                             signal: AbortSignal.timeout(5 * 60 * 1000) });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.detail || `Something went wrong (${res.status}).`);
+        throw Object.assign(new Error(data.detail || `Something went wrong (${res.status}).`), { status: res.status });
       }
       try { localStorage.setItem(PASSWORD_KEY, form.password.value); } catch {}
       if (pdfUrl) URL.revokeObjectURL(pdfUrl);
@@ -140,8 +159,13 @@
       timer.textContent = `Done in ${Math.round((Date.now() - started) / 1000)}s`;
     } catch (err) {
       resultsWrap.hidden = true;
-      showError(err.message === 'Failed to fetch' ? 'Network problem. Check your connection and try again.' : err.message);
-      form.scrollIntoView({ behavior: 'smooth' });
+      if (err.status === 401) {
+        showPasswordError(err.message);
+      } else {
+        showError(err.name === 'TimeoutError' ? 'This is taking much longer than usual, so we stopped waiting. Please try again.'
+          : err.message === 'Failed to fetch' ? 'Network problem. Check your connection and try again.' : err.message);
+        error.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
     } finally {
       clearInterval(tick);
       $('again').hidden = false;

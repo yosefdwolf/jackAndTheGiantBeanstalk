@@ -160,3 +160,5 @@ label.field { display: block; }
 .book-card .sprout, .book-icon { font-size: 44px; }
 .book-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 12px; }
 .book-actions .btn { width: auto; min-width: 160px; }
+.field-error { text-align: left; margin: 8px 0 0; }
+.field input[aria-invalid="true"] { border-color: var(--err); box-shadow: 0 0 0 3px color-mix(in srgb, var(--err) 20%, transparent); }

@@ -47,8 +47,24 @@ The `Procfile` sets the start command and `.python-version` pins Python 3.12. Un
 
 Leave `MOCK` unset.
 
+## Logs (for post-mortems)
+Every book gets a short ID. It's on every log line, in the `X-Book-Id` response header, and in any error
+message the user sees ("… (ref 3f9a1c2e)"). Search Railway's logs for that ID. Each step logs when it
+starts and when it ends, so a stuck call shows a `start` with no `done`:
+```
+INFO book=3f9a1c2e book requested ip=… gender=girl details=2
+INFO book=3f9a1c2e start hero sheet call=images.edit model=gpt-image-2.5-flare size=1024x1024 refs=photo.png
+INFO book=3f9a1c2e usage hero sheet text_in=238 image_in=480 out=439 cost=$0.018 openai_request=req_…
+INFO book=3f9a1c2e done hero sheet 21.4s
+INFO book=3f9a1c2e start page 1 … refs=hero.png,mother.png,milky_white.png
+ERROR book=3f9a1c2e failed page 2 120.0s APITimeoutError
+WARNING book=3f9a1c2e refused status=504 reason=timeout
+```
+Never logged: the password, the API key, the photo, or the child's name and details. `LOG_LEVEL` sets
+the level (default `INFO`).
+
 ## Cost
-About $0.10 per book: the hero sheet plus three wide pages at medium quality. Every call prints its
-cost in the server log as `[cost] …`.
+About $0.12 per book (measured): the hero sheet plus three wide pages at medium quality. Each call's
+cost is in the logs, and each book's total is on its `book done` line.
 
 See [to-do.md](to-do.md) for what still needs work.

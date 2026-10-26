@@ -17,13 +17,8 @@ What still needs work in this build, most important first.
 - **The PDF font is the built-in Times.** A picture-book font file (licensed for embedding) would look better.
 - **No retry when OpenAI's safety filter blocks a page.** That happened once, with an ordinary adult photo, and the same photo passed on the next try. Right now the whole book fails.
 
-## Logging for post-mortems
-- **There's no real logging yet, only `[cost]` lines.** When a book fails or comes out wrong, there's no way to trace what happened. It needs:
-  - **One ID per book**, on every log line and shown to the user in error messages, so they can report it.
-  - **Every step logged:** face check result, each image call (duration, tokens, cost, OpenAI request ID), each page, PDF size, total time and cost.
-  - **Failures with detail:** error type, OpenAI's error code (e.g. `moderation_blocked`) and request ID, full traceback for unexpected errors.
-  - **Wrong-password attempts logged** with the IP, to spot abuse.
-  - **No secrets or personal data in logs:** never the password, API key, photo, or the child's name and details.
+## Logging
+- **Logs live only in Railway's log view.** Every step is logged with a book ID (see README), but nothing stores or alerts on them. A failure is only noticed if someone reports a ref or happens to look. A log drain with an alert on `failed` lines would catch problems without anyone reporting them.
 
 ## Site
 - **One shared password (`APP_PASSWORD`), no rate limit.** Anyone with the password can make unlimited books. A per-password or per-IP limit would cap the spend.

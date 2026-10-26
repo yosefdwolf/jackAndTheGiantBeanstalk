@@ -7,6 +7,7 @@ import asyncio
 
 from ..faces import PreparedPhoto
 from .cast import CastSheets
+from .log import log, step
 from .pages import BookContext, ChildInfo, make_page
 from .pdf import build_pdf
 from .prompts import PromptBuilder
@@ -34,5 +35,8 @@ async def build_book(photo: PreparedPhoto, child: ChildInfo, gender: str = "boy"
             return MockImageProvider._draw(f"{key} sheet", SHEET_SIZE, None, 0)
     ctx = BookContext(casting, prompts, provider, CastSheets(hero_sheet, fallback=fallback), child)
 
+    log.info("drawing %d pages in parallel", len(story.pages))
     pages = await asyncio.gather(*(make_page(spec).render(ctx) for spec in story.pages))
-    return build_pdf(list(pages), story.title)
+    async with step("pdf", pages=len(pages)):
+        pdf = build_pdf(list(pages), story.title)
+    return pdf

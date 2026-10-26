@@ -201,3 +201,72 @@ def test_adding_a_page_needs_no_code(mock_book, monkeypatch):
 
 def test_index_served():
     assert client.get("/").status_code == 200
+
+
+def test_openai_timeout_gives_clear_message(mock_book, monkeypatch):
+    import httpx
+    import openai
+
+    async def stuck(*args, **kwargs):
+        raise openai.APITimeoutError(request=httpx.Request("POST", "https://api.openai.com/v1/images/edits"))
+
+    monkeypatch.setattr(app.main, "build_book", stuck)
+    r = post_book()
+    assert r.status_code == 504 and "took too long" in r.json()["detail"]
+
+
+def test_openai_client_has_no_hidden_retries(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test-not-real")
+    from app.book.providers import OpenAIImageProvider
+    client = OpenAIImageProvider().client
+    assert client.max_retries == 0 and client.timeout == 120
+
+
+# --- logging for post-mortems ---------------------------------------------------------------------
+
+def _log_lines(caplog):
+    return [r.getMessage() for r in caplog.records if r.name == "book"]
+
+
+def test_every_step_logs_start_and_done(mock_book, caplog):
+    caplog.set_level("INFO", logger="book")
+    r = post_book()
+    lines = _log_lines(caplog)
+    for name in ("face check", "hero sheet", "page 1", "page 2", "page 3", "pdf"):
+        assert any(l.startswith(f"start {name}") for l in lines), name
+        assert any(l.startswith(f"done {name}") for l in lines), name
+    assert any(l.startswith("book done") for l in lines)
+    book_id = r.headers["x-book-id"]
+    assert all(getattr(rec, "book_id", None) == book_id for rec in caplog.records if rec.name == "book")
+
+
+def test_logs_never_hold_password_or_child_details(mock_book, caplog):
+    caplog.set_level("INFO", logger="book")
+    post_book(name="Zebediah", favourites="unicorn-pancakes", about="secret-fort")
+    text = "\n".join(_log_lines(caplog))
+    for private in (PASSWORD, "Zebediah", "unicorn-pancakes", "secret-fort"):
+        assert private not in text
+
+
+def test_refusals_are_logged_with_a_reference(mock_book, caplog):
+    caplog.set_level("INFO", logger="book")
+    r = post_book(password="nope")
+    ref = r.headers["x-book-id"]
+    assert f"(ref {ref})" in r.json()["detail"]
+    assert any("refused status=401 reason=wrong password" in l for l in _log_lines(caplog))
+
+
+def test_failed_step_is_logged(mock_book, monkeypatch, caplog):
+    import httpx
+    import openai
+    from app.book import providers
+
+    async def stuck(self, label, refs, prompt, size):
+        from app.book.log import step
+        async with step(label):
+            raise openai.APITimeoutError(request=httpx.Request("POST", "https://api.openai.com/v1/images/edits"))
+
+    monkeypatch.setattr(providers.MockImageProvider, "edit", stuck)
+    caplog.set_level("INFO", logger="book")
+    assert post_book().status_code == 504
+    assert any(l.startswith("failed hero sheet") and "APITimeoutError" in l for l in _log_lines(caplog))
