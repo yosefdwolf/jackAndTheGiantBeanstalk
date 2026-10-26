@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#f5efe0" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#16201a" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>You and the Beanstalk</title>
+<title>Jack and the Beanstalk</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌱</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,8 +17,8 @@
 <header class="hero">
   <div class="hero-inner">
     <span class="badge" id="mockBadge" hidden>Mock mode · no API calls</span>
-    <h1>You <em>and the</em> Beanstalk</h1>
-    <p>Upload a photo and step into the fairy tale as Jack or Jane, in two storybook scenes.</p>
+    <h1>Jack <em>and the</em> Beanstalk</h1>
+    <p>Upload a photo of a child and get a picture book starring them, as a PDF.</p>
   </div>
   <svg class="vine" viewBox="0 0 1200 80" preserveAspectRatio="none" aria-hidden="true">
     <path d="M0 60 C 150 10, 300 90, 450 45 S 750 10, 900 50 S 1100 80, 1200 30" />
@@ -56,90 +56,68 @@
 
     <!-- Step 2 -->
     <section class="card">
-      <div class="step-head"><span class="num">2</span><h2>Cartoon style</h2></div>
-      <div class="styles" role="radiogroup" aria-label="Cartoon style">
-        <label class="style-tile">
-          <input type="radio" name="style" value="storybook" checked>
-          <span class="swatch sw-storybook" aria-hidden="true"></span>
-          <span class="style-name">Storybook</span>
-          <span class="style-desc">Soft watercolor & ink</span>
-        </label>
-        <label class="style-tile">
-          <input type="radio" name="style" value="animated3d">
-          <span class="swatch sw-3d" aria-hidden="true"></span>
-          <span class="style-name">3D animated</span>
-          <span class="style-desc">Family-movie look</span>
-        </label>
-        <label class="style-tile">
-          <input type="radio" name="style" value="comic">
-          <span class="swatch sw-comic" aria-hidden="true"></span>
-          <span class="style-name">Comic book</span>
-          <span class="style-desc">Bold lines, flat color</span>
-        </label>
-        <label class="style-tile">
-          <input type="radio" name="style" value="papercut">
-          <span class="swatch sw-paper" aria-hidden="true"></span>
-          <span class="style-name">Paper cutout</span>
-          <span class="style-desc">Layered collage</span>
-        </label>
-      </div>
+      <div class="step-head"><span class="num">2</span><h2>About the child</h2></div>
+
+      <label class="field">
+        <span class="field-label">Child's name</span>
+        <input type="text" name="name" maxlength="300" autocomplete="off" required placeholder="e.g. Sam">
+      </label>
 
       <div class="field">
-        <span class="field-label" id="heroLabel">Who are you in the story?</span>
+        <span class="field-label" id="heroLabel">In the story, they are</span>
         <div class="segmented two" role="radiogroup" aria-labelledby="heroLabel">
-          <label><input type="radio" name="hero" value="jack" checked><span>Jack</span></label>
-          <label><input type="radio" name="hero" value="jane"><span>Jane</span></label>
+          <label><input type="radio" name="gender" value="boy" checked><span>Jack</span></label>
+          <label><input type="radio" name="gender" value="girl"><span>Jane</span></label>
         </div>
       </div>
 
-      <div class="field">
-        <span class="field-label" id="strengthLabel">How cartoony?</span>
-        <div class="segmented" role="radiogroup" aria-labelledby="strengthLabel">
-          <label><input type="radio" name="strength" value="1"><span>Light</span></label>
-          <label><input type="radio" name="strength" value="2" checked><span>Medium</span></label>
-          <label><input type="radio" name="strength" value="3"><span>Strong</span></label>
-        </div>
-      </div>
+      <p class="field-hint">These go on the <strong>About Me</strong> page at the end of the book. All optional.</p>
+      <label class="field">
+        <span class="field-label">Age</span>
+        <input type="text" name="age" maxlength="300" placeholder="e.g. 7">
+      </label>
+      <label class="field">
+        <span class="field-label">Favourite things</span>
+        <input type="text" name="favourites" maxlength="300" placeholder="e.g. dinosaurs, pancakes, the colour green">
+      </label>
+      <label class="field">
+        <span class="field-label">More about me</span>
+        <textarea name="about" maxlength="300" rows="3" placeholder="Anything else to include"></textarea>
+      </label>
     </section>
 
     <!-- Step 3 -->
     <section class="card">
-      <div class="step-head"><span class="num">3</span><h2>Your scenes</h2></div>
-      <div class="scene-picks" role="radiogroup" aria-label="Which scenes to draw">
-        <label class="scene-pick">
-          <input type="radio" name="which" value="1">
-          <span class="scene-num">1</span>
-          <span class="scene-text"><strong>Jack is planting the seed.</strong>
-            <span class="scene-desc" data-scene="0"></span></span>
-        </label>
-        <label class="scene-pick">
-          <input type="radio" name="which" value="2">
-          <span class="scene-num">2</span>
-          <span class="scene-text"><strong>Jack is climbing the beanstalk.</strong>
-            <span class="scene-desc" data-scene="1"></span></span>
-        </label>
-        <label class="scene-pick scene-both">
-          <input type="radio" name="which" value="both" checked>
-          <span class="scene-num">★</span>
-          <span class="scene-text"><strong>Both scenes</strong>
-            <span class="scene-desc">The whole story, start to sky. Two pictures, twice the cost.</span></span>
-        </label>
-      </div>
+      <div class="step-head"><span class="num">3</span><h2>Password</h2></div>
+      <label class="field">
+        <span class="field-label">Ask the site owner for the password</span>
+        <input type="password" name="password" autocomplete="current-password" required>
+      </label>
     </section>
 
     <div class="submit-bar">
-      <button class="btn btn-primary" id="go" type="submit" disabled>Make my scenes</button>
+      <button class="btn btn-primary" id="go" type="submit" disabled>Make my book</button>
       <p class="error" id="error" role="alert" hidden></p>
     </div>
   </form>
 
   <section id="resultsWrap" hidden aria-live="polite">
     <div class="results-head">
-      <h2>Your story</h2>
+      <h2>Your book</h2>
       <span class="muted" id="timer"></span>
     </div>
-    <div class="results" id="results"></div>
-    <div class="again"><button class="btn btn-ghost" id="again" type="button">Try another photo</button></div>
+    <div class="card book-card">
+      <div id="bookWorking"><div class="sprout" aria-hidden="true">🌱</div><p>Drawing every page with the same child and the same style…</p></div>
+      <div id="bookReady" hidden>
+        <div class="book-icon" aria-hidden="true">📖</div>
+        <p><strong>JackAndTheBeanstalk.pdf</strong> is ready.</p>
+        <div class="book-actions">
+          <a class="btn btn-primary" id="download">Download PDF</a>
+          <a class="btn btn-ghost" id="openPdf" target="_blank" rel="noopener">Open</a>
+        </div>
+      </div>
+    </div>
+    <div class="again"><button class="btn btn-ghost" id="again" type="button">Make another book</button></div>
   </section>
 </main>
 

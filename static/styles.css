@@ -150,3 +150,13 @@ dialog#camera::backdrop { background: rgba(0, 0, 0, .6); }
 #cameraVideo { width: 100%; border-radius: 12px; background: #000; transform: scaleX(-1); display: block; aspect-ratio: 4 / 3; object-fit: cover; }
 .camera-actions { display: flex; gap: 10px; margin-top: 12px; }
 .camera-actions .btn { flex: 1; width: auto; }
+
+/* Book form and result */
+.field input[type=text], .field input[type=password], .field textarea { width: 100%; font: inherit; font-size: 16px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); color: var(--ink); }
+.field textarea { resize: vertical; }
+label.field { display: block; }
+.field-hint { margin: 18px 0 0; color: var(--muted); font-size: 14px; }
+.book-card { text-align: center; padding: 32px 20px; }
+.book-card .sprout, .book-icon { font-size: 44px; }
+.book-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 12px; }
+.book-actions .btn { width: auto; min-width: 160px; }

@@ -1,0 +1,90 @@
+# The storyboard. Adding a page = adding an entry here; no code changes.
+#
+# Placeholders, filled per book: {hero} (Jack/Jane), {he} {his} {him} and capitalized {He} {His}.
+# cast:  character keys from `characters` (plus `hero`). Only their sheets are sent with the page,
+#        and the prompt says no one else appears.
+# text_zone: where the story text is drawn on the art: bottom | top | bottom-dark.
+
+title: Jack and the Beanstalk
+style: animated3d
+
+world: >-
+  a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly
+  exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours;
+  nothing new, clean or polished.
+
+hero:
+  names: {boy: Jack, girl: Jane}
+  outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots
+
+# Sheets live in the repo (assets/characters/<key>.png) and are the same in every book.
+characters:
+  mother:
+    name: "{hero}'s mother"
+    description: >-
+      a thin, tired woman in her late thirties, worry lines, brown hair under a faded beige
+      headscarf, patched oatmeal blouse, brown skirt, faded patched apron
+  milky_white:
+    name: Milky-White, the cow
+    description: >-
+      a bony, gentle old black-and-white cow with a sad, kind face, small horns and a frayed
+      rope halter
+  old_man:
+    name: the strange old man
+    description: >-
+      a small, hunched, mysterious old man with a long grey beard, a knowing smile, a ragged
+      patched long coat and a battered floppy hat
+
+pages:
+  - type: illustrated
+    text: "{hero} and {his} mother had nothing left to sell but Milky-White."
+    cast: [hero, mother, milky_white]
+    scene: >-
+      A bare, poor cottage kitchen in a hard winter. The cupboard doors hang open on empty, dusty
+      shelves; a cracked empty bowl sits on a rough table. {hero}'s mother stands by the empty
+      cupboard, worried. {hero}, thin and serious, is shown full face, front-lit by cold daylight
+      from the door, looking at {his} mother with a sad, worried expression. Through the open door
+      behind them, Milky-White stands in a muddy yard.
+    mood: >-
+      Quiet, sad and hungry. Cold, overcast grey daylight, deep shadows in the corners; no golden
+      sunshine.
+    composition: >-
+      Characters in the upper two-thirds. The lower third is the worn, uneven earth floor in soft
+      shadow, plain and low in detail, for text added later. Not a table edge, board or blank panel.
+    text_zone: bottom
+
+  - type: illustrated
+    text: "“Five magic beans,” said the old man. “For one cow.”"
+    cast: [hero, old_man, milky_white]
+    scene: >-
+      A muddy dirt road under a grey, overcast sky, bare hedgerows and twisted trees, a village tiny
+      in the far distance. The strange old man holds out his open palm with exactly five beans: one
+      deep red, one purple, one cream with red speckles, one green, one mottled brown; real dried
+      beans, each with a faint magical glow, not candy, not jelly beans. {hero}, in three-quarter
+      view and in the same clothes as before, holds a frayed rope tied to Milky-White and stares at
+      the beans: unsure, tempted, hungry. Milky-White looks tired.
+    mood: >-
+      Uncertain and a little eerie; the old man's smile is knowing, not jolly. Flat, cool overcast
+      light; muted colours.
+    composition: >-
+      Characters in the lower two-thirds. The top third is plain, soft overcast sky with no birds or
+      detail, for text added later.
+    text_zone: top
+
+  - type: illustrated
+    text: "“Beans!” she cried. And out the window they went."
+    cast: [hero, mother]
+    scene: >-
+      The cottage at dusk, seen from the garden. {hero}'s mother leans out of the window, angrily
+      throwing the beans. Exactly five beans scatter through the air into the garden below: one deep
+      red, one purple, one cream with red speckles, one green, one mottled brown; real dried beans,
+      faintly glowing, not candy. {hero} stands alone in the open doorway, watching, worried.
+    mood: >-
+      Darker than the daytime pages: deep blue dusk, warm lamplight in the window.
+    composition: >-
+      Keep the bottom quarter as plain, dark grass with no detail, for text added later.
+    text_zone: bottom-dark
+
+  # Page 4 (the beanstalk at dawn) goes here next.
+
+  - type: about_me

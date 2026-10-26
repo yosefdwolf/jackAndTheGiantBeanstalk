@@ -1,32 +1,20 @@
 (() => {
   const $ = (id) => document.getElementById(id);
   const form = $('form'), drop = $('drop'), preview = $('preview'), go = $('go'), error = $('error');
-  const resultsWrap = $('resultsWrap'), results = $('results'), timer = $('timer');
+  const resultsWrap = $('resultsWrap'), timer = $('timer');
   const MAX_SIDE = 1600;
+  const PDF_NAME = 'JackAndTheBeanstalk.pdf';
+  const PASSWORD_KEY = 'beanstalk-password';
 
   let photo = null;      // Blob that will be uploaded
-  let scenes = [...document.querySelectorAll('.scene-pick:not(.scene-both) strong')]
-    .map((el) => ({ caption: el.textContent, description: '' }));
-
-  // Scenes are written for Jack; Jane swaps the name, the same way the server does.
-  const hero = () => new FormData(form).get('hero');
-  const cast = (text) => (hero() === 'jane' ? text.replaceAll('Jack', 'Jane') : text);
-  const castScene = (s) => ({ caption: cast(s.caption), description: cast(s.description) });
-
-  function renderScenePicks() {
-    document.querySelectorAll('.scene-pick:not(.scene-both) strong').forEach((el, i) => {
-      if (scenes[i]) el.textContent = cast(scenes[i].caption);
-    });
-    document.querySelectorAll('.scene-desc[data-scene]').forEach((el) => {
-      el.textContent = cast(scenes[+el.dataset.scene].description);
-    });
-  }
+  let pdfUrl = null;
 
   fetch('/api/options').then((r) => r.json()).then((o) => {
-    scenes = o.scenes;
-    renderScenePicks();
     $('mockBadge').hidden = !o.mock;
   }).catch(() => {});
+
+  // Remember the password on this device only, as a convenience. Never required to work.
+  try { form.password.value = localStorage.getItem(PASSWORD_KEY) || ''; } catch {}
 
   // Shrink big phone photos before upload (faster on mobile data). If the browser can't
   // decode the file (e.g. HEIC in Chrome on Windows), upload it as-is: the server converts it.
@@ -115,74 +103,40 @@
   ['dragleave', 'drop'].forEach((t) => drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.remove('over'); }));
   drop.addEventListener('drop', (e) => setFile(e.dataTransfer.files[0]));
 
-  function setCaption(fig, scene) {
-    const cap = fig.querySelector('figcaption');
-    cap.replaceChildren(
-      Object.assign(document.createElement('span'), { className: 'cap-title', textContent: scene.caption }),
-      Object.assign(document.createElement('span'), { className: 'cap-desc', textContent: scene.description }),
-    );
-  }
-
-  function selectedScenes() {
-    const which = new FormData(form).get('which');
-    return which === 'both' ? scenes : [scenes[+which - 1]];
-  }
-
-  function card(scene) {
-    const fig = document.createElement('figure');
-    fig.className = 'result';
-    fig.innerHTML = '<div class="frame"><div class="skeleton"><div><div class="sprout">🌱</div>Drawing…</div></div></div><figcaption></figcaption><div class="actions"></div>';
-    setCaption(fig, scene);
-    return fig;
-  }
-
-  async function save(blob, name) {
-    const file = new File([blob], name, { type: 'image/png' });
-    // iPhone/iPad: the share sheet offers "Save Image" to Photos.
-    if (navigator.canShare && navigator.canShare({ files: [file] }) && matchMedia('(pointer: coarse)').matches) {
-      try { await navigator.share({ files: [file] }); return; } catch (e) { if (e.name === 'AbortError') return; }
-    }
-    const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: name });
-    document.body.append(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(a.href), 10000);
-  }
-
-  function fill(fig, b64, alt, filename) {
-    const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
-    const blob = new Blob([bytes], { type: 'image/png' });
-    const el = Object.assign(document.createElement('img'), { src: URL.createObjectURL(blob), alt });
-    fig.querySelector('.frame').replaceChildren(el);
-    const btn = Object.assign(document.createElement('button'), { type: 'button', className: 'btn btn-ghost', textContent: 'Save image' });
-    btn.addEventListener('click', () => save(blob, filename));
-    fig.querySelector('.actions').replaceChildren(btn);
-  }
-
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!photo) return showError('Choose a photo first.');
+    if (!form.name.value.trim()) return showError("Please enter the child's name.");
+    if (!form.password.value) return showError('Enter the password to make a book.');
     showError('');
     go.disabled = true;
-    go.textContent = 'Drawing…';
+    go.textContent = 'Making your book…';
 
-    const cards = selectedScenes().map(castScene).map(card);
-    results.replaceChildren(...cards);
+    $('bookReady').hidden = true;
+    $('bookWorking').hidden = false;
     resultsWrap.hidden = false;
     $('again').hidden = true;
     resultsWrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
     const started = Date.now();
-    const tick = setInterval(() => { timer.textContent = `${Math.round((Date.now() - started) / 1000)}s · usually under a minute`; }, 1000);
+    const tick = setInterval(() => { timer.textContent = `${Math.round((Date.now() - started) / 1000)}s · usually about a minute`; }, 1000);
 
-    const body = new FormData(form);  // style + strength radios; file inputs are unnamed
+    const body = new FormData(form);
+    body.delete('password');  // sent as a header instead
     body.append('photo', photo, photo.name || 'photo.jpg');
 
     try {
-      const res = await fetch('/api/generate', { method: 'POST', body });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.detail || `Something went wrong (${res.status}).`);
-      data.images.forEach((img, i) => {
-        fill(cards[i], img.image_b64, img.caption, `${hero()}-scene-${i + 1}.png`);
-        setCaption(cards[i], img);  // title is exactly the scene that was sent
-      });
+      const res = await fetch('/api/book', { method: 'POST', body, headers: { 'X-App-Password': form.password.value } });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.detail || `Something went wrong (${res.status}).`);
+      }
+      try { localStorage.setItem(PASSWORD_KEY, form.password.value); } catch {}
+      if (pdfUrl) URL.revokeObjectURL(pdfUrl);
+      pdfUrl = URL.createObjectURL(await res.blob());
+      Object.assign($('download'), { href: pdfUrl, download: PDF_NAME });
+      $('openPdf').href = pdfUrl;
+      $('bookWorking').hidden = true;
+      $('bookReady').hidden = false;
       timer.textContent = `Done in ${Math.round((Date.now() - started) / 1000)}s`;
     } catch (err) {
       resultsWrap.hidden = true;
@@ -192,18 +146,9 @@
       clearInterval(tick);
       $('again').hidden = false;
       go.disabled = false;
-      updateButton();
+      go.textContent = 'Make my book';
     }
   });
-
-  function updateButton() {
-    go.textContent = selectedScenes().length === 2 ? 'Make my 2 scenes' : 'Make my scene';
-  }
-  form.addEventListener('change', (e) => {
-    if (e.target.name === 'which') updateButton();
-    if (e.target.name === 'hero') renderScenePicks();
-  });
-  updateButton();
 
   $('again').addEventListener('click', () => {
     photo = null;

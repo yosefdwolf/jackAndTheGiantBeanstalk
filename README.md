@@ -1,59 +1,54 @@
-# You and the Beanstalk
+# Jack and the Beanstalk — a picture book starring your child
 
-Upload a photo and get cartoonified into the two fixed scenes from Jack and the Beanstalk, each captioned with its scene:
+Upload a child's photo, add their name and a few details, and download `JackAndTheBeanstalk.pdf`: a
+cartoon picture book where the child is Jack (or Jane), with an About Me page at the end. This build
+makes the first three pages of the storyboard.
 
-1. *Jack is planting the seed.*
-2. *Jack is climbing the beanstalk.*
+## How it's built
+The book is data; the code is generic. To add a page, add an entry to the story file. A new style, page
+type or image provider is one new class.
 
-The scenes live only in `app/prompts.py`. The API accepts no scene text, so users can't change them.
+| Piece | File | What it does |
+|---|---|---|
+| Story | `stories/jack_and_the_beanstalk.yaml` | The storyboard. Per page: text, cast, scene, mood, composition, and where the text goes. |
+| Style | `app/book/styles.py` | `ArtStyle` abstract class. `Animated3DStyle` is the book's style; its wording is sent unchanged in every call. |
+| Cast | `app/book/cast.py` | Reference sheets. The child's is drawn from the upload. The mother's, Milky-White's and the old man's are drawn once and kept in `assets/characters/`. |
+| Prompts | `app/book/prompts.py` | Builds every prompt: reference images, style, world, scene, mood, composition, then "only these characters appear." |
+| Pages | `app/book/pages.py` | `Page` abstract class. `IllustratedPage` and `AboutMePage` are registered by type name. |
+| Providers | `app/book/providers.py` | `ImageProvider` abstract class. OpenAI (`gpt-image-2.5-flare`) and a free mock. |
+| PDF | `app/book/pdf.py` | Full-bleed art, with the story text drawn on top in a real font. The image model never draws text. About Me is last. |
+| Builder | `app/book/builder.py` | Makes the hero sheet, renders every page in parallel (one call each, no retries), then builds the PDF. |
 
-Works in Safari on iPhone/iPad (including HEIC photos, selfie camera, and saving to Photos through the share sheet) and in Chrome/Edge/Firefox on Windows and Mac.
+**Keeping the child the same on every page:** one hero sheet and one style string, reused on every
+call. Each page sends only the sheets for the characters in it, so nobody shows up who shouldn't (for
+example, the cow on page 3, after she's been sold).
+
+Prompts were developed by hand in the OpenAI Playground first, then moved into the story file.
 
 ## Run locally
-
-Put your key in `.env` (copied from `.env.example`; it's gitignored). Then:
-
-**macOS / Linux**
+Copy `.env.example` to `.env` and set `OPENAI_API_KEY` and `APP_PASSWORD`. `.env` is gitignored. Then:
 ```bash
-./scripts/run.sh          # real images
-./scripts/run.sh --mock   # free: placeholder images, no OpenAI calls
+./scripts/run.sh          # macOS / Linux, real images
+./scripts/run.sh --mock   # free placeholder images
 ```
-
-**Windows (PowerShell)**
 ```powershell
-.\scripts\run.ps1
-.\scripts\run.ps1 -Mock
+.\scripts\run.ps1 -Mock   # Windows
 ```
+Open http://localhost:8000.
 
-Open http://localhost:8000. To test on your phone, join the same Wi-Fi and open `http://<your computer's IP>:8000`.
+**Tests** (free, offline): `pip install -r requirements-dev.txt && python -m pytest`
 
-**Tests** (free, offline):
-```bash
-pip install -r requirements-dev.txt
-python -m pytest
-```
+**Supporting character sheets** (once, then commit them): `python -m scripts.make_character_sheets`
 
-## How it works
-1. **Upload checks before any API call** (`app/faces.py`): fix orientation, convert HEIC, require one clear face (a background pattern isn't counted as a second person), make a face close-up.
-2. **Cartoonify once**: `gpt-image-2.5-flare` redraws the photo from scratch as a cartoon portrait in the chosen style and strength. A cheap vision model first writes a short description of the face, which goes into the prompt.
-3. **Scenes from the cartoon, not the photo**: each scene is one call that uses the cartoon portrait as the character, so it can't copy the realistic face, and both scenes show the same character. The scenes run in parallel, with no retry loops.
-4. **Fully art-directed scenes** (`app/prompts.py`): action, setting, props, wardrobe, pose, camera, lighting, and what to avoid. A medium close shot keeps the face large.
-5. **Jack or Jane**: the toggle swaps the name in the captions and prompts. The story title stays "Jack and the Beanstalk."
+## Deploy (Railway)
+The `Procfile` sets the start command and `.python-version` pins Python 3.12. Under **Variables**, set:
+- `OPENAI_API_KEY`
+- `APP_PASSWORD`: the password people must enter. Without it, the site refuses to make real books.
 
-Models tried: `gpt-image-1-mini` lost the face; `gpt-image-1` at low quality was blurry and cost more. Editing the photo directly kept the face too photographic, which is why the app cartoonifies first.
+Leave `MOCK` unset.
 
-## Deploy on Railway
-Connect the repo. The `Procfile` provides the start command and `.python-version` pins Python 3.12. Under **Variables**, set `OPENAI_API_KEY` (and optionally `IMAGE_MODEL`, `IMAGE_QUALITY`, `VISION_MODEL`). Leave `MOCK` unset.
+## Cost
+About $0.10 per book: the hero sheet plus three wide pages at medium quality. Every call prints its
+cost in the server log as `[cost] …`.
 
-## Proving both requirements hold
-```bash
-pip install -r requirements-eval.txt
-python -m eval.run_eval
-```
-Put photos of several different people (with consent) in `eval/photos/`. That folder is gitignored. The report in `eval/out/<timestamp>/results.md` contains:
-- **Likeness**: the ArcFace similarity between each output and its own upload, compared with its best match among the other uploads. It passes when the output matches its own person best.
-- **Scene**: a vision model checks each image against its caption, element by element.
-
-Edit `app/prompts.py`, re-run, and compare reports until both requirements pass for everyone.
-
-Cost: about $0.02 per image at `gpt-image-2.5-flare` medium (measured), so about $0.06 for the cartoon portrait plus both scenes. Every call prints its token cost in the server log as `[cost] …`.
+See [to-do.md](to-do.md) for what still needs work.

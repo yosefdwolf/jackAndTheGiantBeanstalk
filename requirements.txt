@@ -7,3 +7,5 @@ opencv-python-headless==4.10.0.84
 numpy>=1.26,<3
 python-dotenv==1.0.1
 pillow-heif==0.21.0
+pyyaml==6.0.2
+reportlab==4.2.5
