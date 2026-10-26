@@ -19,4 +19,3 @@ What still needs work in this build, most important first.
 
 ## Site
 - **One shared password (`APP_PASSWORD`), no rate limit.** Anyone with the password can make unlimited books. A per-password or per-IP limit would cap the spend.
-- **The webcam selfie hasn't been tested on Railway.** It can't run in the dev browser pane.
