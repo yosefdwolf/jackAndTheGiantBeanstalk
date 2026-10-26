@@ -3,7 +3,7 @@
 What still needs work in this build, most important first.
 
 ## Book quality
-- **Supporting character sheets aren't in the repo yet.** `assets/characters/` needs `mother.png`, `milky_white.png` and `old_man.png`. Make them once (`python -m scripts.make_character_sheets`, or save the Playground versions) and commit them. Until then, real books fail with "No character sheet", and mock books use placeholders.
+- **Two of the supporting character sheets are turnaround sheets.** `mother.png` and `old_man.png` came out with side and back views and close-up panels, because the prompt said "character reference sheet". The model could copy that multi-panel layout into a page. The prompt now asks for a single front view; those two sheets should be regenerated (`python -m scripts.make_character_sheets mother old_man`). The mother also came out younger and less worn than the approved Playground version.
 - **The hero sheet is redrawn for every book, with no way to approve it first.** If the cartoon doesn't look like the child, all three pages inherit that. A "here's your cartoon, keep it or redraw it" step before the pages would catch it early, at the cost of one extra call.
 - **Bean count and colours drift.** The prompt asks for exactly five beans in five named colours. Playground runs showed four on page 2 and six or seven on page 3 before that wording was added; it hasn't been checked across many runs.
 - **Text areas are requested, not guaranteed.** Each page asks for a plain band (lower third, top sky, dark grass). If the model puts a face there, the text lands on it. Next step: check the band's detail level after generating and nudge the text.
