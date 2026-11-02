@@ -1,3 +1,4 @@
+import hashlib
 import hmac
 import os
 import time
@@ -9,7 +10,7 @@ load_dotenv()  # local dev only; on Railway the key comes from service variables
 
 import openai  # noqa: E402
 from fastapi import FastAPI, File, Form, Header, HTTPException, Request, UploadFile  # noqa: E402
-from fastapi.responses import FileResponse, Response  # noqa: E402
+from fastapi.responses import HTMLResponse, Response  # noqa: E402
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 
 from .book.builder import PDF_NAME, build_book  # noqa: E402
@@ -28,10 +29,42 @@ setup_logging(os.getenv("LOG_LEVEL", "INFO"))
 app = FastAPI(title="Jack and the Beanstalk")
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
+# Browsers kept running an old app.js after deploys, so a click did nothing. The page's script and
+# stylesheet links carry a content hash, and everything is served with no-cache (re-check each time).
+ASSET_VERSION = hashlib.sha1(b"".join((STATIC / f).read_bytes() for f in ("app.js", "styles.css"))).hexdigest()[:10]
+NO_CACHE = {"Cache-Control": "no-cache"}
+
+
+@app.middleware("http")
+async def no_stale_files(request: Request, call_next):
+    response = await call_next(request)
+    if request.url.path == "/" or request.url.path.startswith("/static/"):
+        response.headers["Cache-Control"] = "no-cache"
+    return response
+
 
 @app.get("/")
 def index():
-    return FileResponse(STATIC / "index.html")
+    html = (STATIC / "index.html").read_text()
+    for asset in ("app.js", "styles.css"):
+        html = html.replace(f"/static/{asset}\"", f"/static/{asset}?v={ASSET_VERSION}\"")
+    return HTMLResponse(html, headers=NO_CACHE)
+
+
+@app.post("/api/client-error")
+async def client_error(request: Request):
+    """The page reports its own script errors here, so they show up in the server log."""
+    body = (await request.body())[:2000].decode(errors="replace")
+    log.warning("page script error ip=%s %s", request.client.host if request.client else "-", body)
+    return Response(status_code=204)
+
+
+@app.post("/no-script")
+def no_script():
+    """Where the form lands if the page's script failed to load (the script normally takes over)."""
+    log.warning("form submitted without the page script")
+    return HTMLResponse("<p style='font:18px system-ui;padding:24px'>The page didn't finish loading. "
+                        "Please <a href='/'>reload it</a> and try again.</p>", status_code=400)
 
 
 @app.get("/api/options")

@@ -270,3 +270,27 @@ def test_failed_step_is_logged(mock_book, monkeypatch, caplog):
     caplog.set_level("INFO", logger="book")
     assert post_book().status_code == 504
     assert any(l.startswith("failed hero sheet") and "APITimeoutError" in l for l in _log_lines(caplog))
+
+
+# --- the page must never run a stale script -------------------------------------------------------
+
+def test_page_links_versioned_assets_and_is_not_cached():
+    r = client.get("/")
+    assert r.headers["cache-control"] == "no-cache"
+    assert f"/static/app.js?v={app.main.ASSET_VERSION}" in r.text
+    assert f"/static/styles.css?v={app.main.ASSET_VERSION}" in r.text
+    assert client.get("/static/app.js").headers["cache-control"] == "no-cache"
+
+
+def test_form_without_script_lands_on_a_message_not_a_url_with_the_password():
+    html = client.get("/").text
+    assert 'method="post" action="/no-script"' in html
+    r = client.post("/no-script", data={"password": "x"})
+    assert r.status_code == 400 and "reload" in r.text
+
+
+def test_page_errors_reach_the_log(caplog):
+    caplog.set_level("INFO", logger="book")
+    r = client.post("/api/client-error", content=b'{"message":"boom","browser":"Safari 15"}')
+    assert r.status_code == 204
+    assert any("page script error" in l and "Safari 15" in l for l in _log_lines(caplog))

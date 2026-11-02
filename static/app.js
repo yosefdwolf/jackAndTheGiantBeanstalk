@@ -1,3 +1,15 @@
+// If anything on this page breaks, say so on screen and tell the server log (with the browser),
+// so "I clicked and nothing happened" can be traced.
+function reportPageError(message) {
+  const box = document.getElementById('error');
+  if (box) { box.textContent = 'Something went wrong on this page. Please reload it and try again.'; box.hidden = false; }
+  try {
+    navigator.sendBeacon('/api/client-error', JSON.stringify({ message: String(message).slice(0, 500), browser: navigator.userAgent }));
+  } catch {}
+}
+window.addEventListener('error', (e) => reportPageError(e.message));
+window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
+
 (() => {
   const $ = (id) => document.getElementById(id);
   const form = $('form'), drop = $('drop'), preview = $('preview'), go = $('go'), error = $('error');
@@ -137,14 +149,18 @@
     const started = Date.now();
     const tick = setInterval(() => { timer.textContent = `${Math.round((Date.now() - started) / 1000)}s · usually about a minute`; }, 1000);
 
+    let giveUp;
     const body = new FormData(form);
     body.delete('password');  // sent as a header instead
     body.append('photo', photo, photo.name || 'photo.jpg');
 
     try {
       // Longer than the server's worst case (2 min for the cartoon + 2 min for the pages).
+      // A plain timer rather than AbortSignal.timeout, which older Safari doesn't have.
+      const controller = new AbortController();
+      giveUp = setTimeout(() => controller.abort(), 5 * 60 * 1000);
       const res = await fetch('/api/book', { method: 'POST', body, headers: { 'X-App-Password': form.password.value },
-                                             signal: AbortSignal.timeout(5 * 60 * 1000) });
+                                             signal: controller.signal });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw Object.assign(new Error(data.detail || `Something went wrong (${res.status}).`), { status: res.status });
@@ -162,11 +178,12 @@
       if (err.status === 401) {
         showPasswordError(err.message);
       } else {
-        showError(err.name === 'TimeoutError' ? 'This is taking much longer than usual, so we stopped waiting. Please try again.'
+        showError(err.name === 'AbortError' ? 'This is taking much longer than usual, so we stopped waiting. Please try again.'
           : err.message === 'Failed to fetch' ? 'Network problem. Check your connection and try again.' : err.message);
         error.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     } finally {
+      clearTimeout(giveUp);
       clearInterval(tick);
       $('again').hidden = false;
       go.disabled = false;
