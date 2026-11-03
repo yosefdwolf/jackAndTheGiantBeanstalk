@@ -257,3 +257,14 @@ def test_admin_qr_code(client):
 def test_pdf_can_open_in_the_browser(client):
     ref = finished_book(client)
     assert client.get(f"/api/books/{ref}/pdf?inline=1").headers["content-disposition"].startswith("inline")
+
+
+def test_one_review_per_person_across_their_books(client):
+    first, second = finished_book(client), finished_book(client)
+    client.put(f"/api/books/{first}/review", json=ANSWERS)
+    shown = client.get(f"/api/books/{second}/review").json()["review"]
+    assert shown["book_id"] == first  # the card on the second book shows what they already said
+    client.put(f"/api/books/{second}/review", json={**ANSWERS, "looks_like_me": 1})
+    sign_in(client, ADMIN)
+    data = client.get("/admin/api/reviews").json()
+    assert data["count"] == 1 and data["items"][0]["book_id"] == second and data["items"][0]["looks_like_me"] == 1

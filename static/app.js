@@ -44,9 +44,6 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
 
   fetch('/api/options').then((r) => r.json()).then((o) => { $('mockBadge').hidden = !o.mock; }).catch(() => {});
 
-  // The beanstalk in the scenery grows with the book (0 = a sprout, 1 = into the clouds).
-  function grow(fraction) { document.body.style.setProperty('--growth', String(Math.max(0.04, Math.min(1, fraction)))); }
-  grow(0.06);
 
   // --- the magic word comes first ---------------------------------------------------------------------
 
@@ -84,7 +81,6 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     $('signin').classList.add('reveal');
     $('signinError').textContent = message || '';
     $('signinError').hidden = !message;
-    grow(0.09);
   }
 
   function openBook(animate) {
@@ -96,7 +92,6 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
       $('signin').hidden = true;
       form.hidden = false;
       form.classList.add('reveal');
-      grow(0.12);
     };
     if (animate) { gate.classList.add('opening'); setTimeout(show, 520); } else show();
   }
@@ -360,7 +355,6 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
   function paintAll() {
     if (!book) return;
     const fractions = book.images.map(paintRow);
-    grow(0.12 + 0.88 * (fractions.reduce((a, b) => a + b, 0) / Math.max(1, fractions.length)));
     const done = book.images.filter((i) => i.status === 'done').length;
     $('tally').textContent = `${done} of ${book.images.length}`;
     const starts = book.images.map((i) => i.started_at).filter(Boolean).map(Date.parse);
@@ -415,7 +409,6 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     clearTimeout(pollTimer);
     store.drop(BOOK_KEY);
     if (data.status === 'done' && data.book) {
-      grow(1);
       openReader(data);
       showReview(data.id);
     } else {
@@ -566,6 +559,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     $('reviewPdf').href = `/api/books/${id}/pdf?inline=1`;
     $('reviewThanks').hidden = true;
     $('reviewError').hidden = true;
+    $('reviewAlready').hidden = true;
     reviewForm.reset();
     try {
       const res = await fetch(`/api/books/${id}/review`, { cache: 'no-store' });
@@ -578,6 +572,10 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
         }
         reviewForm.not_good.value = review.not_good;
         $('reviewBtn').textContent = 'Update my answers';
+        // One review per person: answering here replaces what they said about an earlier book.
+        $('reviewAlready').textContent = review.book_id === id ? ''
+          : `You already answered for an earlier book (reference ${review.book_id}). It’s one review per person, so sending these replaces those answers.`;
+        $('reviewAlready').hidden = review.book_id === id;
       } else {
         $('reviewBtn').textContent = 'Send my answers';
       }
@@ -608,6 +606,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
       }
       $('reviewError').hidden = true;
       $('reviewThanks').hidden = false;
+      $('reviewAlready').hidden = true;
       $('reviewBtn').textContent = 'Update my answers';
     } catch (err) {
       $('reviewError').textContent = err.message.startsWith('Failed') ? 'We couldn’t reach the book. Try again in a moment.' : err.message;
@@ -633,7 +632,6 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     preview.hidden = true;
     drop.classList.remove('has-photo');
     $('polaroidCaption').textContent = 'tap or drop a photo';
-    grow(0.12);
     updateReady();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }

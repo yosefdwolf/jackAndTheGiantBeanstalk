@@ -43,7 +43,7 @@ Admins (`ADMIN_EMAILS`) and the emails on the admin site's unlimited list have n
 ## Reviews (real user feedback)
 When a book finishes, its owner sees four questions under the flip book: Does this look like me? Does
 the story ring true? Does it look professional? What isn't good? They can open the whole PDF from
-there. Only the book's owner can answer, and answering again updates the same review. For a crowd
+there. Only the book's owner can answer, and it's one review per person: answering again, even on another of their books, replaces their earlier answers. For a crowd
 study (e.g. CloudResearch Connect), link to `https://jack.graydates.com/?pid={participant ID}`: the ID
 is kept through the Google sign-in and saved with the review, so each answer matches a payment.
 

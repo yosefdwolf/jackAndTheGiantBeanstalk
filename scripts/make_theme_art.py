@@ -41,9 +41,6 @@ ART = [
     ("beans", "1024x1024", True,
      "Five plump magic beans in a little pile: one deep red, one purple, one cream with red speckles, one green, "
      "one mottled brown, each with a faint golden magical glow and a few tiny sparkles. Nothing else."),
-    ("beanstalk", "1024x1536", True,
-     "A single tall, curling magic beanstalk growing straight up from a small mound of soil, bright green, with "
-     "big heart-shaped leaves and curly tendrils, filling the full height. Nothing else."),
     ("icon-camera", "1024x1024", True, "A cute, chunky toy camera icon, rounded, cream and leaf-green. Nothing else."),
     ("icon-key", "1024x1024", True, "A cute golden storybook key with a little leaf on its bow, rounded and chunky. Nothing else."),
     ("icon-book", "1024x1024", True,

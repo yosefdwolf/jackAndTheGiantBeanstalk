@@ -41,8 +41,8 @@ components) rather than restyling one-off elements.
   - Avoid Fredoka, Baloo, Poppins and Inter. They're the overused "friendly AI app" picks.
 - **The finished book is a flip book** that you turn page by page on the site, with the story text set
   on the art just like in the PDF. The PDF is the download.
-- **Progress tells the story.** Each picture has its own row and bar, and the beanstalk grows as
-  pictures finish. Each row says what's being drawn ("Sketching Jane and the others").
+- **Progress tells the story.** Each picture has its own row and bar. (A growing beanstalk in the
+  corner was tried and removed: it looked out of place.) Each row says what's being drawn ("Sketching Jane and the others").
 - **Copy** is warm and specific to the story, like a picture-book narrator. "Pop in the magic word"
   beats "Enter password". Talk about the child and the story, never "AI-powered".
 

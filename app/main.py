@@ -301,29 +301,34 @@ async def _own_book(request: Request, ref: str):
 def _review_out(r: Review | None) -> dict | None:
     if r is None:
         return None
-    return {"looks_like_me": r.looks_like_me, "story_rings_true": r.story_rings_true,
+    return {"book_id": r.book_id, "looks_like_me": r.looks_like_me, "story_rings_true": r.story_rings_true,
             "looks_professional": r.looks_professional, "not_good": r.not_good or ""}
+
+
+async def _their_review(s, user) -> Review | None:
+    """One review per person, whichever of their books it was about."""
+    return (await s.execute(select(Review).where(Review.respondent_key == str(user.id))
+                            .order_by(Review.created_at.desc()))).scalars().first()
 
 
 @app.get("/api/books/{ref}/review")
 async def get_review(request: Request, ref: str):
     user, _ = await _own_book(request, ref)
     async with session() as s:
-        r = (await s.execute(select(Review).where(Review.book_id == ref, Review.respondent_key == str(user.id))
-                             )).scalar_one_or_none()
-    return {"review": _review_out(r)}
+        return {"review": _review_out(await _their_review(s, user))}
 
 
 @app.put("/api/books/{ref}/review")
 async def put_review(request: Request, ref: str, body: ReviewIn):
-    """Answering again updates the same review rather than counting twice."""
+    """One review per person: answering again (on any of their books) replaces their answers, and the
+    review moves to the book they answered about last."""
     user, _ = await _own_book(request, ref)
     async with session() as s:
-        r = (await s.execute(select(Review).where(Review.book_id == ref, Review.respondent_key == str(user.id))
-                             )).scalar_one_or_none()
+        r = await _their_review(s, user)
         if r is None:
             r = Review(book_id=ref, respondent_key=str(user.id), source="site")
             s.add(r)
+        r.book_id = ref
         r.looks_like_me, r.story_rings_true, r.looks_professional = (body.looks_like_me, body.story_rings_true,
                                                                      body.looks_professional)
         r.not_good = body.not_good.strip() or None

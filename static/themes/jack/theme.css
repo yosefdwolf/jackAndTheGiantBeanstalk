@@ -20,27 +20,24 @@
   color-scheme: light;
 }
 
-body { background: var(--sky) url("/static/themes/jack/art/scene-wide.webp") center bottom / cover fixed no-repeat; }
-@media (max-aspect-ratio: 1/1) {
-  body { background-image: url("/static/themes/jack/art/scene-tall.webp"); }
-}
-/* iOS Safari ignores fixed backgrounds; the scene layer below keeps the clouds and beanstalk in place. */
+body { background: var(--sky); }
 
-.scene { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+/* All the scenery (painting and clouds) lives in one fixed layer behind the page, so it all stays
+   put together while the cards scroll. A fixed *background* was handled differently by some browsers
+   (Safari ignores or lags it), which left parts of the scene moving at different speeds. */
+.scene { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden;
+  background: var(--sky) url("/static/themes/jack/art/scene-wide.webp") center bottom / cover no-repeat; }
+@media (max-aspect-ratio: 1/1) {
+  .scene { background-image: url("/static/themes/jack/art/scene-tall.webp"); }
+}
 .cloud { position: absolute; width: 150px; opacity: .95; animation: drift 80s linear infinite; }
 .cloud.c1 { top: 16%; left: -180px; }
 .cloud.c2 { top: 40%; left: -180px; width: 110px; animation-duration: 110s; animation-delay: -55s; }
 .cloud.c3 { top: 64%; left: -180px; width: 90px; animation-duration: 130s; animation-delay: -25s; }
 @keyframes drift { to { transform: translateX(calc(100vw + 380px)); } }
 
-/* The beanstalk grows up the right side as the book prints (revealed from the soil upward). */
-.grow { position: absolute; right: max(1%, calc(50% - 560px)); bottom: 4vh; height: 78vh; width: 170px;
-  clip-path: inset(calc((1 - var(--growth, 0)) * 100%) 0 0 0); transition: clip-path 1.4s cubic-bezier(.3, 1.3, .5, 1); }
-.grow img { height: 100%; width: 100%; object-fit: contain; object-position: bottom; }
-
 @media (max-width: 760px) {
   .cloud { width: 96px; }
-  .grow { right: -18px; width: 96px; height: 60vh; opacity: .9; }
 }
 @media (prefers-reduced-motion: reduce) {
   .cloud { animation: none; } .cloud.c1 { left: 6%; } .cloud.c2 { left: 70%; } .cloud.c3 { left: 40%; }
