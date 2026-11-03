@@ -44,7 +44,7 @@
   function showTab(name) {
     tabs.forEach((t) => t.setAttribute('aria-selected', String(t.dataset.tab === name)));
     document.querySelectorAll('.tab').forEach((s) => { s.hidden = s.id !== `tab-${name}`; });
-    ({ books: loadBooks, days: loadDays, errors: loadErrors, settings: loadSettings })[name]();
+    ({ books: loadBooks, reviews: loadReviews, days: loadDays, errors: loadErrors, settings: loadSettings })[name]();
   }
   tabs.forEach((t) => t.addEventListener('click', () => { setHash({ tab: t.dataset.tab, book: '' }); }));
 
@@ -145,6 +145,10 @@
             d.upload && d.upload.face_description && el('details', {}, el('summary', { text: 'face description' }),
               el('pre', { text: d.upload.face_description })))),
         d.images.map(imageCard)),
+      d.reviews.length && el('h3', { text: 'Their review' }),
+      ...d.reviews.map((r) => el('dl', { class: 'facts' },
+        [['Looks like me', r.looks_like_me], ['Rings true', r.story_rings_true], ['Professional', r.looks_professional],
+          ['What isn’t good', r.not_good || '—']].map(([k, v]) => el('div', {}, el('dt', { text: k }), el('dd', { text: v }))))),
       el('h3', { text: `Timeline (${d.events.length} events)` }),
       timeline(d.events),
     ];
@@ -178,6 +182,37 @@
         el('td', {}, pill(e.stuck ? 'never finished' : e.event)),
         el('td', { class: 'num' + (e.duration_ms > 60000 ? ' slow' : ''), text: e.duration_ms == null ? '' : fmt.secs(e.duration_ms / 1000) }),
         el('td', { class: 'kv' }, Object.entries(e.fields || {}).flatMap(([k, v]) => [el('b', { text: k }), `=${typeof v === 'object' ? JSON.stringify(v) : v}  `])))))));
+  }
+
+  // --- reviews -----------------------------------------------------------------------------------
+  const SITE = location.hostname.startsWith('admin.') ? `${location.protocol}//${location.hostname.slice(6)}` : location.origin;
+
+  async function loadReviews() {
+    const d = await api('/reviews');
+    $('reviewCount').textContent = `${d.count} review${d.count === 1 ? '' : 's'}`;
+    const qr = `${API}/qr.svg?url=${encodeURIComponent(SITE + '/')}`;
+    $('qrImg').src = qr;
+    $('qrDownload').href = qr;
+    $('qrUrl').textContent = SITE.replace(/^https?:\/\//, '');
+    $('studyUrl').textContent = `${SITE.replace(/^https?:\/\//, '')}/?pid={participant ID}`;
+    $('reviewQuestions').replaceChildren(...d.questions.map((q) => {
+      const most = Math.max(1, ...q.counts);
+      return el('div', { class: 'panel question' },
+        el('h3', { text: q.label }),
+        el('p', { class: 'avg' }, q.average == null ? '—' : q.average.toFixed(1), el('small', { text: ' / 5 average' })),
+        el('div', { class: 'bars' }, q.counts.map((n, i) => el('div', {},
+          el('span', { text: i + 1 }), el('i', { style: `width:${(n / most) * 100}%` }), el('span', { text: n })))));
+    }));
+    const score = (n) => el('td', { class: 'num' }, el('span', { class: 'score' + (n <= 2 ? ' low' : ''), text: n }));
+    $('reviewTable').tBodies[0].replaceChildren(...(d.items.length ? d.items.map((r) => el('tr', {
+      onclick: () => setHash({ tab: 'books', book: r.book_id }) },
+      el('td', { class: 'when', text: fmt.when(r.at) }),
+      el('td', {}, el('img', { class: 'thumb', src: r.cover_url + '?w=120', alt: '', loading: 'lazy' }),
+        el('span', { class: 'mono', text: r.book_id })),
+      el('td', {}, r.email || '—', r.participant_id && el('div', { class: 'kv', text: `participant ${r.participant_id}` })),
+      score(r.looks_like_me), score(r.story_rings_true), score(r.looks_professional),
+      el('td', { class: 'msg', text: r.not_good || '' })))
+      : [el('tr', { class: 'empty' }, el('td', { colspan: 7, text: 'No reviews yet. Share the QR code!' }))]));
   }
 
   // --- days --------------------------------------------------------------------------------------

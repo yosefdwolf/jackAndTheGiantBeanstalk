@@ -17,6 +17,7 @@
   <h1>Beanstalk admin</h1>
   <nav class="tabs" role="tablist">
     <button role="tab" data-tab="books" aria-selected="true">Books</button>
+    <button role="tab" data-tab="reviews">Reviews</button>
     <button role="tab" data-tab="days">Days</button>
     <button role="tab" data-tab="errors">Errors</button>
     <button role="tab" data-tab="settings">Settings</button>
@@ -46,6 +47,28 @@
           <th class="num">Pictures</th><th class="num">Time</th><th class="num">Slowest</th><th class="num">Cost</th><th>Reason</th></tr></thead>
         <tbody></tbody>
       </table>
+    </div>
+  </section>
+
+  <section id="tab-reviews" class="tab" hidden>
+    <p class="summary"><b id="reviewCount"></b></p>
+    <div class="questions" id="reviewQuestions"></div>
+    <h2 class="section-title">What isn’t good</h2>
+    <div class="table-wrap">
+      <table class="grid" id="reviewTable">
+        <thead><tr><th>When</th><th>Book</th><th>Who</th><th class="num">Like me</th><th class="num">Rings true</th>
+          <th class="num">Professional</th><th>What isn’t good</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="panel qr">
+      <img id="qrImg" alt="QR code for the book site" width="150" height="150">
+      <div>
+        <h2>Hand it out</h2>
+        <p class="soft">Opens <span class="mono" id="qrUrl"></span>. For a crowd study, link to
+          <span class="mono" id="studyUrl"></span> so each answer carries the participant’s ID.</p>
+        <a class="btn plain small" id="qrDownload" download="jack-qr.svg">Download QR</a>
+      </div>
     </div>
   </section>
 

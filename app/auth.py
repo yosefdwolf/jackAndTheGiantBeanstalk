@@ -139,6 +139,10 @@ async def upsert_user(sub: str, email: str, name: str | None = None, picture: st
     email = email.lower()
     async with session() as s:
         user = (await s.execute(select(User).where(User.google_sub == sub))).scalar_one_or_none()
+        if user is None:  # same email, new sign-in route (e.g. dev sign-in after Google): same person
+            user = (await s.execute(select(User).where(User.email == email))).scalar_one_or_none()
+            if user is not None and not sub.startswith("dev:"):
+                user.google_sub = sub
         if user is None:
             user = User(google_sub=sub, email=email)
             s.add(user)

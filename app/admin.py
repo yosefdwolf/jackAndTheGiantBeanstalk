@@ -3,6 +3,7 @@ the model switch and the unlimited list. Only ADMIN_EMAILS can open it.
 
 On the admin host, paths are mapped under /admin (see AdminHost), so the same routes serve both.
 """
+import io
 import os
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -15,11 +16,13 @@ from sqlalchemy.orm import selectinload
 
 from . import auth
 from .book.providers import CHOICES, is_mock
-from .db.models import AdminSettings, Book, BookEvent, BookImage, RequestError, UnlimitedEmail, Upload, User
+from .db.models import AdminSettings, Book, BookEvent, BookImage, RequestError, Review, UnlimitedEmail, Upload, User
 from .db.session import session
 
 STATIC = Path(__file__).resolve().parent.parent / "static"
 SLOW_SECONDS = 60  # an image slower than this is flagged
+QUESTIONS = [("looks_like_me", "Does this look like me?"), ("story_rings_true", "Does the story ring true?"),
+             ("looks_professional", "Does it look professional?")]
 router = APIRouter(prefix="/admin")
 
 
@@ -180,6 +183,7 @@ async def book(ref: str, _=Depends(require_admin)):
                                   .where(Upload.book_id == ref))).first()
         events = (await s.execute(select(BookEvent).where(BookEvent.book_id == ref).order_by(BookEvent.at, BookEvent.id)
                                   )).scalars().all()
+        reviews = (await s.execute(select(Review).where(Review.book_id == ref))).scalars().all()
     # A step that started and never finished is where the book got stuck.
     open_steps = {}
     for e in events:
@@ -194,6 +198,8 @@ async def book(ref: str, _=Depends(require_admin)):
                  "finished_at": _iso(b.finished_at), "style": b.style_key, "story": b.story_key},
         "upload": dict(upload._mapping) if upload else None,
         "photo_url": f"/admin/api/books/{ref}/photo" if upload else None,
+        "reviews": [{**{k: getattr(r, k) for k, _ in QUESTIONS}, "not_good": r.not_good, "at": _iso(r.created_at)}
+                    for r in reviews],
         "images": [{
             "kind": i.kind, "page": i.page_number, "status": i.status, "prompt": i.prompt, "refs": i.refs,
             "provider": i.provider, "model": i.model, "quality": i.quality, "tokens": i.tokens,
@@ -215,6 +221,39 @@ async def photo(ref: str, _=Depends(require_admin)):
     if data is None:
         raise HTTPException(404, "No photo.")
     return Response(data, media_type="image/webp", headers={"Cache-Control": "private, max-age=3600"})
+
+
+# --- reviews --------------------------------------------------------------------------------------
+
+@router.get("/api/reviews")
+async def reviews(_=Depends(require_admin)):
+    async with session() as s:
+        rows = (await s.execute(select(Review, Book.child_name, Book.gender, User.email)
+                                .join(Book, Book.id == Review.book_id).outerjoin(User, User.id == Book.user_id)
+                                .order_by(Review.created_at.desc()))).all()
+    people = {r.respondent_key for r, *_ in rows}
+    questions = []
+    for key, label in QUESTIONS:
+        scores = [getattr(r, key) for r, *_ in rows]
+        questions.append({"key": key, "label": label, "average": round(sum(scores) / len(scores), 2) if scores else None,
+                          "counts": [scores.count(n) for n in range(1, 6)]})
+    return {"people": len(people), "count": len(rows), "questions": questions,
+            "items": [{"book_id": r.book_id, "at": _iso(r.created_at), "email": email, "child_name": child,
+                       "gender": gender, "not_good": r.not_good, **{k: getattr(r, k) for k, _ in QUESTIONS},
+                       "source": r.source, "participant_id": r.connect_id,
+                       "cover_url": f"/api/books/{r.book_id}/images/hero_sheet-0"}
+                      for r, child, gender, email in rows]}
+
+
+@router.get("/api/qr.svg")
+async def qr(url: str = "", _=Depends(require_admin)):
+    """A QR code for handing out the site, e.g. on a slide or in Engage/Connect."""
+    import segno
+    target = url if url.startswith("https://") else os.getenv("PUBLIC_URL", "https://jack.graydates.com")
+    buf = io.BytesIO()
+    segno.make(target, error="m").save(buf, kind="svg", scale=10, border=2, dark="#2b2219")
+    return Response(buf.getvalue(), media_type="image/svg+xml",
+                    headers={"Content-Disposition": 'inline; filename="jack-qr.svg"'})
 
 
 # --- errors outside books -------------------------------------------------------------------------

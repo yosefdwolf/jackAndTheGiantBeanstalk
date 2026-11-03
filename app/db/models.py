@@ -153,7 +153,7 @@ class Review(Base):
     story_rings_true: Mapped[int] = mapped_column(SmallInteger)
     looks_professional: Mapped[int] = mapped_column(SmallInteger)
     not_good: Mapped[str | None] = mapped_column(Text)
-    source: Mapped[str] = mapped_column(String(16), default="link")  # qr | link | connect
+    source: Mapped[str] = mapped_column(String(16), default="site")  # site | connect
     respondent_key: Mapped[str | None] = mapped_column(String(64), index=True)
     connect_id: Mapped[str | None] = mapped_column(String(64))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)

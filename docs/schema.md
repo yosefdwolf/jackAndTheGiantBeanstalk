@@ -26,7 +26,7 @@ starts (`Procfile`).
 | `book_events` | step event | the trail: start, done, failed, info, refused, with a duration and fields. Never holds the password, the photo, or the child's name and details. |
 | `request_errors` | failure outside a book | the ref, path, status, error type, message, traceback and browser |
 | `admin_settings` | admin | the debug panel's provider, model, quality and size; these apply only to that admin's books |
-| `reviews` | review response | three 1–5 ratings plus "what isn't good", the source (qr, link, connect), and a hashed per-browser key against duplicate responses |
+| `reviews` | review response | three 1–5 ratings plus "what isn't good", by the book's owner only. `respondent_key` is the user's id (one review per person per book; answering again updates it). `source` is `site` or `connect`; `connect_id` is the crowd participant ID from the study link |
 | `settings` | site-wide value | e.g. `featured_review_book_id` |
 
 ## Decisions

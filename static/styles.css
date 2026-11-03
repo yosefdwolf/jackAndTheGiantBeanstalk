@@ -212,3 +212,24 @@ dialog#camera::backdrop { background: rgba(20, 40, 60, .55); }
   .cover-page, .about-page { grid-template-columns: 40% 1fr; padding: 5%; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+/* Reviews: a row of five round stamps per question */
+.review { display: grid; gap: 6px; }
+.rate { border: 0; padding: 0; margin: 14px 0 6px; }
+.rate legend { font: 600 18px/1.35 var(--hand); color: var(--ink); margin-bottom: 10px; padding: 0; }
+.stamps { display: flex; gap: 10px; }
+.stamps label { flex: 1; }
+.stamps input { position: absolute; opacity: 0; pointer-events: none; }
+.stamps span { display: grid; place-items: center; height: 52px; border-radius: 50%; aspect-ratio: 1; max-width: 64px; margin: 0 auto;
+  font: 800 22px var(--display); color: var(--ink-soft); background: #fff; border: 3px solid #d9c7a2; cursor: pointer;
+  transition: transform .15s, background .15s; }
+.stamps label:hover span { transform: translateY(-2px); border-color: var(--accent); }
+.stamps input:checked + span { background: var(--accent); border-color: var(--accent-deep); color: #fff;
+  transform: rotate(-8deg) scale(1.08); box-shadow: 0 3px 0 var(--accent-deep); }
+.stamps input:focus-visible + span { outline: 3px solid var(--accent-deep); outline-offset: 3px; }
+.ends { display: flex; justify-content: space-between; font: 400 14px var(--hand); color: var(--ink-soft); margin-top: 6px; }
+.review .box { margin-top: 12px; }
+#reviewForm { display: grid; }
+.review .btn { justify-self: center; margin-top: 4px; }
+.thanks { text-align: center; font-size: 19px; color: var(--leaf-deep); font-weight: 600; padding: 8px 0; }
+@media (prefers-reduced-motion: reduce) { .stamps span { transition: none; } }

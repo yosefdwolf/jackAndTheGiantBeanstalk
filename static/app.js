@@ -403,6 +403,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     form.hidden = true;
     $('signin').hidden = true;
     $('reader').hidden = true;
+    $('review').hidden = true;
     $('printing').hidden = false;
     $('printing').scrollIntoView({ behavior: 'smooth', block: 'start' });
     clearTimeout(pollTimer);
@@ -416,6 +417,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     if (data.status === 'done' && data.book) {
       grow(1);
       openReader(data);
+      showReview(data.id);
     } else {
       $('printingTitle').textContent = 'Oh no, the beans didn’t grow';
       $('bookError').textContent = `${data.error || 'This book couldn’t be finished.'} (reference ${data.id})`;
@@ -550,6 +552,71 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     swipeX = null;
   });
 
+  // --- what did you think? (each person rates their own book) ---------------------------------------
+
+  // A crowd study links here as /?pid=PARTICIPANT_ID. Kept across the Google sign-in, and saved with
+  // the review so each answer can be matched to a payment.
+  const PID_KEY = 'jack-participant';
+  const pidFromLink = new URLSearchParams(location.search).get('pid');
+  if (pidFromLink && /^[\w-]{1,64}$/.test(pidFromLink)) store.set(PID_KEY, pidFromLink);
+
+  const reviewForm = $('reviewForm');
+  async function showReview(id) {
+    $('review').hidden = false;
+    $('reviewPdf').href = `/api/books/${id}/pdf?inline=1`;
+    $('reviewThanks').hidden = true;
+    $('reviewError').hidden = true;
+    reviewForm.reset();
+    try {
+      const res = await fetch(`/api/books/${id}/review`, { cache: 'no-store' });
+      if (!res.ok) { $('review').hidden = true; return; }  // not this person's book
+      const { review } = await res.json();
+      if (review) {
+        for (const k of ['looks_like_me', 'story_rings_true', 'looks_professional']) {
+          const input = reviewForm.querySelector(`input[name="${k}"][value="${review[k]}"]`);
+          if (input) input.checked = true;
+        }
+        reviewForm.not_good.value = review.not_good;
+        $('reviewBtn').textContent = 'Update my answers';
+      } else {
+        $('reviewBtn').textContent = 'Send my answers';
+      }
+    } catch { /* the review card is a bonus; the book still works without it */ }
+  }
+
+  reviewForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const f = new FormData(reviewForm);
+    const body = {};
+    for (const k of ['looks_like_me', 'story_rings_true', 'looks_professional']) {
+      if (!f.get(k)) {
+        $('reviewError').textContent = 'Pick a number for each question first.';
+        $('reviewError').hidden = false;
+        return reviewForm.querySelector(`input[name="${k}"]`).closest('fieldset').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      body[k] = Number(f.get(k));
+    }
+    body.not_good = f.get('not_good') || '';
+    if (store.get(PID_KEY)) body.participant_id = store.get(PID_KEY);
+    $('reviewBtn').disabled = true;
+    try {
+      const res = await fetch(`/api/books/${watching}/review`, { method: 'PUT', body: JSON.stringify(body),
+        headers: { 'Content-Type': 'application/json' } });
+      if (!res.ok) {
+        const d = errorDetail(await res.json().catch(() => ({})), res);
+        throw new Error(`${d.message || 'That didn’t save.'}${d.ref ? ` (reference ${d.ref})` : ''}`);
+      }
+      $('reviewError').hidden = true;
+      $('reviewThanks').hidden = false;
+      $('reviewBtn').textContent = 'Update my answers';
+    } catch (err) {
+      $('reviewError').textContent = err.message.startsWith('Failed') ? 'We couldn’t reach the book. Try again in a moment.' : err.message;
+      $('reviewError').hidden = false;
+    } finally {
+      $('reviewBtn').disabled = false;
+    }
+  });
+
   function startOver() {
     clearTimeout(pollTimer);
     cancelAnimationFrame(frame);
@@ -557,6 +624,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     store.drop(BOOK_KEY);
     $('printing').hidden = true;
     $('reader').hidden = true;
+    $('review').hidden = true;
     for (const extra of $('printing').querySelectorAll('p:not(.ref):not(.tally):not(.error)')) extra.remove();
     form.hidden = !password || !(me && me.signed_in);
     $('signin').hidden = !password || !!(me && me.signed_in);

@@ -43,6 +43,12 @@ def test_book_is_linked_to_the_user(client):
     assert book.user_id is not None
 
 
+def test_same_email_from_a_new_sign_in_is_the_same_person(client):
+    first = run(auth.upsert_user("google-1", "Same@Example.com"))
+    assert run(auth.upsert_user("dev:same@example.com", "same@example.com")).id == first.id
+    assert run(auth.upsert_user("google-1", "same@example.com")).id == first.id
+
+
 def test_next_only_allows_same_site_paths():
     assert auth._safe_next("/admin") == "/admin"
     for bad in ("https://evil.example", "//evil.example", "/\\evil", "", None):
@@ -192,3 +198,62 @@ def test_model_switch_applies_to_the_admins_own_books_only(client, monkeypatch):
 def test_privacy_page_names_who_to_contact(client):
     r = client.get("/privacy")
     assert r.status_code == 200 and f"mailto:{ADMIN}" in r.text and "OpenAI" in r.text and "{{" not in r.text
+
+
+# --- reviews --------------------------------------------------------------------------------------
+
+ANSWERS = {"looks_like_me": 4, "story_rings_true": 5, "looks_professional": 3, "not_good": "Page 2 hands look odd"}
+
+
+def finished_book(client):
+    ref = post_book(client).json()["id"]
+    wait_for(client, ref)
+    return ref
+
+
+def test_owner_reviews_their_book_and_can_change_it(client):
+    ref = finished_book(client)
+    assert client.get(f"/api/books/{ref}/review").json() == {"review": None}
+    assert client.put(f"/api/books/{ref}/review", json=ANSWERS).status_code == 200
+    r = client.put(f"/api/books/{ref}/review", json={**ANSWERS, "looks_like_me": 2})
+    assert r.json()["review"]["looks_like_me"] == 2
+    assert client.get(f"/api/books/{ref}/review").json()["review"]["not_good"] == "Page 2 hands look odd"
+    sign_in(client, ADMIN)
+    data = client.get("/admin/api/reviews").json()
+    assert data["count"] == 1 and data["people"] == 1  # updated, not counted twice
+    assert data["questions"][0]["counts"] == [0, 1, 0, 0, 0] and data["questions"][1]["average"] == 5
+    assert data["items"][0]["email"] == PARENT
+    assert client.get(f"/admin/api/books/{ref}").json()["reviews"][0]["looks_like_me"] == 2
+
+
+def test_only_the_owner_can_review(client):
+    ref = finished_book(client)
+    sign_in(client, "stranger@example.com")
+    assert client.put(f"/api/books/{ref}/review", json=ANSWERS).status_code == 404
+    client.cookies.clear()
+    assert client.put(f"/api/books/{ref}/review", json=ANSWERS).status_code == 401
+
+
+def test_scores_must_be_one_to_five(client):
+    ref = finished_book(client)
+    assert client.put(f"/api/books/{ref}/review", json={**ANSWERS, "looks_like_me": 6}).status_code == 422
+    assert client.put(f"/api/books/{ref}/review", json={**ANSWERS, "participant_id": "a b<"}).status_code == 422
+
+
+def test_crowd_participant_id_is_saved(client):
+    ref = finished_book(client)
+    client.put(f"/api/books/{ref}/review", json={**ANSWERS, "participant_id": "CR-12345"})
+    sign_in(client, ADMIN)
+    item = client.get("/admin/api/reviews").json()["items"][0]
+    assert item["participant_id"] == "CR-12345" and item["source"] == "connect"
+
+
+def test_admin_qr_code(client):
+    sign_in(client, ADMIN)
+    r = client.get("/admin/api/qr.svg?url=https://jack.graydates.com/")
+    assert r.status_code == 200 and r.headers["content-type"].startswith("image/svg") and b"<svg" in r.content
+
+
+def test_pdf_can_open_in_the_browser(client):
+    ref = finished_book(client)
+    assert client.get(f"/api/books/{ref}/pdf?inline=1").headers["content-disposition"].startswith("inline")

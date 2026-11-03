@@ -40,11 +40,20 @@ sign-in (so each person's books are kept together). Everyone can make 3 books pe
 (`DAILY_BOOK_LIMIT`). Refused books never count, and a failed book counts only if a picture was drawn.
 Admins (`ADMIN_EMAILS`) and the emails on the admin site's unlimited list have no limit.
 
+## Reviews (real user feedback)
+When a book finishes, its owner sees four questions under the flip book: Does this look like me? Does
+the story ring true? Does it look professional? What isn't good? They can open the whole PDF from
+there. Only the book's owner can answer, and answering again updates the same review. For a crowd
+study (e.g. CloudResearch Connect), link to `https://jack.graydates.com/?pid={participant ID}`: the ID
+is kept through the Google sign-in and saved with the review, so each answer matches a payment.
+
 ## Admin site
 `admin.jack.graydates.com` (locally `http://localhost:8000/admin`), for `ADMIN_EMAILS` only:
 - **Books:** every book, filterable by status, reason, provider, date, slow pictures and failures, and
   searchable by ref, email or child's name. Click a book for its photo, every picture with its prompt,
   cost and provider request ID, and the step-by-step timeline (a step that never finished is flagged).
+- **Reviews:** how many reviews there are, the average and spread for each 1–5 question, every
+  "what isn't good" comment with its book, and a QR code for handing out the site.
 - **Days:** books, failures, people and spend per day.
 - **Errors:** everything in `request_errors` (wrong passwords, sign-in failures, page script errors, crashes).
 - **Settings:** which provider and model draws *your own* books (OpenAI Flare, Agnes or mock; everyone

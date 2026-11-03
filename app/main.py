@@ -14,13 +14,15 @@ from fastapi import FastAPI, File, Form, Header, HTTPException, Request, UploadF
 from fastapi.responses import HTMLResponse, JSONResponse, Response  # noqa: E402
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 from PIL import Image, ImageOps  # noqa: E402
+from pydantic import BaseModel, Field  # noqa: E402
+from sqlalchemy import select  # noqa: E402
 
 from . import admin, auth  # noqa: E402
 from .book import jobs  # noqa: E402
 from .book.log import current_ref, new_ref, record, set_event_sink, set_ref, setup_logging, start_book, step  # noqa: E402
 from .book.providers import is_mock  # noqa: E402
 from .book.story import PRONOUNS, load_story  # noqa: E402
-from .db.models import RequestError  # noqa: E402
+from .db.models import Book, RequestError, Review  # noqa: E402
 from .db.session import create_tables_if_sqlite, session  # noqa: E402
 from .faces import UploadError, prepare  # noqa: E402
 
@@ -262,9 +264,72 @@ async def book_image(ref: str, name: str, w: int | None = None):
 
 
 @app.get("/api/books/{ref}/pdf")
-async def book_pdf(ref: str):
+async def book_pdf(ref: str, inline: bool = False):
+    """Downloads by default; ?inline=1 opens it in the browser (the review card's "open the PDF")."""
     pdf = await jobs.pdf_bytes(ref)
     if pdf is None:
         raise HTTPException(404, {"message": "That book isn't finished.", "ref": ref})
+    disposition = "inline" if inline else "attachment"
     return Response(pdf, media_type="application/pdf",
-                    headers={"Content-Disposition": f'attachment; filename="{jobs.PDF_NAME}"'})
+                    headers={"Content-Disposition": f'{disposition}; filename="{jobs.PDF_NAME}"'})
+
+
+# --- reviews: each person rates their own book ----------------------------------------------------
+
+class ReviewIn(BaseModel):
+    looks_like_me: int = Field(ge=1, le=5)
+    story_rings_true: int = Field(ge=1, le=5)
+    looks_professional: int = Field(ge=1, le=5)
+    not_good: str = Field("", max_length=2000)
+    participant_id: str | None = Field(None, max_length=64, pattern=r"^[\w-]+$")  # from a crowd study's link
+
+
+async def _own_book(request: Request, ref: str):
+    """Only the person who made a book can review it (which also keeps out spam)."""
+    user = await auth.current_user(request)
+    if user is None:
+        raise HTTPException(401, {"message": "Please sign in first.", "ref": current_ref(), "reason": "not_signed_in"})
+    async with session() as s:
+        book = await s.get(Book, ref)
+    if book is None or book.user_id != user.id:
+        raise HTTPException(404, {"message": "No book of yours with that reference.", "ref": current_ref()})
+    if book.status != "done":
+        raise HTTPException(409, {"message": "The book isn't finished yet.", "ref": current_ref()})
+    return user, book
+
+
+def _review_out(r: Review | None) -> dict | None:
+    if r is None:
+        return None
+    return {"looks_like_me": r.looks_like_me, "story_rings_true": r.story_rings_true,
+            "looks_professional": r.looks_professional, "not_good": r.not_good or ""}
+
+
+@app.get("/api/books/{ref}/review")
+async def get_review(request: Request, ref: str):
+    user, _ = await _own_book(request, ref)
+    async with session() as s:
+        r = (await s.execute(select(Review).where(Review.book_id == ref, Review.respondent_key == str(user.id))
+                             )).scalar_one_or_none()
+    return {"review": _review_out(r)}
+
+
+@app.put("/api/books/{ref}/review")
+async def put_review(request: Request, ref: str, body: ReviewIn):
+    """Answering again updates the same review rather than counting twice."""
+    user, _ = await _own_book(request, ref)
+    async with session() as s:
+        r = (await s.execute(select(Review).where(Review.book_id == ref, Review.respondent_key == str(user.id))
+                             )).scalar_one_or_none()
+        if r is None:
+            r = Review(book_id=ref, respondent_key=str(user.id), source="site")
+            s.add(r)
+        r.looks_like_me, r.story_rings_true, r.looks_professional = (body.looks_like_me, body.story_rings_true,
+                                                                     body.looks_professional)
+        r.not_good = body.not_good.strip() or None
+        if body.participant_id:
+            r.connect_id, r.source = body.participant_id, "connect"
+        await s.commit()
+    await record("INFO", "review", "saved", book=ref, scores=f"{body.looks_like_me}/{body.story_rings_true}/"
+                                                             f"{body.looks_professional}")
+    return {"review": _review_out(r)}

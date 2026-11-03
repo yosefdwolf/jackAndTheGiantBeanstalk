@@ -23,5 +23,5 @@ What still needs work in this build, most important first.
 
 ## Site
 - **Agnes is untested against the real API.** The provider follows Agnes's docs (OpenAI-style JSON, reference images under `extra_body.image`), but no book has been drawn with it yet. Try one admin book with `AGNES_API_KEY` set and check the admin timeline.
-- **The review site and the results site aren't built yet.**
+- **Reviewers need the magic word and a Google account.** Crowd participants must be given the magic word in the study instructions, and someone without Google can't take part.
 - **No alert on failures.** The admin site lists them, but nobody is told when one happens.
