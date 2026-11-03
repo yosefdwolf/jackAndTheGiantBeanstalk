@@ -130,6 +130,7 @@ def test_admin_host_serves_the_dashboard_at_the_root(client):
     sign_in(client, ADMIN)
     r = client.get("/", headers={"host": "admin.jack.graydates.com"})
     assert r.status_code == 200 and ADMIN in r.text and "admin.js" in r.text
+    assert 'href="http://jack.graydates.com/"' in r.text  # the link back to the book site
     assert client.get("/api/options", headers={"host": "admin.jack.graydates.com"}).status_code == 200
     client.cookies.clear()
     r = client.get("/", headers={"host": "admin.jack.graydates.com"}, follow_redirects=False)

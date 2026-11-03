@@ -94,7 +94,10 @@ async def page(request: Request):
     if not auth.is_admin(user):
         return HTMLResponse(f"<p style='font:18px Georgia,serif;padding:24px'>{user.email} isn't on the admin list. "
                             f"<a href='/auth/logout?next={home}'>Sign in as someone else</a></p>", status_code=403)
-    html = (STATIC / "admin" / "index.html").read_text().replace("{{EMAIL}}", user.email)
+    # admin.jack.graydates.com links back to jack.graydates.com; locally /admin links back to /
+    host = request.headers.get("host", "")
+    site = f"{request.headers.get('x-forwarded-proto', request.url.scheme)}://{host[len('admin.'):]}/" if _admin_host(request) else "/"
+    html = (STATIC / "admin" / "index.html").read_text().replace("{{EMAIL}}", user.email).replace("{{SITE}}", site)
     return HTMLResponse(html, headers={"Cache-Control": "no-cache"})
 
 
