@@ -143,9 +143,74 @@ class MockImageProvider(ImageProvider):
         return buf.getvalue()
 
 
+class AgnesImageProvider(ImageProvider):
+    """Agnes AI (free at the time of writing). Admin test books only: Agnes may train on what it's sent.
+
+    OpenAI-style JSON API; reference images go in extra_body.image as data URIs, and the size is a
+    tier ("1K", "2K") plus a ratio ("3:2", "1:1").
+    """
+    name = "agnes"
+    URL = "https://apihub.agnes-ai.com/v1/images/generations"
+    RATIOS = {"1536x1024": "3:2", "1024x1536": "2:3", "1024x1024": "1:1"}
+
+    def __init__(self, model: str | None = None, quality: str | None = None):
+        self.model = model or "agnes-image-2.1-flash"
+        self.quality = quality or "1K"  # the size tier
+        self.timeout = float(os.getenv("IMAGE_TIMEOUT_SECONDS", "120"))
+
+    async def edit(self, label, refs, prompt, size):
+        async with step(label, call="agnes.images", model=self.model, tier=self.quality, size=size,
+                        refs=",".join(n for n, _ in refs)):
+            images = [f"data:image/png;base64,{base64.b64encode(b).decode()}" for _, b in refs]
+            return await self._call(label, prompt, size, images)
+
+    async def generate(self, label, prompt, size):
+        async with step(label, call="agnes.images", model=self.model, tier=self.quality, size=size):
+            return await self._call(label, prompt, size, [])
+
+    async def _call(self, label, prompt, size, images):
+        import httpx
+        key = os.getenv("AGNES_API_KEY", "")
+        if not key:
+            raise RuntimeError("AGNES_API_KEY is not set")
+        body = {"model": self.model, "prompt": prompt, "size": self.quality,
+                "ratio": self.RATIOS.get(size, "1:1"), "return_base64": True}
+        if images:
+            body["extra_body"] = {"image": images}
+        async with httpx.AsyncClient(timeout=self.timeout) as http:
+            resp = await http.post(self.URL, json=body, headers={"Authorization": f"Bearer {key}"})
+            if resp.status_code != 200:
+                raise RuntimeError(f"Agnes returned {resp.status_code}: {resp.text[:300]}")
+            item = resp.json()["data"][0]
+            if item.get("b64_json"):
+                data = base64.b64decode(item["b64_json"])
+            else:
+                data = (await http.get(item["url"])).content
+        request_id = resp.headers.get("x-request-id")
+        await record("INFO", label, "usage", provider_request=request_id, cost="$0.000")
+        # Agnes may not return the size asked for; pages are laid out for the exact size.
+        img = Image.open(io.BytesIO(data)).convert("RGB")
+        w, h = (int(x) for x in size.split("x"))
+        if img.size != (w, h):
+            img = ImageOps.fit(img, (w, h))
+        buf = io.BytesIO()
+        img.save(buf, "PNG")
+        return ImageResult(buf.getvalue(), request_id=request_id)
+
+
 PROVIDERS: dict[str, type[ImageProvider]] = {
     "openai": OpenAIImageProvider,
+    "agnes": AgnesImageProvider,
     "mock": MockImageProvider,
+}
+
+# What the admin's model switch offers: provider -> models, and the quality (or size tier) choices.
+CHOICES = {
+    "openai": {"models": ["gpt-image-2.5-flare", "gpt-image-2.5-sunburst", "gpt-image-1", "gpt-image-1-mini"],
+               "qualities": ["low", "medium", "high"], "default_quality": "medium"},
+    "agnes": {"models": ["agnes-image-2.1-flash", "agnes-image-2.0-flash"],
+              "qualities": ["1K", "2K"], "default_quality": "1K"},
+    "mock": {"models": ["mock"], "qualities": [""], "default_quality": ""},
 }
 
 

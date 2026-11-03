@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Beanstalk admin</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 30C16 20 10 18 10 12s4-9 6-10c2 1 6 4 6 10s-6 8-6 18z' fill='%23c98a06'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Grandstander:wght@700;800&family=IBM+Plex+Mono:wght@400;500&family=Literata:opsz,wght@7..72,400;7..72,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/admin/admin.css">
+</head>
+<body>
+<header class="top">
+  <img src="/static/themes/jack/art/beans.webp" alt="" class="top-beans">
+  <h1>Beanstalk admin</h1>
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="books" aria-selected="true">Books</button>
+    <button role="tab" data-tab="days">Days</button>
+    <button role="tab" data-tab="errors">Errors</button>
+    <button role="tab" data-tab="settings">Settings</button>
+  </nav>
+  <p class="who">{{EMAIL}} · <a href="/auth/logout">sign out</a></p>
+</header>
+
+<main>
+  <section id="tab-books" class="tab">
+    <form class="filters" id="bookFilters">
+      <label class="grow">Search <input type="search" name="q" placeholder="ref, email or child’s name"></label>
+      <label>Status
+        <select name="status"><option value="">any</option><option>done</option><option>running</option><option>queued</option>
+          <option>failed</option><option>interrupted</option><option>refused</option></select></label>
+      <label>Reason <select name="reason"><option value="">any</option></select></label>
+      <label>Provider <select name="provider"><option value="">any</option></select></label>
+      <label>From <input type="date" name="since"></label>
+      <label>To <input type="date" name="until"></label>
+      <label class="check"><input type="checkbox" name="slow"> slow (&gt;60s image)</label>
+      <label class="check"><input type="checkbox" name="failed"> failed only</label>
+      <label class="check"><input type="checkbox" id="live" checked> live</label>
+    </form>
+    <p class="summary" id="bookSummary"></p>
+    <div class="table-wrap">
+      <table class="grid" id="bookTable">
+        <thead><tr><th>When</th><th>Ref</th><th>Status</th><th>Who</th><th>Child</th><th>Model</th>
+          <th class="num">Pictures</th><th class="num">Time</th><th class="num">Slowest</th><th class="num">Cost</th><th>Reason</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="tab-days" class="tab" hidden>
+    <div class="table-wrap">
+      <table class="grid" id="dayTable">
+        <thead><tr><th>Day (UTC)</th><th class="num">Books</th><th class="num">Done</th><th class="num">Failed</th>
+          <th class="num">Refused</th><th class="num">People</th><th class="num">Cost</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="tab-errors" class="tab" hidden>
+    <form class="filters" id="errorFilters">
+      <label class="grow">Search <input type="search" name="q" placeholder="ref, path or message"></label>
+      <label>Type <select name="type"><option value="">any</option></select></label>
+    </form>
+    <div class="table-wrap">
+      <table class="grid" id="errorTable">
+        <thead><tr><th>When</th><th>Ref</th><th>Where</th><th class="num">Status</th><th>Type</th><th>Message</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="tab-settings" class="tab" hidden>
+    <div class="panels">
+      <form class="panel" id="modelForm">
+        <h2>Who draws my books</h2>
+        <p class="soft">Applies only to books you make while signed in as an admin. Everyone else gets OpenAI Flare.</p>
+        <fieldset id="providerChoice"></fieldset>
+        <label>Model <select name="model"></select></label>
+        <label>Quality <select name="quality"></select></label>
+        <p class="warn" id="modelWarn" hidden></p>
+        <button class="btn" type="submit">Save</button>
+        <p class="saved" id="modelSaved" hidden>Saved.</p>
+      </form>
+      <form class="panel" id="unlimitedForm">
+        <h2>Unlimited books</h2>
+        <p class="soft">Everyone else can make 3 a day (UTC).</p>
+        <ul class="emails" id="emails"></ul>
+        <div class="row"><input type="email" name="email" placeholder="friend@gmail.com" required>
+          <button class="btn" type="submit">Add</button></div>
+      </form>
+    </div>
+  </section>
+</main>
+
+<aside class="drawer" id="drawer" hidden aria-label="Book details">
+  <div class="drawer-head">
+    <h2 id="drawerTitle"></h2>
+    <button class="btn plain" id="drawerClose" type="button">Close</button>
+  </div>
+  <div id="drawerBody"></div>
+</aside>
+
+<script src="/static/admin/admin.js"></script>
+</body>
+</html>

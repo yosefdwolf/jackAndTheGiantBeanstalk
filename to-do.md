@@ -19,8 +19,9 @@ What still needs work in this build, most important first.
 - **No retry when OpenAI's safety filter blocks a page.** That happened once, with an ordinary adult photo, and the same photo passed on the next try. Right now the whole book fails.
 
 ## Logging
-- **Nothing alerts on failures.** Every step is saved in `book_events` and every ref has a row (see docs/schema.md), but a failed book is only noticed if someone reports its ref or looks. The debug panel (next phase) will list recent failures.
 - **Images are stored in Postgres** (about 1.5 MB per book). Fine for a class project; at scale they belong in object storage.
 
 ## Site
-- **One shared password (`APP_PASSWORD`), no rate limit.** Anyone with the password can make unlimited books. A per-password or per-IP limit would cap the spend.
+- **Agnes is untested against the real API.** The provider follows Agnes's docs (OpenAI-style JSON, reference images under `extra_body.image`), but no book has been drawn with it yet. Try one admin book with `AGNES_API_KEY` set and check the admin timeline.
+- **The review site and the results site aren't built yet.**
+- **No alert on failures.** The admin site lists them, but nobody is told when one happens.

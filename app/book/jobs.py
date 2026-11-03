@@ -83,14 +83,25 @@ async def save_event(book_id, level, step_name, event, duration_ms, fields):
 # --- creating a book ------------------------------------------------------------------------------
 
 async def create_book(ref: str, *, gender: str, child_name: str, details: list, provider: str,
-                      model: str | None, quality: str | None) -> None:
+                      model: str | None, quality: str | None, user_id=None) -> None:
     """The row exists from the first moment of the request, so every ref can be looked up."""
     story = load_story()
     async with session() as s:
-        s.add(Book(id=ref, story_key=DEFAULT_STORY.stem, style_key=story.style, prompt_version=prompt_version(),
-                   gender=gender[:8], child_name=child_name, details=details, provider=provider,
-                   model=model, quality=quality, page_size=None))
+        s.add(Book(id=ref, user_id=user_id, story_key=DEFAULT_STORY.stem, style_key=story.style,
+                   prompt_version=prompt_version(), gender=gender[:8], child_name=child_name, details=details,
+                   provider=provider, model=model, quality=quality, page_size=None))
         await s.commit()
+
+
+async def books_today(user_id, exclude: str | None = None) -> int:
+    """Books that count towards the daily limit (UTC day). Refused books never count; a failed book
+    counts only if at least one picture was drawn, since that's when it cost something."""
+    midnight = utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    async with session() as s:
+        books = (await s.execute(select(Book).where(Book.user_id == user_id, Book.created_at >= midnight)
+                                 .options(selectinload(Book.images)))).scalars().all()
+    return sum(1 for b in books if b.id != exclude and b.status != "refused"
+               and (b.status != "failed" or any(i.status == "done" for i in b.images)))
 
 
 async def refuse(ref: str, reason: str, message: str) -> None:

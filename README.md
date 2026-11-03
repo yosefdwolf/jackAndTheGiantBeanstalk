@@ -34,8 +34,26 @@ each deploy before the app starts.
 A book request returns at once. The pictures are drawn in the background, each with its own progress
 bar on the page, and saved as they finish, so a dropped connection or a restart doesn't lose a paid book.
 
+## Sign-in and limits
+Making a book needs both the magic word (`APP_PASSWORD`, so only the class can use it) and a Google
+sign-in (so each person's books are kept together). Everyone can make 3 books per UTC day
+(`DAILY_BOOK_LIMIT`). Refused books never count, and a failed book counts only if a picture was drawn.
+Admins (`ADMIN_EMAILS`) and the emails on the admin site's unlimited list have no limit.
+
+## Admin site
+`admin.jack.graydates.com` (locally `http://localhost:8000/admin`), for `ADMIN_EMAILS` only:
+- **Books:** every book, filterable by status, reason, provider, date, slow pictures and failures, and
+  searchable by ref, email or child's name. Click a book for its photo, every picture with its prompt,
+  cost and provider request ID, and the step-by-step timeline (a step that never finished is flagged).
+- **Days:** books, failures, people and spend per day.
+- **Errors:** everything in `request_errors` (wrong passwords, sign-in failures, page script errors, crashes).
+- **Settings:** which provider and model draws *your own* books (OpenAI Flare, Agnes or mock; everyone
+  else always gets OpenAI Flare), and the unlimited list.
+
 ## Run locally
-Copy `.env.example` to `.env` and set `OPENAI_API_KEY` and `APP_PASSWORD`. `.env` is gitignored. Then:
+Copy `.env.example` to `.env` and set `OPENAI_API_KEY` and `APP_PASSWORD`. `.env` is gitignored.
+Without Google credentials, add `DEV_LOGIN=1` to sign in locally with no Google (it only works on
+localhost, and turns itself off once `GOOGLE_CLIENT_ID` is set). Then:
 ```bash
 ./scripts/run.sh          # macOS / Linux, real images
 ./scripts/run.sh --mock   # free placeholder images
@@ -54,6 +72,16 @@ The `Procfile` sets the start command and `.python-version` pins Python 3.12. Un
 - `OPENAI_API_KEY`
 - `APP_PASSWORD`: the password people must enter. Without it, the site refuses to make real books.
 - `DATABASE_URL`: add it as a reference to the Postgres service (Variables → Add Reference → Postgres → `DATABASE_URL`).
+- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`: from a Google Cloud OAuth client (Web application) with
+  redirect URIs `https://jack.graydates.com/auth/callback`, `https://admin.jack.graydates.com/auth/callback`
+  and `http://localhost:8000/auth/callback`.
+- `SESSION_SECRET`: a long random string that signs the sign-in cookie.
+- `ADMIN_EMAILS`: comma-separated emails allowed on the admin site.
+- `COOKIE_DOMAIN=jack.graydates.com`, so one sign-in works on both the book site and the admin site.
+- `AGNES_API_KEY` (optional): lets an admin pick Agnes for their own test books.
+
+The admin site needs `admin.jack.graydates.com` added as a custom domain in Railway, plus a CNAME for
+`admin.jack` at the DNS host.
 
 Leave `MOCK` unset.
 

@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Privacy · {{TITLE}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Grandstander:wght@600;800&family=Shantell+Sans:wght@400;600&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/styles.css">
+<!--THEME_CSS-->
+<style>
+  .policy h2 { margin-bottom: 6px; }
+  .policy h3 { font-size: 21px; color: var(--leaf-deep); margin: 22px 0 6px; }
+  .policy p, .policy li { font-size: 17px; }
+  .policy ul { margin: 6px 0 0; padding-left: 22px; display: grid; gap: 4px; }
+  .policy .back { display: inline-block; margin-top: 24px; }
+</style>
+</head>
+<body>
+<!--SCENE-->
+<main class="stand">
+  <header class="masthead">
+    <p class="hand kicker">a picture book starring your child</p>
+  </header>
+
+  <article class="card policy">
+    <h2>Privacy</h2>
+    <p class="hand note">The short version: we keep what we need to make your book and fix problems, and nothing is sold.</p>
+
+    <h3>What we keep</h3>
+    <ul>
+      <li>Your Google account’s name, email address and profile picture, from signing in.</li>
+      <li>The photo you upload, and the name and details you type in about the child.</li>
+      <li>The book we make: its pictures and pages.</li>
+      <li>A step-by-step log of how each book was made (timings, errors and costs). The log never holds the photo or the child’s name and details.</li>
+    </ul>
+
+    <h3>Why</h3>
+    <p>To make your book, keep it for you, limit how many books one person can make in a day, and find out what went wrong when a book fails.</p>
+
+    <h3>Who else sees it</h3>
+    <p>The pictures are drawn by OpenAI’s image service, so the photo and the book’s pictures are sent to OpenAI to be drawn. OpenAI says it doesn’t train its models on data sent through its API. Nothing is sold, shared for advertising, or given to anyone else. Only the site’s admins can see the saved photos and logs.</p>
+
+    <h3>How long</h3>
+    <p>This is a class project. Books and photos are kept while the project runs. To have yours deleted, email <a href="mailto:{{CONTACT}}">{{CONTACT}}</a> with your book’s reference.</p>
+
+    <h3>Questions</h3>
+    <p>Email <a href="mailto:{{CONTACT}}">{{CONTACT}}</a>.</p>
+
+    <a class="btn plain back" href="/">Back to the book</a>
+  </article>
+</main>
+</body>
+</html>

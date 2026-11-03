@@ -16,6 +16,7 @@ from pypdf import PdfReader
 from sqlalchemy import select
 
 import app.main
+from app import auth
 from app.book import jobs, providers
 from app.db import session as db
 from app.db.models import Book, BookEvent, BookImage, RequestError
@@ -57,10 +58,26 @@ def client(tmp_path, monkeypatch):
     fake = PreparedPhoto(full_png=png(), face_png=png())
     monkeypatch.setattr(app.main, "prepare", lambda data: fake)
     monkeypatch.setattr(jobs, "prepare", lambda data: fake)
+    monkeypatch.setenv("SESSION_SECRET", "test-secret")
+    monkeypatch.setenv("ADMIN_EMAILS", ADMIN)
+    for name in ("GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "DEV_LOGIN", "COOKIE_DOMAIN"):
+        monkeypatch.delenv(name, raising=False)
     db.reset(f"sqlite+aiosqlite:///{tmp_path / 'test.db'}")
     with TestClient(app.main.app) as c:
+        sign_in(c, PARENT)
         yield c
     db.reset()
+
+
+ADMIN = "admin@example.com"
+PARENT = "parent@example.com"
+
+
+def sign_in(client, email):
+    """What a finished Google sign-in leaves behind: a user row and a signed session cookie."""
+    user = run(auth.upsert_user(f"sub-{email}", email))
+    client.cookies.set(auth.COOKIE, auth.session_cookie(user.id))
+    return user
 
 
 def post_book(client, password=PASSWORD, **form):

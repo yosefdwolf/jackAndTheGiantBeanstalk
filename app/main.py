@@ -15,9 +15,10 @@ from fastapi.responses import HTMLResponse, JSONResponse, Response  # noqa: E402
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 from PIL import Image, ImageOps  # noqa: E402
 
+from . import admin, auth  # noqa: E402
 from .book import jobs  # noqa: E402
 from .book.log import current_ref, new_ref, record, set_event_sink, set_ref, setup_logging, start_book, step  # noqa: E402
-from .book.providers import default_provider_name, is_mock  # noqa: E402
+from .book.providers import is_mock  # noqa: E402
 from .book.story import PRONOUNS, load_story  # noqa: E402
 from .db.models import RequestError  # noqa: E402
 from .db.session import create_tables_if_sqlite, session  # noqa: E402
@@ -26,6 +27,7 @@ from .faces import UploadError, prepare  # noqa: E402
 STATIC = Path(__file__).resolve().parent.parent / "static"
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024  # phone photos can be large; they are downscaled on arrival
 MAX_FIELD = 300
+DAILY_LIMIT = int(os.getenv("DAILY_BOOK_LIMIT", "3"))
 
 setup_logging(os.getenv("LOG_LEVEL", "INFO"))
 
@@ -40,6 +42,9 @@ async def lifespan(app):
 
 app = FastAPI(title="Jack and the Beanstalk", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
+app.include_router(auth.router)
+app.include_router(admin.router)
+app.add_middleware(admin.AdminHost)  # admin.jack.graydates.com/x is served from /admin/x
 
 # Browsers kept running an old app.js after deploys, so a click did nothing. The page's script and
 # stylesheet links carry a content hash, and everything is served with no-cache (re-check each time).
@@ -77,16 +82,28 @@ async def refs_and_errors(request: Request, call_next):
     return response
 
 
+def themed(page: str) -> str:
+    """A page from static/, dressed in the story's theme (static/themes/<theme>/)."""
+    story = load_story()
+    html = (STATIC / page).read_text()
+    html = html.replace("<!--THEME_CSS-->", f'<link rel="stylesheet" href="/static/themes/{story.theme}/theme.css">')
+    html = html.replace("<!--SCENE-->", (STATIC / "themes" / story.theme / "scene.html").read_text())
+    html = html.replace("{{TITLE}}", story.title)
+    for asset in ("app.js", "styles.css", f"themes/{story.theme}/theme.css"):
+        html = html.replace(f"/static/{asset}\"", f"/static/{asset}?v={ASSET_VERSION}\"")
+    return html
+
+
 @app.get("/")
 def index():
-    """The page, dressed in the story's theme (static/themes/<theme>/)."""
-    theme = load_story().theme
-    html = (STATIC / "index.html").read_text()
-    html = html.replace("<!--THEME_CSS-->", f'<link rel="stylesheet" href="/static/themes/{theme}/theme.css">')
-    html = html.replace("<!--SCENE-->", (STATIC / "themes" / theme / "scene.html").read_text())
-    for asset in ("app.js", "styles.css", f"themes/{theme}/theme.css"):
-        html = html.replace(f"/static/{asset}\"", f"/static/{asset}?v={ASSET_VERSION}\"")
-    return HTMLResponse(html, headers=NO_CACHE)
+    return HTMLResponse(themed("index.html"), headers=NO_CACHE)
+
+
+@app.get("/privacy")
+def privacy():
+    """Linked from Google's sign-in screen. CONTACT_EMAIL, else the first admin, is who to write to."""
+    contact = os.getenv("CONTACT_EMAIL") or next(iter(sorted(auth.admin_emails())), "")
+    return HTMLResponse(themed("privacy.html").replace("{{CONTACT}}", contact), headers=NO_CACHE)
 
 
 @app.post("/api/client-error")
@@ -111,6 +128,19 @@ def no_script():
 def options():
     story = load_story()
     return {"title": story.title, "heroes": story.hero_names, "pages": len(story.pages), "mock": is_mock()}
+
+
+@app.get("/api/me")
+async def me(request: Request):
+    """Who is signed in, and how many books they have left today."""
+    user = await auth.current_user(request)
+    info = {"signed_in": user is not None, "sign_in_url": "/auth/login?next=/", "limit": DAILY_LIMIT}
+    if user:
+        unlimited = await auth.has_unlimited(user)
+        used = await jobs.books_today(user.id)
+        info.update(email=user.email, name=user.name, admin=auth.is_admin(user), unlimited=unlimited,
+                    used_today=used, left=None if unlimited else max(0, DAILY_LIMIT - used))
+    return info
 
 
 def password_problem(given: str | None) -> tuple[int, str, str] | None:
@@ -168,12 +198,15 @@ async def create_book_route(
     ref = start_book(current_ref())
     details = [[label, value.strip()[:MAX_FIELD]] for label, value in
                (("Age", age), ("Favourite things", favourites), ("More about me", about)) if value.strip()]
+    user = await auth.current_user(request)
+    provider, model, quality = await admin.provider_for(user)
     # The row exists before any check, so even a refused request can be looked up by its ref.
     await jobs.create_book(ref, gender=gender, child_name=name.strip()[:MAX_FIELD], details=details,
-                           provider=default_provider_name(), model=None, quality=None)
+                           provider=provider, model=model, quality=quality, user_id=user.id if user else None)
     # Never log the password, the photo, or the child's name and details.
     await record("INFO", "request", "received", ip=request.client.host if request.client else None,
-                 gender=gender, details=len(details))
+                 gender=gender, details=len(details), user=str(user.id) if user else None, provider=provider,
+                 model=model)
 
     async def refuse(status: int, reason: str, message: str):
         await jobs.refuse(ref, reason, message)
@@ -181,6 +214,11 @@ async def create_book_route(
 
     if problem := password_problem(x_app_password):
         await refuse(*problem)
+    if user is None:
+        await refuse(401, "not_signed_in", "Please sign in with Google first.")
+    if not await auth.has_unlimited(user) and await jobs.books_today(user.id, exclude=ref) >= DAILY_LIMIT:
+        await refuse(429, "daily_limit", f"That's {DAILY_LIMIT} books today, the most for one day. "
+                                         "Come back tomorrow for more!")
     data = await photo.read()
     if len(data) > MAX_UPLOAD_BYTES:
         await refuse(413, "photo_too_large", "That photo is too large (max 25 MB).")

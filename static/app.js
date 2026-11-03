@@ -61,10 +61,39 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
   }
   pwField.addEventListener('input', () => { pwError.hidden = true; pwField.removeAttribute('aria-invalid'); });
 
+  // --- then Google sign-in --------------------------------------------------------------------------
+
+  let me = null;  // who's signed in (from /api/me)
+  const meReady = fetch('/api/me', { cache: 'no-store' }).then((r) => r.json()).then((m) => { me = m; paintAccount(); })
+    .catch(() => {});
+
+  function paintAccount() {
+    const a = $('account');
+    if (!me || !me.signed_in) { a.hidden = true; return; }
+    const left = me.unlimited ? 'unlimited books' : me.left === 1 ? '1 book left today' : `${me.left} books left today`;
+    a.replaceChildren(`Hi ${me.name || me.email}! `, Object.assign(document.createElement('span'), { className: 'left', textContent: left }),
+      ...(me.admin ? [' · ', Object.assign(document.createElement('a'), { href: '/admin', textContent: 'admin' })] : []),
+      ' · ', Object.assign(document.createElement('a'), { href: '/auth/logout', textContent: 'sign out' }));
+    a.hidden = false;
+  }
+
+  function askToSignIn(message) {
+    form.hidden = true;
+    gate.hidden = true;
+    $('signin').hidden = false;
+    $('signin').classList.add('reveal');
+    $('signinError').textContent = message || '';
+    $('signinError').hidden = !message;
+    grow(0.09);
+  }
+
   function openBook(animate) {
     store.set(PASSWORD_KEY, password);
-    const show = () => {
+    const show = async () => {
+      await meReady;
       gate.hidden = true;
+      if (!me || !me.signed_in) return askToSignIn();
+      $('signin').hidden = true;
       form.hidden = false;
       form.classList.add('reveal');
       grow(0.12);
@@ -76,6 +105,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     store.drop(PASSWORD_KEY);
     password = '';
     form.hidden = true;
+    $('signin').hidden = true;
     $('printing').hidden = true;
     gate.hidden = false;
     gate.classList.remove('opening');
@@ -231,9 +261,11 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
       if (!res.ok) {
         const d = errorDetail(data, res);
         if (d.reason === 'wrong_password') return lockAgain(`The magic word changed. Please type it again. (reference ${d.ref})`);
+        if (d.reason === 'not_signed_in') { me = null; return askToSignIn(`Please sign in again. (reference ${d.ref})`); }
         showError(`${d.message}${d.ref ? ` (reference ${d.ref})` : ''}`);
         return error.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
+      if (me && me.left != null) { me.left = Math.max(0, me.left - 1); paintAccount(); }
       watch(data.id);
     } catch {
       showError('We couldn’t reach the book. Check your connection and try again.');
@@ -369,6 +401,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     $('printingTitle').textContent = 'Growing your book';
     gate.hidden = true;
     form.hidden = true;
+    $('signin').hidden = true;
     $('reader').hidden = true;
     $('printing').hidden = false;
     $('printing').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -525,7 +558,8 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     $('printing').hidden = true;
     $('reader').hidden = true;
     for (const extra of $('printing').querySelectorAll('p:not(.ref):not(.tally):not(.error)')) extra.remove();
-    form.hidden = !password;
+    form.hidden = !password || !(me && me.signed_in);
+    $('signin').hidden = !password || !!(me && me.signed_in);
     gate.hidden = !!password;
     photo = null;
     preview.hidden = true;
