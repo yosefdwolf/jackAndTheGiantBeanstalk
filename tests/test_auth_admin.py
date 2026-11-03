@@ -291,3 +291,19 @@ def test_bookshelf_lists_only_my_books_newest_first(client):
     assert client.get("/api/my-books").json()["books"] == []
     client.cookies.clear()
     assert client.get("/api/my-books").status_code == 401
+
+
+# --- a book is only for the person who made it ----------------------------------------------------
+
+def test_someone_elses_book_looks_like_no_book(client):
+    ref = finished_book(client)
+    paths = [f"/api/books/{ref}", f"/api/books/{ref}/images/page-1", f"/api/books/{ref}/pdf"]
+    assert all(client.get(p).status_code == 200 for p in paths)  # the owner sees it
+    sign_in(client, "stranger@example.com")
+    for p in paths:
+        r = client.get(p)
+        assert r.status_code == 404 and r.json()["detail"]["reason"] == "not_yours", p
+    client.cookies.clear()
+    assert all(client.get(p).status_code == 404 for p in paths)  # signed out too
+    sign_in(client, ADMIN)
+    assert all(client.get(p).status_code == 200 for p in paths)  # admins can look into any book

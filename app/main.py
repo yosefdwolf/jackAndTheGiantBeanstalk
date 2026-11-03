@@ -263,8 +263,21 @@ async def create_book_route(
     return {"id": ref, "status_url": f"/api/books/{ref}"}
 
 
+async def can_see(request: Request, ref: str) -> None:
+    """A book, its pictures and its PDF are for the person who made it (and admins). Anyone else, even
+    with the right reference, gets the same "no such book" as for a reference that doesn't exist."""
+    user = await auth.current_user(request)
+    async with session() as s:
+        owner = (await s.execute(select(Book.user_id).where(Book.id == ref))).first()
+    if owner is None or user is None or (owner[0] != user.id and not auth.is_admin(user)):
+        await record("WARNING", "book", "not yours", book=ref, user=str(user.id) if user else None)
+        raise HTTPException(404, {"message": "No book of yours with that reference.", "ref": current_ref(),
+                                  "reason": "not_yours"})
+
+
 @app.get("/api/books/{ref}")
-async def book_status(ref: str):
+async def book_status(request: Request, ref: str):
+    await can_see(request, ref)
     data = await jobs.status(ref)
     if data is None:
         raise HTTPException(404, {"message": "No book with that reference.", "ref": ref})
@@ -272,7 +285,8 @@ async def book_status(ref: str):
 
 
 @app.get("/api/books/{ref}/images/{name}")
-async def book_image(ref: str, name: str, w: int | None = None):
+async def book_image(request: Request, ref: str, name: str, w: int | None = None):
+    await can_see(request, ref)
     kind, _, page = name.rpartition("-")
     data = await jobs.image_bytes(ref, kind, int(page)) if page.isdigit() else None
     if data is None:
@@ -287,8 +301,9 @@ async def book_image(ref: str, name: str, w: int | None = None):
 
 
 @app.get("/api/books/{ref}/pdf")
-async def book_pdf(ref: str, inline: bool = False):
+async def book_pdf(request: Request, ref: str, inline: bool = False):
     """Downloads by default; ?inline=1 opens it in the browser (the review card's "open the PDF")."""
+    await can_see(request, ref)
     pdf = await jobs.pdf_bytes(ref)
     if pdf is None:
         raise HTTPException(404, {"message": "That book isn't finished.", "ref": ref})

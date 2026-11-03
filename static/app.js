@@ -369,7 +369,8 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
   async function poll() {
     try {
       const res = await fetch(`/api/books/${watching}`, { cache: 'no-store' });
-      if (res.status === 404) return finish({ id: watching, status: 'failed', error: 'We couldn’t find that book.' });
+      // Not this person's book (or no such book): forget it, clear it from the address, back to the form.
+      if (res.status === 404) return startOver();
       const data = await res.json();
       clockOffset = Date.parse(data.server_time) - Date.now();
       book = data;
