@@ -1,4 +1,5 @@
-"""PDF layout: full-bleed art with the story text drawn on top (never by the image model), About Me last."""
+"""PDF layout: a cover, full-bleed art with the story text drawn on top (never by the image model),
+About Me, and The End. The same order as the flip book on the site."""
 import io
 
 from reportlab.lib.colors import Color, HexColor
@@ -9,7 +10,7 @@ from .pages import RenderedPage
 
 W, H = 792, 528  # 11 x 7.33 in: the 3:2 shape of the 1536x1024 art
 STORY_FONT, STORY_SIZE, STORY_LEADING = "Times-Bold", 30, 36
-CREAM, INK = HexColor("#f6efe0"), HexColor("#2b2418")
+CREAM, INK, GREEN, GOLD = HexColor("#f6efe0"), HexColor("#2b2418"), HexColor("#2c7a1f"), HexColor("#b07a05")
 
 # Where text sits, as (band bottom, band top) in fractions of page height, and which edge the scrim
 # darkens from. The story file names the zone per page; its prompt keeps that part of the art plain.
@@ -20,18 +21,65 @@ ZONES = {
 }
 
 
-def build_pdf(pages: list[RenderedPage], title: str) -> bytes:
+def build_pdf(pages: list[RenderedPage], title: str, cover: RenderedPage | None = None) -> bytes:
     buf = io.BytesIO()
     c = Canvas(buf, pagesize=(W, H))
     c.setTitle(title)
+    if cover is not None:
+        _cover(c, cover, title)
+        c.showPage()
     for page in pages:
         if page.kind == "about_me":
             _about_me(c, page)
         else:
             _illustrated(c, page)
         c.showPage()
+    if cover is not None:
+        _the_end(c)
+        c.showPage()
     c.save()
     return buf.getvalue()
+
+
+def _cover(c: Canvas, page: RenderedPage, title: str) -> None:
+    """The child's cartoon in a round frame, the title, and "starring <name>"."""
+    c.setFillColor(CREAM)
+    c.rect(0, 0, W, H, stroke=0, fill=1)
+    side = H * 0.66
+    x0, y0 = W * 0.07, (H - side) / 2
+    c.saveState()
+    path = c.beginPath()
+    path.circle(x0 + side / 2, y0 + side / 2, side / 2)
+    c.clipPath(path, stroke=0, fill=0)
+    c.drawImage(ImageReader(io.BytesIO(page.image)), x0, y0, side, side)
+    c.restoreState()
+    c.setStrokeColor(HexColor("#ffffff"))
+    c.setLineWidth(8)
+    c.circle(x0 + side / 2, y0 + side / 2, side / 2, stroke=1, fill=0)
+
+    tx = x0 + side + W * 0.05
+    width = W - tx - W * 0.05
+    lines = simpleSplit(title, "Times-Bold", 46, width)
+    y = H / 2 + len(lines) * 52 / 2
+    c.setFillColor(GREEN)
+    c.setFont("Times-Bold", 46)
+    for line in lines:
+        y -= 52
+        c.drawString(tx, y, line)
+    if page.child and page.child.name:
+        c.setFillColor(GOLD)
+        c.setFont("Times-Italic", 24)
+        for line in simpleSplit(f"starring {page.child.name}", "Times-Italic", 24, width):
+            y -= 34
+            c.drawString(tx, y, line)
+
+
+def _the_end(c: Canvas) -> None:
+    c.setFillColor(CREAM)
+    c.rect(0, 0, W, H, stroke=0, fill=1)
+    c.setFillColor(GREEN)
+    c.setFont("Times-Bold", 60)
+    c.drawCentredString(W / 2, H / 2 - 20, "The End")
 
 
 def _illustrated(c: Canvas, page: RenderedPage) -> None:

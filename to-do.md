@@ -14,14 +14,14 @@ What still needs work in this build, most important first.
 - **Pages 4–20 aren't written.** Page 4 (the beanstalk at dawn) is next. Each page is one entry in `stories/jack_and_the_beanstalk.yaml`.
 - **Progress bars estimate, they don't measure.** Each picture's bar follows how long that kind of picture usually takes (median of recent ones), not real progress from the model. OpenAI can stream partial images; showing those would be truer.
 - **Background books run inside the web process.** A deploy interrupts them (they resume on restart), and two app instances would each try to resume the same book. That's fine on one Railway instance; more instances need a real job queue.
-- **No title page or cover yet.**
 - **The PDF font is the built-in Times.** A picture-book font file (licensed for embedding) would look better.
-- **No retry when OpenAI's safety filter blocks a page.** That happened once, with an ordinary adult photo, and the same photo passed on the next try. Right now the whole book fails.
+- **OpenAI's safety filter sometimes blocks ordinary pages.** Live book d594a533 lost 2 of 3 pages to it. There's no automatic retry (the assignment says no loops around the API call); instead the reader gets a "Try the missing pictures again" button that redraws only the failed ones. Worth finding which words in the page prompts trip it.
 
 ## Logging
 - **Images are stored in Postgres** (about 1.5 MB per book). Fine for a class project; at scale they belong in object storage.
 
 ## Site
+- **The face finder is a simple one (OpenCV Haar).** It turned away several real photos ("couldn't find a face"). It now tries a gentler second pass, and refused photos are kept so the admin can see them. If refusals keep happening, switch to a modern detector (e.g. OpenCV's YuNet).
 - **Agnes is untested against the real API.** The provider follows Agnes's docs (OpenAI-style JSON, reference images under `extra_body.image`), but no book has been drawn with it yet. Try one admin book with `AGNES_API_KEY` set and check the admin timeline.
 - **Reviewers need the magic word and a Google account.** Crowd participants must be given the magic word in the study instructions, and someone without Google can't take part.
 - **No alert on failures.** The admin site lists them, but nobody is told when one happens.

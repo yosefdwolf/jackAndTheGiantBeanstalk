@@ -415,11 +415,27 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
       $('printingTitle').textContent = 'Oh no, the beans didn’t grow';
       $('bookError').textContent = `${data.error || 'This book couldn’t be finished.'} (reference ${data.id})`;
       $('bookError').hidden = false;
+      // Redraw only the missing pictures (the finished ones are kept), or start a fresh book.
       const again = document.createElement('p');
-      again.innerHTML = '<button class="btn plain" type="button">Try again</button>';
-      again.style.textAlign = 'center';
-      again.style.marginTop = '14px';
-      again.querySelector('button').addEventListener('click', startOver);
+      again.className = 'try-again';
+      const retryBtn = Object.assign(document.createElement('button'), { className: 'btn bean', type: 'button',
+        textContent: 'Try the missing pictures again' });
+      const freshBtn = Object.assign(document.createElement('button'), { className: 'btn plain', type: 'button',
+        textContent: 'Start a new book' });
+      retryBtn.addEventListener('click', async () => {
+        retryBtn.disabled = true;
+        try {
+          const res = await fetch(`/api/books/${data.id}/retry`, { method: 'POST', headers: { 'X-App-Password': password } });
+          if (!res.ok) throw errorDetail(await res.json().catch(() => ({})), res);
+          again.remove();
+          watch(data.id);
+        } catch (d) {
+          retryBtn.disabled = false;
+          $('bookError').textContent = `${d.message || 'That didn’t work.'}${d.ref ? ` (reference ${d.ref})` : ''}`;
+        }
+      });
+      freshBtn.addEventListener('click', startOver);
+      again.append(retryBtn, freshBtn);
       $('printing').append(again);
     }
   }
@@ -554,6 +570,21 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
   if (pidFromLink && /^[\w-]{1,64}$/.test(pidFromLink)) store.set(PID_KEY, pidFromLink);
 
   const reviewForm = $('reviewForm');
+  const SCORES = ['looks_like_me', 'story_rings_true', 'looks_professional'];
+
+  // Every question is required: the button only wakes up once all four are answered.
+  function reviewMissing() {
+    const f = new FormData(reviewForm);
+    return SCORES.filter((k) => !f.get(k)).length + (String(f.get('not_good') || '').trim() ? 0 : 1);
+  }
+  function updateReviewReady() {
+    const missing = reviewMissing();
+    $('reviewBtn').disabled = missing > 0;
+    $('reviewNote').textContent = missing === 0 ? '' : missing === 1 ? 'One more to answer' : `Answer all four to send (${4 - missing} of 4 done)`;
+    $('reviewNote').hidden = missing === 0;
+  }
+  reviewForm.addEventListener('input', updateReviewReady);
+  reviewForm.addEventListener('change', updateReviewReady);
   async function showReview(id) {
     $('review').hidden = false;
     $('reviewPdf').href = `/api/books/${id}/pdf?inline=1`;
@@ -580,6 +611,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
         $('reviewBtn').textContent = 'Send my answers';
       }
     } catch { /* the review card is a bonus; the book still works without it */ }
+    updateReviewReady();
   }
 
   reviewForm.addEventListener('submit', async (e) => {
@@ -594,7 +626,12 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
       }
       body[k] = Number(f.get(k));
     }
-    body.not_good = f.get('not_good') || '';
+    body.not_good = String(f.get('not_good') || '').trim();
+    if (!body.not_good) {
+      $('reviewError').textContent = 'Tell us what isn’t good too, even if it’s small.';
+      $('reviewError').hidden = false;
+      return reviewForm.not_good.focus();
+    }
     if (store.get(PID_KEY)) body.participant_id = store.get(PID_KEY);
     $('reviewBtn').disabled = true;
     try {
@@ -612,7 +649,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
       $('reviewError').textContent = err.message.startsWith('Failed') ? 'We couldn’t reach the book. Try again in a moment.' : err.message;
       $('reviewError').hidden = false;
     } finally {
-      $('reviewBtn').disabled = false;
+      updateReviewReady();
     }
   });
 

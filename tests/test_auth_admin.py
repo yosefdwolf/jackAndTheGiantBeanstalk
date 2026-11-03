@@ -240,6 +240,15 @@ def test_scores_must_be_one_to_five(client):
     assert client.put(f"/api/books/{ref}/review", json={**ANSWERS, "participant_id": "a b<"}).status_code == 422
 
 
+def test_every_review_question_is_required(client):
+    ref = finished_book(client)
+    for missing in ("looks_like_me", "story_rings_true", "looks_professional", "not_good"):
+        answers = {k: v for k, v in ANSWERS.items() if k != missing}
+        assert client.put(f"/api/books/{ref}/review", json=answers).status_code == 422, missing
+    r = client.put(f"/api/books/{ref}/review", json={**ANSWERS, "not_good": "   "})
+    assert r.status_code == 422 and r.json()["detail"]["reason"] == "missing_answer"
+
+
 def test_crowd_participant_id_is_saved(client):
     ref = finished_book(client)
     client.put(f"/api/books/{ref}/review", json={**ANSWERS, "participant_id": "CR-12345"})

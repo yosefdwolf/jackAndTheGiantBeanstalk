@@ -166,16 +166,19 @@ def test_pdf_is_rebuilt_from_saved_images(client):
     assert r.headers["content-type"] == "application/pdf"
     assert 'filename="JackAndTheBeanstalk.pdf"' in r.headers["content-disposition"]
     pages = PdfReader(io.BytesIO(r.content)).pages
-    assert len(pages) == 4
-    assert "nothing left to sell" in pages[0].extract_text()
-    about = pages[-1].extract_text()
+    assert len(pages) == 6  # cover, three story pages, About Me, The End: the same order as the flip book
+    cover = " ".join(pages[0].extract_text().split())
+    assert "Jack and the Beanstalk" in cover and "starring Sam" in cover
+    assert "nothing left to sell" in pages[1].extract_text()
+    about = pages[-2].extract_text()
     assert "About Me" in about and "Sam" in about and "dinosaurs, pancakes" in about
+    assert "The End" in pages[-1].extract_text()
 
 
 def test_jane_book_uses_jane(client):
     ref = post_book(client, gender="girl").json()["id"]
     wait_for(client, ref)
-    assert "Jane and her mother" in PdfReader(io.BytesIO(client.get(f"/api/books/{ref}/pdf").content)).pages[0].extract_text()
+    assert "Jane and her mother" in PdfReader(io.BytesIO(client.get(f"/api/books/{ref}/pdf").content)).pages[1].extract_text()
 
 
 def test_thumbnails_are_served(client):
@@ -323,3 +326,66 @@ def test_finished_book_has_flipbook_pages(client):
     assert book["hero"] == "Jane" and book["child_name"] == "Sam"
     assert [p["kind"] for p in book["pages"]] == ["illustrated", "illustrated", "illustrated", "about_me"]
     assert book["pages"][1]["text_zone"] == "top" and "Five magic beans" in book["pages"][1]["text"]
+
+
+# --- failures seen on the live site ---------------------------------------------------------------
+
+def test_book_never_rechecks_the_face_in_the_background(client, monkeypatch):
+    """Live books 3d0637bb and 584f8735 passed the face check, then failed when the background job ran it
+    again on the saved (recompressed) copy. The saved face box is used instead."""
+    boxed = PreparedPhoto(full_png=png(), face_png=png(), face_box=[100, 100, 200, 200])
+    monkeypatch.setattr(app.main, "prepare", lambda data: boxed)
+
+    def no_second_check(data):
+        raise AssertionError("face check ran again")
+    monkeypatch.setattr(jobs, "prepare", no_second_check)
+    ref = post_book(client).json()["id"]
+    assert wait_for(client, ref)["status"] == "done"
+
+
+def test_photo_is_kept_whatever_the_refusal(client):
+    from app.db.models import Upload
+    for r in (post_book(client, password="nope"), post_book(client, name=" ")):
+        assert run(rows(Upload, book_id=r.json()["detail"]["ref"]))[0].width == 800
+
+
+def test_refused_photo_is_kept_for_the_admin(client, monkeypatch):
+    from app.db.models import Upload
+    from app.faces import prepare as real_prepare
+    monkeypatch.setattr(app.main, "prepare", real_prepare)
+    ref = post_book(client).json()["detail"]["ref"]
+    assert run(rows(Upload, book_id=ref))[0].width == 800
+    assert not run(rows(BookImage, book_id=ref))  # kept, never drawn from
+
+
+def test_try_again_redraws_only_the_missing_pictures(client, monkeypatch):
+    original = providers.MockImageProvider.edit
+    calls = []
+    blocked = {"page 2"}
+
+    async def sometimes_blocked(self, label, refs, prompt, size):
+        calls.append(label)
+        if label in blocked:
+            from app.book.log import step
+            async with step(label):
+                raise openai.APITimeoutError(request=httpx.Request("POST", "https://api.openai.com/v1/images/edits"))
+        return await original(self, label, refs, prompt, size)
+
+    monkeypatch.setattr(providers.MockImageProvider, "edit", sometimes_blocked)
+    ref = post_book(client).json()["id"]
+    assert wait_for(client, ref)["status"] == "failed"
+    blocked.clear()
+    calls.clear()
+    assert client.post(f"/api/books/{ref}/retry", headers={"X-App-Password": PASSWORD}).status_code == 202
+    assert wait_for(client, ref)["status"] == "done"
+    assert calls == ["page 2"]  # the cartoon and the other pages weren't paid for again
+    assert client.get("/api/me").json()["left"] == 2  # still one book
+
+
+def test_only_the_owner_can_try_again(client):
+    ref = post_book(client).json()["id"]
+    wait_for(client, ref)
+    assert client.post(f"/api/books/{ref}/retry", headers={"X-App-Password": PASSWORD}).status_code == 409  # done
+    from tests.test_auth_admin import sign_in as other
+    other(client, "stranger@example.com")
+    assert client.post(f"/api/books/{ref}/retry", headers={"X-App-Password": PASSWORD}).status_code == 404

@@ -11,16 +11,16 @@ import statistics
 from datetime import datetime, timezone
 
 import openai
-from PIL import Image
+from PIL import Image, ImageOps
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from ..db.models import Book, BookEvent, BookImage, Upload
 from ..db.session import session
-from ..faces import PreparedPhoto, prepare
+from ..faces import PreparedPhoto, UploadError, from_saved, prepare
 from .cast import CastSheets, MissingSheetError
 from .log import record, start_book, step
-from .pages import BookContext, ChildInfo, make_page
+from .pages import BookContext, ChildInfo, RenderedPage, make_page
 from .pdf import build_pdf
 from .prompts import PromptBuilder
 from .providers import SHEET_SIZE, MockImageProvider, get_provider
@@ -112,18 +112,52 @@ async def refuse(ref: str, reason: str, message: str) -> None:
     await record("WARNING", "request", "refused", reason=reason)
 
 
+async def keep_refused_photo(ref: str, data: bytes, mime: str) -> None:
+    """A photo the face check turned away is kept too, so the admin can see why (never drawn from)."""
+    try:
+        img = Image.open(io.BytesIO(data))
+        img = ImageOps.exif_transpose(img).convert("RGB")
+        img.thumbnail((1024, 1024))
+        buf = io.BytesIO()
+        img.save(buf, "WEBP", quality=85)
+        async with session() as s:
+            s.add(Upload(book_id=ref, image=buf.getvalue(), mime=mime[:32], width=img.width, height=img.height))
+            await s.commit()
+    except Exception:
+        pass  # unreadable files have nothing to show
+
+
 async def accept(ref: str, photo: PreparedPhoto, mime: str) -> None:
     """Save the photo and one waiting row per image, then start drawing in the background."""
     story = load_story()
     img = Image.open(io.BytesIO(photo.full_png))
     async with session() as s:
-        s.add(Upload(book_id=ref, image=to_webp(photo.full_png), mime=mime, width=img.width, height=img.height))
+        s.add(Upload(book_id=ref, image=to_webp(photo.full_png), mime=mime, width=img.width, height=img.height,
+                     face_box=photo.face_box))
         s.add(BookImage(book_id=ref, kind="hero_sheet", page_number=0))
         for spec in story.pages:
             if make_page(spec).needs_image:
                 s.add(BookImage(book_id=ref, kind="page", page_number=spec.number))
         await s.commit()
     spawn(ref)
+
+
+async def retry(ref: str) -> bool:
+    """Redraw only the pictures that didn't finish; finished ones are kept and not paid for again.
+    Started by the person pressing "try again", never automatically (one call per image, no loops)."""
+    async with session() as s:
+        book = (await s.execute(select(Book).where(Book.id == ref).options(selectinload(Book.images)))).scalar_one()
+        if book.status not in ("failed", "interrupted"):
+            return False
+        for i in book.images:
+            if i.status != "done":
+                i.status, i.error_code, i.error_message, i.started_at, i.finished_at = "waiting", None, None, None, None
+        book.status, book.error_code, book.error_message, book.finished_at = "queued", None, None, None
+        await s.commit()
+    start_book(ref)
+    await record("INFO", "book", "retry", note="the reader asked to redraw the missing pictures")
+    spawn(ref)
+    return True
 
 
 def spawn(ref: str) -> None:
@@ -201,7 +235,13 @@ async def _run(ref: str) -> None:
     provider = get_provider(book.provider, book.model, book.quality)
     rows = {(i.kind, i.page_number): i for i in book.images}
     upload = book.upload
-    photo = prepare(upload.image)  # the same face crop and size the model saw
+    if upload.face_box:
+        photo = from_saved(upload.image, upload.face_box)  # the same face crop and size the model saw
+    else:  # accepted before face boxes were saved
+        try:
+            photo = prepare(upload.image)
+        except UploadError:
+            photo = from_saved(upload.image, None)
 
     hero = rows[HERO]
     if hero.status == "done":
@@ -330,7 +370,8 @@ async def pdf_bytes(ref: str) -> bytes | None:
         page = make_page(spec)
         image = to_png(rows[("page", spec.number)].image) if page.needs_image else None
         pages.append(page.layout(ctx, image))
-    return build_pdf(pages, story.title)
+    cover = RenderedPage(0, "cover", image=ctx.sheets.hero_sheet, child=ctx.child)
+    return build_pdf(pages, story.title, cover=cover)
 
 
 async def resume_unfinished() -> None:

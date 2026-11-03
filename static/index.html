@@ -150,8 +150,9 @@
           <p class="ends"><span>not yet</span><span>absolutely</span></p>
         </fieldset>
         <label class="box"><span class="box-label">What isn’t good?</span>
-          <textarea name="not_good" rows="3" maxlength="2000" placeholder="The beans on page 3 look strange…"></textarea></label>
-        <button class="btn bean" type="submit" id="reviewBtn">Send my answers</button>
+          <textarea name="not_good" rows="3" maxlength="2000" required placeholder="The beans on page 3 look strange…"></textarea></label>
+        <button class="btn bean" type="submit" id="reviewBtn" disabled>Send my answers</button>
+        <p class="hand note" id="reviewNote">Answer all four to send</p>
         <p class="error" id="reviewError" role="alert" hidden></p>
       </form>
       <p class="thanks hand" id="reviewThanks" hidden>Thank you! Your answers are saved. You can change them any time.</p>

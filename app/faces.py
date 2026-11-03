@@ -15,6 +15,7 @@ register_heif_opener()  # iPhone photos arrive as HEIC when sent from the Files 
 MAX_SIDE = 1024
 MIN_FACE_FRACTION = 0.12  # face width must be at least this share of image width
 CASCADE = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+CASCADE_ALT = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_alt2.xml")
 EYES = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_eye.xml")
 
 
@@ -26,6 +27,7 @@ class UploadError(ValueError):
 class PreparedPhoto:
     full_png: bytes
     face_png: bytes
+    face_box: list[int] | None = None  # [x, y, w, h] in full_png, saved so the book never re-detects
 
 
 def _to_png(img: Image.Image) -> bytes:
@@ -57,12 +59,12 @@ def prepare(upload: bytes) -> PreparedPhoto:
 
     img.thumbnail((MAX_SIDE, MAX_SIDE))
     gray = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2GRAY)
-    faces = CASCADE.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=6, minSize=(60, 60))
+    faces = _find_faces(gray)
 
     if len(faces) == 0:
         raise UploadError("We couldn't find a face. Use a clear, front-facing photo with good light.")
     faces = sorted(faces, key=lambda f: f[2] * f[3], reverse=True)
-    x, y, w, h = faces[0]
+    x, y, w, h = (int(v) for v in faces[0])
     # Haar often "sees" faces in shirts, posters or shadows, so a second detection only counts
     # as another person when it is nearly as big, separate from the main face, and has an eye.
     if any(_is_second_person(gray, faces[0], f) for f in faces[1:]):
@@ -81,4 +83,33 @@ def prepare(upload: bytes) -> PreparedPhoto:
     )
     face = img.crop(box)
     face.thumbnail((512, 512))
-    return PreparedPhoto(full_png=_to_png(img), face_png=_to_png(face))
+    return PreparedPhoto(full_png=_to_png(img), face_png=_to_png(face), face_box=[x, y, w, h])
+
+
+def _find_faces(gray):
+    """Strict first (few false faces); if that finds nothing, a gentler pass with evened-out light and a
+    second detector, since real phone photos in dim rooms or at an angle were being turned away."""
+    faces = CASCADE.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=6, minSize=(60, 60))
+    if len(faces):
+        return faces
+    even = cv2.equalizeHist(gray)
+    for cascade in (CASCADE, CASCADE_ALT):
+        faces = cascade.detectMultiScale(even, scaleFactor=1.05, minNeighbors=4, minSize=(48, 48))
+        if len(faces):
+            return faces
+    return faces
+
+
+def from_saved(full: bytes, face_box: list[int] | None) -> PreparedPhoto:
+    """Rebuild the photo the book was accepted with, from the saved copy, without detecting again
+    (the saved copy is recompressed, and a second check on it failed books that had passed)."""
+    img = Image.open(io.BytesIO(full)).convert("RGB")
+    if face_box:
+        x, y, w, h = face_box
+        cx, cy, half = x + w / 2, y + h / 2, max(w, h) * 0.9
+        face = img.crop((int(max(0, cx - half)), int(max(0, cy - half * 1.1)),
+                         int(min(img.width, cx + half)), int(min(img.height, cy + half * 0.9))))
+    else:  # books accepted before boxes were saved
+        face = img.copy()
+    face.thumbnail((512, 512))
+    return PreparedPhoto(full_png=_to_png(img), face_png=_to_png(face), face_box=face_box)

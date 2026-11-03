@@ -210,7 +210,11 @@ async def create_book_route(
                  gender=gender, details=len(details), user=str(user.id) if user else None, provider=provider,
                  model=model)
 
+    data = await photo.read()
+
     async def refuse(status: int, reason: str, message: str):
+        # The photo is kept whatever the reason, so the admin can always see what was sent.
+        await jobs.keep_refused_photo(ref, data, photo.content_type or "image/unknown")
         await jobs.refuse(ref, reason, message)
         raise HTTPException(status, {"message": message, "ref": ref, "reason": reason}, headers={"X-Book-Id": ref})
 
@@ -221,7 +225,6 @@ async def create_book_route(
     if not await auth.has_unlimited(user) and await jobs.books_today(user.id, exclude=ref) >= DAILY_LIMIT:
         await refuse(429, "daily_limit", f"That's {DAILY_LIMIT} books today, the most for one day. "
                                          "Come back tomorrow for more!")
-    data = await photo.read()
     if len(data) > MAX_UPLOAD_BYTES:
         await refuse(413, "photo_too_large", "That photo is too large (max 25 MB).")
     if gender not in PRONOUNS:
@@ -274,13 +277,29 @@ async def book_pdf(ref: str, inline: bool = False):
                     headers={"Content-Disposition": f'{disposition}; filename="{jobs.PDF_NAME}"'})
 
 
+@app.post("/api/books/{ref}/retry", status_code=202)
+async def retry_book(request: Request, ref: str, x_app_password: str | None = Header(None)):
+    """The book's owner asks to redraw the pictures that failed. Doesn't count as another book."""
+    if problem := password_problem(x_app_password):
+        status_code, reason, message = problem
+        raise HTTPException(status_code, {"message": message, "ref": current_ref(), "reason": reason})
+    user = await auth.current_user(request)
+    async with session() as s:
+        book = await s.get(Book, ref)
+    if user is None or book is None or book.user_id != user.id:
+        raise HTTPException(404, {"message": "No book of yours with that reference.", "ref": current_ref()})
+    if book.refused_reason or not await jobs.retry(ref):
+        raise HTTPException(409, {"message": "That book can't be tried again.", "ref": ref})
+    return {"id": ref, "status_url": f"/api/books/{ref}"}
+
+
 # --- reviews: each person rates their own book ----------------------------------------------------
 
 class ReviewIn(BaseModel):
     looks_like_me: int = Field(ge=1, le=5)
     story_rings_true: int = Field(ge=1, le=5)
     looks_professional: int = Field(ge=1, le=5)
-    not_good: str = Field("", max_length=2000)
+    not_good: str = Field(max_length=2000)  # required, like every question
     participant_id: str | None = Field(None, max_length=64, pattern=r"^[\w-]+$")  # from a crowd study's link
 
 
@@ -322,6 +341,9 @@ async def get_review(request: Request, ref: str):
 async def put_review(request: Request, ref: str, body: ReviewIn):
     """One review per person: answering again (on any of their books) replaces their answers, and the
     review moves to the book they answered about last."""
+    if not body.not_good.strip():
+        raise HTTPException(422, {"message": "Please answer every question, including what isn't good.",
+                                  "ref": current_ref(), "reason": "missing_answer"})
     user, _ = await _own_book(request, ref)
     async with session() as s:
         r = await _their_review(s, user)
@@ -331,7 +353,7 @@ async def put_review(request: Request, ref: str, body: ReviewIn):
         r.book_id = ref
         r.looks_like_me, r.story_rings_true, r.looks_professional = (body.looks_like_me, body.story_rings_true,
                                                                      body.looks_professional)
-        r.not_good = body.not_good.strip() or None
+        r.not_good = body.not_good.strip()
         if body.participant_id:
             r.connect_id, r.source = body.participant_id, "connect"
         await s.commit()

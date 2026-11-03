@@ -230,6 +230,8 @@ dialog#camera::backdrop { background: rgba(20, 40, 60, .55); }
 .ends { display: flex; justify-content: space-between; font: 400 14px var(--hand); color: var(--ink-soft); margin-top: 6px; }
 .review .box { margin-top: 12px; }
 #reviewForm { display: grid; }
+.try-again { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 16px; }
 .review .btn { justify-self: center; margin-top: 4px; }
+#reviewNote { text-align: center; margin-top: 6px; }
 .thanks { text-align: center; font-size: 19px; color: var(--leaf-deep); font-weight: 600; padding: 8px 0; }
 @media (prefers-reduced-motion: reduce) { .stamps span { transition: none; } }
