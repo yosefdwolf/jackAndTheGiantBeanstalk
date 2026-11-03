@@ -10,3 +10,6 @@ eval/out/
 !.claude/skills/
 local.db
 *.db-journal
+
+# PyCharm / IntelliJ settings
+.idea/
