@@ -6,4 +6,7 @@ eval/photos/*
 !eval/photos/.gitkeep
 eval/out/
 .DS_Store
-.claude/
+.claude/*
+!.claude/skills/
+local.db
+*.db-journal

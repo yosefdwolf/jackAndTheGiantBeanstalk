@@ -25,6 +25,15 @@ example, the cow on page 3, after she's been sold).
 
 Prompts were developed by hand in the OpenAI Playground first, then moved into the story file.
 
+## Database
+Postgres on Railway; SQLite locally and in tests. Every request gets a ref, and every ref has a row.
+Look a ref up in `books` (or `request_errors`), then read `book_events` in order: a `start` with no
+`done` is where it stopped. Full design: [docs/schema.md](docs/schema.md). Migrations (Alembic) run on
+each deploy before the app starts.
+
+A book request returns at once. The pictures are drawn in the background, each with its own progress
+bar on the page, and saved as they finish, so a dropped connection or a restart doesn't lose a paid book.
+
 ## Run locally
 Copy `.env.example` to `.env` and set `OPENAI_API_KEY` and `APP_PASSWORD`. `.env` is gitignored. Then:
 ```bash
@@ -44,6 +53,7 @@ Open http://localhost:8000.
 The `Procfile` sets the start command and `.python-version` pins Python 3.12. Under **Variables**, set:
 - `OPENAI_API_KEY`
 - `APP_PASSWORD`: the password people must enter. Without it, the site refuses to make real books.
+- `DATABASE_URL`: add it as a reference to the Postgres service (Variables → Add Reference → Postgres → `DATABASE_URL`).
 
 Leave `MOCK` unset.
 

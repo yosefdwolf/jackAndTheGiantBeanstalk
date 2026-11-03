@@ -12,13 +12,15 @@ What still needs work in this build, most important first.
 
 ## Pipeline
 - **Pages 4–20 aren't written.** Page 4 (the beanstalk at dawn) is next. Each page is one entry in `stories/jack_and_the_beanstalk.yaml`.
-- **One request builds the whole book.** That's fine for 3 pages (about a minute), but 20 pages would take several minutes and could hit request timeouts on the host. It needs a background job with a progress endpoint before the book grows much.
+- **Progress bars estimate, they don't measure.** Each picture's bar follows how long that kind of picture usually takes (median of recent ones), not real progress from the model. OpenAI can stream partial images; showing those would be truer.
+- **Background books run inside the web process.** A deploy interrupts them (they resume on restart), and two app instances would each try to resume the same book. That's fine on one Railway instance; more instances need a real job queue.
 - **No title page or cover yet.**
 - **The PDF font is the built-in Times.** A picture-book font file (licensed for embedding) would look better.
 - **No retry when OpenAI's safety filter blocks a page.** That happened once, with an ordinary adult photo, and the same photo passed on the next try. Right now the whole book fails.
 
 ## Logging
-- **Logs live only in Railway's log view.** Every step is logged with a book ID (see README), but nothing stores or alerts on them. A failure is only noticed if someone reports a ref or happens to look. A log drain with an alert on `failed` lines would catch problems without anyone reporting them.
+- **Nothing alerts on failures.** Every step is saved in `book_events` and every ref has a row (see docs/schema.md), but a failed book is only noticed if someone reports its ref or looks. The debug panel (next phase) will list recent failures.
+- **Images are stored in Postgres** (about 1.5 MB per book). Fine for a class project; at scale they belong in object storage.
 
 ## Site
 - **One shared password (`APP_PASSWORD`), no rate limit.** Anyone with the password can make unlimited books. A per-password or per-IP limit would cap the spend.

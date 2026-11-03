@@ -1,15 +1,20 @@
 """Image providers. The book only talks to ImageProvider, so a new provider is one new class.
 
-MOCK=1 selects MockImageProvider: placeholder images, no API calls, no cost.
+Each book records which provider drew it (books.provider). MOCK=1 makes "mock" the default:
+placeholder images, no API calls, no cost. MOCK_DELAY=seconds makes mock images take time, so the
+progress bars can be watched locally.
 """
+import asyncio
 import base64
 import io
 import os
+import random
 from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
 
 from PIL import Image, ImageDraw, ImageOps
 
-from .log import add_cost, fields, log, step
+from .log import add_cost, record, step
 
 Ref = tuple[str, bytes]  # (filename, png bytes)
 
@@ -17,14 +22,26 @@ PAGE_SIZE = os.getenv("PAGE_SIZE", "1536x1024")  # wide picture-book pages
 SHEET_SIZE = "1024x1024"
 
 
+@dataclass
+class ImageResult:
+    png: bytes
+    cost: float = 0.0
+    tokens: dict = field(default_factory=dict)
+    request_id: str | None = None
+
+
 class ImageProvider(ABC):
-    @abstractmethod
-    async def edit(self, label: str, refs: list[Ref], prompt: str, size: str) -> bytes:
-        """Draw a new image guided by the reference images. Returns PNG bytes."""
+    name: str
+    model: str | None = None
+    quality: str | None = None
 
     @abstractmethod
-    async def generate(self, label: str, prompt: str, size: str) -> bytes:
-        """Draw an image from the prompt alone. Returns PNG bytes."""
+    async def edit(self, label: str, refs: list[Ref], prompt: str, size: str) -> ImageResult:
+        """Draw a new image guided by the reference images."""
+
+    @abstractmethod
+    async def generate(self, label: str, prompt: str, size: str) -> ImageResult:
+        """Draw an image from the prompt alone."""
 
     async def describe_face(self, face_png: bytes) -> str:
         """Short text description of a face, added to the hero sheet prompt. Optional."""
@@ -32,6 +49,7 @@ class ImageProvider(ABC):
 
 
 class OpenAIImageProvider(ImageProvider):
+    name = "openai"
     # List prices, USD per 1M tokens (text in, image in, image out). Check OpenAI's pricing page.
     PRICES = {
         "gpt-image-1": (5.0, 10.0, 40.0),
@@ -40,13 +58,13 @@ class OpenAIImageProvider(ImageProvider):
         "gpt-image-2.5-sunburst": (5.0, 8.0, 30.0),
     }
 
-    def __init__(self):
+    def __init__(self, model: str | None = None, quality: str | None = None):
         from openai import AsyncOpenAI
         # Reads OPENAI_API_KEY from the environment. One attempt per call: the SDK's default of 2
         # silent retries and a 10-minute timeout turned one stuck call into a 30-minute hang.
         self.client = AsyncOpenAI(max_retries=0, timeout=float(os.getenv("IMAGE_TIMEOUT_SECONDS", "120")))
-        self.model = os.getenv("IMAGE_MODEL", "gpt-image-2.5-flare")
-        self.quality = os.getenv("IMAGE_QUALITY", "medium")
+        self.model = model or os.getenv("IMAGE_MODEL", "gpt-image-2.5-flare")
+        self.quality = quality or os.getenv("IMAGE_QUALITY", "medium")
         self.vision_model = os.getenv("VISION_MODEL", "gpt-4.1-mini")
 
     async def edit(self, label, refs, prompt, size):
@@ -54,14 +72,12 @@ class OpenAIImageProvider(ImageProvider):
                         refs=",".join(n for n, _ in refs)):
             resp = await self.client.images.edit(model=self.model, image=[(n, b, "image/png") for n, b in refs],
                                                  prompt=prompt, quality=self.quality, size=size)
-            self._log_usage(label, resp)
-        return base64.b64decode(resp.data[0].b64_json)
+            return await self._result(label, resp)
 
     async def generate(self, label, prompt, size):
         async with step(label, call="images.generate", model=self.model, quality=self.quality, size=size):
             resp = await self.client.images.generate(model=self.model, prompt=prompt, quality=self.quality, size=size)
-            self._log_usage(label, resp)
-        return base64.b64decode(resp.data[0].b64_json)
+            return await self._result(label, resp)
 
     async def describe_face(self, face_png):
         from .prompts import DESCRIBE_FACE
@@ -74,32 +90,40 @@ class OpenAIImageProvider(ImageProvider):
                     {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{b64}"}},
                 ]}],
             )
-            log.info("usage face description %s", fields(tokens_in=resp.usage.prompt_tokens,
-                     tokens_out=resp.usage.completion_tokens, openai_request=resp._request_id))
+            await record("INFO", "face description", "usage", tokens_in=resp.usage.prompt_tokens,
+                         tokens_out=resp.usage.completion_tokens, provider_request=resp._request_id)
         return (resp.choices[0].message.content or "").strip()
 
-    def _log_usage(self, label, resp):
-        usage = resp.usage
-        details = getattr(usage, "input_tokens_details", None)
+    async def _result(self, label, resp) -> ImageResult:
+        png = base64.b64decode(resp.data[0].b64_json)
+        details = getattr(resp.usage, "input_tokens_details", None)
         if details is None:
-            log.info("usage %s %s", label, fields(openai_request=resp._request_id))
-            return
+            await record("INFO", label, "usage", provider_request=resp._request_id)
+            return ImageResult(png, request_id=resp._request_id)
         text_in, image_in, out = self.PRICES.get(self.model, self.PRICES["gpt-image-1"])
-        cost = (details.text_tokens * text_in + details.image_tokens * image_in + usage.output_tokens * out) / 1e6
+        tokens = {"text_in": details.text_tokens, "image_in": details.image_tokens, "out": resp.usage.output_tokens}
+        cost = (tokens["text_in"] * text_in + tokens["image_in"] * image_in + tokens["out"] * out) / 1e6
         add_cost(cost)
-        log.info("usage %s %s", label, fields(text_in=details.text_tokens, image_in=details.image_tokens,
-                 out=usage.output_tokens, cost=f"${cost:.3f}", openai_request=resp._request_id))
+        await record("INFO", label, "usage", **tokens, cost=f"${cost:.3f}", provider_request=resp._request_id)
+        return ImageResult(png, cost, tokens, resp._request_id)
 
 
 class MockImageProvider(ImageProvider):
     """Free placeholder art: the first reference (if any) posterized, under a red MOCK banner."""
+    name = "mock"
+    model = "mock"
+
+    def __init__(self, *_, **__):
+        self.delay = float(os.getenv("MOCK_DELAY", "0"))
 
     async def edit(self, label, refs, prompt, size):
         async with step(label, call="mock.edit", size=size, refs=",".join(n for n, _ in refs)):
-            return self._draw(label, size, refs[0][1] if refs else None, len(refs))
+            if self.delay:
+                await asyncio.sleep(self.delay * random.uniform(0.6, 1.4))
+            return ImageResult(self._draw(label, size, refs[0][1] if refs else None, len(refs)))
 
     async def generate(self, label, prompt, size):
-        return self._draw(label, size, None, 0)
+        return ImageResult(self._draw(label, size, None, 0))
 
     @staticmethod
     def _draw(label: str, size: str, ref: bytes | None, n_refs: int) -> bytes:
@@ -119,9 +143,19 @@ class MockImageProvider(ImageProvider):
         return buf.getvalue()
 
 
+PROVIDERS: dict[str, type[ImageProvider]] = {
+    "openai": OpenAIImageProvider,
+    "mock": MockImageProvider,
+}
+
+
 def is_mock() -> bool:
     return os.getenv("MOCK", "").lower() in {"1", "true", "yes"}
 
 
-def get_provider() -> ImageProvider:
-    return MockImageProvider() if is_mock() else OpenAIImageProvider()
+def default_provider_name() -> str:
+    return "mock" if is_mock() else "openai"
+
+
+def get_provider(name: str | None = None, model: str | None = None, quality: str | None = None) -> ImageProvider:
+    return PROVIDERS[name or default_provider_name()](model, quality)

@@ -1,24 +1,26 @@
 import hashlib
 import hmac
+import io
 import os
-import time
+import traceback
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from dotenv import load_dotenv
 
 load_dotenv()  # local dev only; on Railway the key comes from service variables
 
-import openai  # noqa: E402
 from fastapi import FastAPI, File, Form, Header, HTTPException, Request, UploadFile  # noqa: E402
-from fastapi.responses import HTMLResponse, Response  # noqa: E402
+from fastapi.responses import HTMLResponse, JSONResponse, Response  # noqa: E402
 from fastapi.staticfiles import StaticFiles  # noqa: E402
+from PIL import Image, ImageOps  # noqa: E402
 
-from .book.builder import PDF_NAME, build_book  # noqa: E402
-from .book.cast import MissingSheetError  # noqa: E402
-from .book.log import fields, log, setup_logging, start_book, step, total_cost  # noqa: E402
-from .book.pages import ChildInfo  # noqa: E402
-from .book.providers import is_mock  # noqa: E402
+from .book import jobs  # noqa: E402
+from .book.log import current_ref, new_ref, record, set_event_sink, set_ref, setup_logging, start_book, step  # noqa: E402
+from .book.providers import default_provider_name, is_mock  # noqa: E402
 from .book.story import PRONOUNS, load_story  # noqa: E402
+from .db.models import RequestError  # noqa: E402
+from .db.session import create_tables_if_sqlite, session  # noqa: E402
 from .faces import UploadError, prepare  # noqa: E402
 
 STATIC = Path(__file__).resolve().parent.parent / "static"
@@ -26,18 +28,50 @@ MAX_UPLOAD_BYTES = 25 * 1024 * 1024  # phone photos can be large; they are downs
 MAX_FIELD = 300
 
 setup_logging(os.getenv("LOG_LEVEL", "INFO"))
-app = FastAPI(title="Jack and the Beanstalk")
+
+
+@asynccontextmanager
+async def lifespan(app):
+    await create_tables_if_sqlite()
+    set_event_sink(jobs.save_event)
+    await jobs.resume_unfinished()
+    yield
+
+
+app = FastAPI(title="Jack and the Beanstalk", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
 # Browsers kept running an old app.js after deploys, so a click did nothing. The page's script and
 # stylesheet links carry a content hash, and everything is served with no-cache (re-check each time).
-ASSET_VERSION = hashlib.sha1(b"".join((STATIC / f).read_bytes() for f in ("app.js", "styles.css"))).hexdigest()[:10]
+ASSET_FILES = ["app.js", "styles.css", *(str(p.relative_to(STATIC)) for p in sorted((STATIC / "themes").rglob("*.*")))]
+ASSET_VERSION = hashlib.sha1(b"".join((STATIC / f).read_bytes() for f in ASSET_FILES)).hexdigest()[:10]
 NO_CACHE = {"Cache-Control": "no-cache"}
 
 
+async def save_request_error(ref, path, status_code, error_type, message, tb=None, browser=None):
+    try:
+        async with session() as s:
+            s.add(RequestError(id=ref, path=path[:256], status_code=status_code, error_type=error_type,
+                               message=message, traceback=tb, browser=browser))
+            await s.commit()
+    except Exception:
+        pass  # recording an error must never cause another
+
+
 @app.middleware("http")
-async def no_stale_files(request: Request, call_next):
-    response = await call_next(request)
+async def refs_and_errors(request: Request, call_next):
+    """Every request gets a ref (X-Request-Id). An unexpected crash is saved to request_errors with it."""
+    ref = new_ref()
+    set_ref(ref)
+    try:
+        response = await call_next(request)
+    except Exception as e:
+        await save_request_error(ref, request.url.path, 500, type(e).__name__, str(e), traceback.format_exc(),
+                                 request.headers.get("user-agent"))
+        await record("ERROR", "request", "crashed", path=request.url.path, error=type(e).__name__)
+        response = JSONResponse({"detail": f"Something went wrong on our side. Reference: {ref}", "ref": ref},
+                                status_code=500)
+    response.headers["X-Request-Id"] = ref
     if request.url.path == "/" or request.url.path.startswith("/static/"):
         response.headers["Cache-Control"] = "no-cache"
     return response
@@ -45,58 +79,83 @@ async def no_stale_files(request: Request, call_next):
 
 @app.get("/")
 def index():
+    """The page, dressed in the story's theme (static/themes/<theme>/)."""
+    theme = load_story().theme
     html = (STATIC / "index.html").read_text()
-    for asset in ("app.js", "styles.css"):
+    html = html.replace("<!--THEME_CSS-->", f'<link rel="stylesheet" href="/static/themes/{theme}/theme.css">')
+    html = html.replace("<!--SCENE-->", (STATIC / "themes" / theme / "scene.html").read_text())
+    for asset in ("app.js", "styles.css", f"themes/{theme}/theme.css"):
         html = html.replace(f"/static/{asset}\"", f"/static/{asset}?v={ASSET_VERSION}\"")
     return HTMLResponse(html, headers=NO_CACHE)
 
 
 @app.post("/api/client-error")
 async def client_error(request: Request):
-    """The page reports its own script errors here, so they show up in the server log."""
+    """The page reports its own script errors here. Returns the ref the page shows the user."""
+    ref = current_ref()
     body = (await request.body())[:2000].decode(errors="replace")
-    log.warning("page script error ip=%s %s", request.client.host if request.client else "-", body)
-    return Response(status_code=204)
+    await save_request_error(ref, "page-script", None, "PageScriptError", body,
+                             browser=request.headers.get("user-agent"))
+    await record("WARNING", "page script", "error", ip=request.client.host if request.client else None, report=body)
+    return {"ref": ref}
 
 
 @app.post("/no-script")
 def no_script():
     """Where the form lands if the page's script failed to load (the script normally takes over)."""
-    log.warning("form submitted without the page script")
-    return HTMLResponse("<p style='font:18px system-ui;padding:24px'>The page didn't finish loading. "
+    return HTMLResponse("<p style='font:18px Georgia,serif;padding:24px'>The page didn't finish loading. "
                         "Please <a href='/'>reload it</a> and try again.</p>", status_code=400)
 
 
 @app.get("/api/options")
 def options():
     story = load_story()
-    return {
-        "title": story.title,
-        "heroes": story.hero_names,
-        "pages": len(story.pages),
-        "mock": is_mock(),
-    }
+    return {"title": story.title, "heroes": story.hero_names, "pages": len(story.pages), "mock": is_mock()}
 
 
-def check_password(given: str | None) -> None:
+def password_problem(given: str | None) -> tuple[int, str, str] | None:
     """Every paid request needs APP_PASSWORD. If it isn't set, real books are refused (fail closed)."""
     expected = os.getenv("APP_PASSWORD", "")
     if not expected:
         if is_mock():
-            return  # mock books cost nothing
-        raise HTTPException(503, "The server has no APP_PASSWORD set, so it won't make books.")
+            return None  # mock books cost nothing
+        return 503, "no_app_password", "The server has no APP_PASSWORD set, so it won't make books."
     if not given or not hmac.compare_digest(given.encode(), expected.encode()):
-        raise HTTPException(401, "Wrong password.")
+        return 401, "wrong_password", "Wrong password."
+    return None
 
 
-def fail(book_id: str, status: int, message: str, reason: str) -> HTTPException:
-    """Log why a book was refused and return the error, tagged with the book's reference."""
-    log.warning("refused status=%d reason=%s", status, reason)
-    return HTTPException(status, f"{message} (ref {book_id})", headers={"X-Book-Id": book_id})
+@app.post("/api/unlock", status_code=204)
+async def unlock(request: Request, x_app_password: str | None = Header(None)):
+    """Checks the password on its own, so the page can open the rest of the form."""
+    if problem := password_problem(x_app_password):
+        status, reason, message = problem
+        ref = current_ref()
+        await save_request_error(ref, "/api/unlock", status, reason, message, browser=request.headers.get("user-agent"))
+        await record("WARNING", "unlock", "refused", reason=reason, ip=request.client.host if request.client else None)
+        raise HTTPException(status, {"message": message, "ref": ref, "reason": reason})
+    return Response(status_code=204)
 
 
-@app.post("/api/book")
-async def book_route(
+@app.post("/api/photo-preview")
+async def photo_preview(photo: UploadFile = File(...)):
+    """Turns a photo the browser can't show (e.g. HEIC in Chrome) into a JPEG for the preview and upload."""
+    data = await photo.read()
+    if len(data) > MAX_UPLOAD_BYTES:
+        raise HTTPException(413, {"message": "That photo is too large (max 25 MB).", "ref": current_ref()})
+    try:
+        img = ImageOps.exif_transpose(Image.open(io.BytesIO(data))).convert("RGB")
+    except Exception:
+        raise HTTPException(422, {"message": "That file isn't a photo we can read. Try a JPG, PNG or iPhone photo.",
+                                  "ref": current_ref()})
+    img.thumbnail((1600, 1600))
+    buf = io.BytesIO()
+    img.save(buf, "JPEG", quality=90)
+    return Response(buf.getvalue(), media_type="image/jpeg")
+
+
+@app.post("/api/books", status_code=202)
+async def create_book_route(
     request: Request,
     x_app_password: str | None = Header(None),
     photo: UploadFile = File(...),
@@ -106,54 +165,68 @@ async def book_route(
     favourites: str = Form(""),
     about: str = Form(""),
 ):
-    book_id = start_book()
-    t0 = time.perf_counter()
-    # Never log the password, the photo, or the child's name and details.
-    log.info("book requested %s", fields(ip=request.client.host if request.client else None, gender=gender,
-                                         details=sum(bool(v.strip()) for v in (age, favourites, about))))
-    try:
-        check_password(x_app_password)
-    except HTTPException as e:
-        raise fail(book_id, e.status_code, e.detail,
-                   "no APP_PASSWORD set" if e.status_code == 503 else "wrong password")
-
-    data = await photo.read()
-    log.info("photo received bytes=%d", len(data))
-    if len(data) > MAX_UPLOAD_BYTES:
-        raise fail(book_id, 413, "That photo is too large (max 25 MB).", "photo too large")
-    if gender not in PRONOUNS:
-        raise fail(book_id, 400, "Choose Jack or Jane.", "unknown gender")
-    name = name.strip()
-    if not name:
-        raise fail(book_id, 400, "Please enter the child's name.", "no name")
-    if any(len(v) > MAX_FIELD for v in (name, age, favourites, about)):
-        raise fail(book_id, 400, f"Each answer can be up to {MAX_FIELD} characters.", "field too long")
-    details = [(label, value.strip()) for label, value in
+    ref = start_book(current_ref())
+    details = [[label, value.strip()[:MAX_FIELD]] for label, value in
                (("Age", age), ("Favourite things", favourites), ("More about me", about)) if value.strip()]
+    # The row exists before any check, so even a refused request can be looked up by its ref.
+    await jobs.create_book(ref, gender=gender, child_name=name.strip()[:MAX_FIELD], details=details,
+                           provider=default_provider_name(), model=None, quality=None)
+    # Never log the password, the photo, or the child's name and details.
+    await record("INFO", "request", "received", ip=request.client.host if request.client else None,
+                 gender=gender, details=len(details))
 
+    async def refuse(status: int, reason: str, message: str):
+        await jobs.refuse(ref, reason, message)
+        raise HTTPException(status, {"message": message, "ref": ref, "reason": reason}, headers={"X-Book-Id": ref})
+
+    if problem := password_problem(x_app_password):
+        await refuse(*problem)
+    data = await photo.read()
+    if len(data) > MAX_UPLOAD_BYTES:
+        await refuse(413, "photo_too_large", "That photo is too large (max 25 MB).")
+    if gender not in PRONOUNS:
+        await refuse(400, "unknown_gender", "Choose Jack or Jane.")
+    if not name.strip():
+        await refuse(400, "no_name", "Please enter the child's name.")
+    if any(len(v) > MAX_FIELD for v in (name, age, favourites, about)):
+        await refuse(400, "field_too_long", f"Each answer can be up to {MAX_FIELD} characters.")
     try:
-        async with step("face check"):
+        async with step("face check", photo_bytes=len(data)):
             prepared = prepare(data)
     except UploadError as e:
-        raise fail(book_id, 422, str(e), "face check")
+        await refuse(422, "face_check", str(e))
 
-    try:
-        pdf = await build_book(prepared, ChildInfo(name, details), gender)
-    except Exception as e:
-        if isinstance(e, MissingSheetError):
-            raise fail(book_id, 500, str(e), "missing character sheet")
-        if isinstance(e, openai.APITimeoutError):
-            raise fail(book_id, 504, "The image service took too long to draw a page. Please try again.", "timeout")
-        if isinstance(e, openai.BadRequestError):
-            raise fail(book_id, 400, f"The image service rejected this request: {e.message}",
-                       f"openai {getattr(e, 'code', '')}")
-        if isinstance(e, openai.OpenAIError):
-            raise fail(book_id, 502, "The image service failed. Please try again in a moment.",
-                       f"openai {type(e).__name__}")
-        log.exception("book crashed")
-        raise fail(book_id, 500, "Something went wrong on our side.", "unexpected error") from e
+    await jobs.accept(ref, prepared, photo.content_type or "image/unknown")
+    return {"id": ref, "status_url": f"/api/books/{ref}"}
 
-    log.info("book done %s", fields(pdf_bytes=len(pdf), seconds=f"{time.perf_counter() - t0:.1f}",
-                                    cost=f"${total_cost():.3f}"))
+
+@app.get("/api/books/{ref}")
+async def book_status(ref: str):
+    data = await jobs.status(ref)
+    if data is None:
+        raise HTTPException(404, {"message": "No book with that reference.", "ref": ref})
+    return data
+
+
+@app.get("/api/books/{ref}/images/{name}")
+async def book_image(ref: str, name: str, w: int | None = None):
+    kind, _, page = name.rpartition("-")
+    data = await jobs.image_bytes(ref, kind, int(page)) if page.isdigit() else None
+    if data is None:
+        raise HTTPException(404, "No such image.")
+    if w:  # thumbnails for the progress list
+        img = Image.open(io.BytesIO(data))
+        img.thumbnail((min(w, 1600), min(w, 1600)))
+        buf = io.BytesIO()
+        img.save(buf, "WEBP", quality=85)
+        data = buf.getvalue()
+    return Response(data, media_type="image/webp", headers={"Cache-Control": "private, max-age=86400"})
+
+
+@app.get("/api/books/{ref}/pdf")
+async def book_pdf(ref: str):
+    pdf = await jobs.pdf_bytes(ref)
+    if pdf is None:
+        raise HTTPException(404, {"message": "That book isn't finished.", "ref": ref})
     return Response(pdf, media_type="application/pdf",
-                    headers={"Content-Disposition": f'attachment; filename="{PDF_NAME}"', "X-Book-Id": book_id})
+                    headers={"Content-Disposition": f'attachment; filename="{jobs.PDF_NAME}"'})

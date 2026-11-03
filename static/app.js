@@ -1,11 +1,18 @@
-// If anything on this page breaks, say so on screen and tell the server log (with the browser),
+// If anything on this page breaks, say so on screen (with a reference) and save it on the server,
 // so "I clicked and nothing happened" can be traced.
 function reportPageError(message) {
   const box = document.getElementById('error');
-  if (box) { box.textContent = 'Something went wrong on this page. Please reload it and try again.'; box.hidden = false; }
+  const show = (ref) => {
+    if (box) {
+      box.textContent = 'Oops, something on this page broke. Please reload it and try again.' + (ref ? ` (reference ${ref})` : '');
+      box.hidden = false;
+    }
+  };
   try {
-    navigator.sendBeacon('/api/client-error', JSON.stringify({ message: String(message).slice(0, 500), browser: navigator.userAgent }));
-  } catch {}
+    fetch('/api/client-error', { method: 'POST', keepalive: true,
+      body: JSON.stringify({ message: String(message).slice(0, 500), page: location.pathname }) })
+      .then((r) => r.json()).then((d) => show(d.ref)).catch(() => show());
+  } catch { show(); }
 }
 window.addEventListener('error', (e) => reportPageError(e.message));
 window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
@@ -13,23 +20,93 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
 (() => {
   const $ = (id) => document.getElementById(id);
   const form = $('form'), drop = $('drop'), preview = $('preview'), go = $('go'), error = $('error');
-  const resultsWrap = $('resultsWrap'), timer = $('timer');
   const MAX_SIDE = 1600;
   const PDF_NAME = 'JackAndTheBeanstalk.pdf';
   const PASSWORD_KEY = 'beanstalk-password';
+  const BOOK_KEY = 'beanstalk-book';
+  const POLL_MS = 1500;
 
   let photo = null;      // Blob that will be uploaded
-  let pdfUrl = null;
+  let password = '';
+  let hero = 'Jack';
 
-  fetch('/api/options').then((r) => r.json()).then((o) => {
-    $('mockBadge').hidden = !o.mock;
-  }).catch(() => {});
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+    drop(k) { try { localStorage.removeItem(k); } catch {} },
+  };
 
-  // Remember the password on this device only, as a convenience. Never required to work.
-  try { form.password.value = localStorage.getItem(PASSWORD_KEY) || ''; } catch {}
+  function errorDetail(data, res) {
+    const d = data && typeof data.detail === 'object' ? data.detail : { message: (data && data.detail) || `Something went wrong (${res.status}).` };
+    d.ref = d.ref || res.headers.get('X-Request-Id');
+    return d;
+  }
 
-  // Shrink big phone photos before upload (faster on mobile data). If the browser can't
-  // decode the file (e.g. HEIC in Chrome on Windows), upload it as-is: the server converts it.
+  fetch('/api/options').then((r) => r.json()).then((o) => { $('mockBadge').hidden = !o.mock; }).catch(() => {});
+
+  // The beanstalk in the scenery grows with the book (0 = a sprout, 1 = into the clouds).
+  function grow(fraction) { document.body.style.setProperty('--growth', String(Math.max(0.04, Math.min(1, fraction)))); }
+  grow(0.06);
+
+  // --- the magic word comes first ---------------------------------------------------------------------
+
+  const gate = $('gate'), pwField = $('password'), pwError = $('passwordError');
+
+  function showPasswordError(msg) {
+    pwError.textContent = msg;
+    pwError.hidden = false;
+    pwField.setAttribute('aria-invalid', 'true');
+    pwField.value = '';
+    pwField.focus();
+  }
+  pwField.addEventListener('input', () => { pwError.hidden = true; pwField.removeAttribute('aria-invalid'); });
+
+  function openBook(animate) {
+    store.set(PASSWORD_KEY, password);
+    const show = () => {
+      gate.hidden = true;
+      form.hidden = false;
+      form.classList.add('reveal');
+      grow(0.12);
+    };
+    if (animate) { gate.classList.add('opening'); setTimeout(show, 520); } else show();
+  }
+
+  function lockAgain(message) {
+    store.drop(PASSWORD_KEY);
+    password = '';
+    form.hidden = true;
+    $('printing').hidden = true;
+    gate.hidden = false;
+    gate.classList.remove('opening');
+    showPasswordError(message);
+    gate.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  async function tryPassword(candidate, animate) {
+    const res = await fetch('/api/unlock', { method: 'POST', headers: { 'X-App-Password': candidate } });
+    if (res.ok) { password = candidate; openBook(animate); return true; }
+    const d = errorDetail(await res.json().catch(() => ({})), res);
+    return d;
+  }
+
+  $('gateForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!pwField.value) return showPasswordError('Type the magic word first.');
+    $('unlockBtn').disabled = true;
+    try {
+      const result = await tryPassword(pwField.value, true);
+      if (result !== true) showPasswordError(`That’s not the magic word. (reference ${result.ref})`);
+    } catch {
+      showPasswordError('We couldn’t reach the book. Check your connection and try again.');
+    } finally {
+      $('unlockBtn').disabled = false;
+    }
+  });
+
+  // --- the photograph -------------------------------------------------------------------------------
+
+  // Shrink big phone photos before upload (faster on mobile data).
   async function downscale(file) {
     try {
       const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' });
@@ -39,63 +116,66 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
       canvas.height = Math.round(bmp.height * scale);
       canvas.getContext('2d').drawImage(bmp, 0, 0, canvas.width, canvas.height);
       const blob = await new Promise((res) => canvas.toBlob(res, 'image/jpeg', 0.9));
-      return blob ? { blob, url: URL.createObjectURL(blob) } : { blob: file, url: null };
-    } catch {
-      return { blob: file, url: null };
-    }
+      if (blob) return blob;
+    } catch {}
+    return null;
+  }
+
+  // Browsers that can't read the photo (e.g. an iPhone HEIC in Chrome) get it converted by the server.
+  async function convertOnServer(file) {
+    const body = new FormData();
+    body.append('photo', file, file.name || 'photo');
+    const res = await fetch('/api/photo-preview', { method: 'POST', body });
+    if (!res.ok) throw errorDetail(await res.json().catch(() => ({})), res);
+    return res.blob();
   }
 
   async function setFile(file) {
     if (!file) return;
     showError('');
-    const { blob, url } = await downscale(file);
-    photo = blob;
-    if (url) {
-      preview.src = url;
-      preview.hidden = false;
-      drop.classList.add('has-photo');
-    } else {
-      preview.hidden = true;
-      drop.classList.remove('has-photo');
-      drop.querySelector('.drop-title').textContent = `Selected: ${file.name}`;
+    $('polaroidCaption').textContent = 'developing…';
+    let blob = await downscale(file);
+    if (!blob) {
+      try { blob = await convertOnServer(file); }
+      catch (d) {
+        $('polaroidCaption').textContent = 'tap or drop a photo';
+        return showError(`${d.message || 'We couldn’t open that photo.'}${d.ref ? ` (reference ${d.ref})` : ''}`);
+      }
     }
-    go.disabled = false;
+    photo = blob;
+    preview.src = URL.createObjectURL(blob);
+    preview.hidden = false;
+    drop.classList.add('has-photo');
+    $('polaroidCaption').textContent = 'what a star!';
+    updateReady();
   }
-
-  // Wrong password: say so right at the field, clear it and put the cursor there.
-  function showPasswordError(msg) {
-    const field = form.password, note = $('passwordError');
-    note.textContent = msg;
-    note.hidden = false;
-    field.setAttribute('aria-invalid', 'true');
-    field.value = '';
-    try { localStorage.removeItem(PASSWORD_KEY); } catch {}
-    field.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    field.focus({ preventScroll: true });
-  }
-
-  form.password.addEventListener('input', () => {
-    $('passwordError').hidden = true;
-    form.password.removeAttribute('aria-invalid');
-  });
 
   function showError(msg) {
     error.textContent = msg;
     error.hidden = !msg;
   }
 
+  function updateReady() {
+    const hasName = form.name.value.trim().length > 0;
+    go.disabled = !(photo && hasName);
+    $('goNote').textContent = !photo && !hasName ? 'Add a photo and a name to begin'
+      : !photo ? 'Now pop in a photo' : !hasName ? 'Now write their name' : 'Ready when you are!';
+  }
+  form.name.addEventListener('input', updateReady);
+  form.addEventListener('change', (e) => { if (e.target.name === 'gender') hero = e.target.value === 'girl' ? 'Jane' : 'Jack'; });
+
   // Selfie: phones open the front camera through the file input; computers use the webcam.
   const camera = $('camera'), video = $('cameraVideo'), cameraError = $('cameraError');
   let stream = null;
 
   function stopCamera() {
-    stream?.getTracks().forEach((t) => t.stop());
+    if (stream) stream.getTracks().forEach((t) => t.stop());
     stream = null;
     if (camera.open) camera.close();
   }
 
   $('selfieBtn').addEventListener('click', async () => {
-    if (matchMedia('(pointer: coarse)').matches || !navigator.mediaDevices?.getUserMedia) {
+    if (matchMedia('(pointer: coarse)').matches || !(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) {
       $('cameraInput').click();
       return;
     }
@@ -107,7 +187,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
       video.srcObject = stream;
       $('cameraShoot').disabled = false;
     } catch {
-      cameraError.textContent = 'We could not open your camera. Allow camera access, or choose a photo instead.';
+      cameraError.textContent = 'We couldn’t open your camera. Allow camera access, or choose a photo instead.';
       cameraError.hidden = false;
     }
   });
@@ -132,72 +212,342 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
   ['dragleave', 'drop'].forEach((t) => drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.remove('over'); }));
   drop.addEventListener('drop', (e) => setFile(e.dataTransfer.files[0]));
 
+  // --- planting the beans: send the book to be drawn ------------------------------------------------
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    if (!photo) return showError('Choose a photo first.');
-    if (!form.name.value.trim()) return showError("Please enter the child's name.");
-    if (!form.password.value) return showPasswordError('Enter the password to make a book.');
+    if (!photo) return showError('Pop in a photo of the child first.');
+    if (!form.name.value.trim()) return showError('Write the child’s name first.');
     showError('');
     go.disabled = true;
-    go.textContent = 'Making your book…';
+    go.textContent = 'Planting…';
+    hero = new FormData(form).get('gender') === 'girl' ? 'Jane' : 'Jack';
 
-    $('bookReady').hidden = true;
-    $('bookWorking').hidden = false;
-    resultsWrap.hidden = false;
-    $('again').hidden = true;
-    resultsWrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    const started = Date.now();
-    const tick = setInterval(() => { timer.textContent = `${Math.round((Date.now() - started) / 1000)}s · usually about a minute`; }, 1000);
-
-    let giveUp;
     const body = new FormData(form);
-    body.delete('password');  // sent as a header instead
-    body.append('photo', photo, photo.name || 'photo.jpg');
-
+    body.append('photo', photo, 'photo.jpg');
     try {
-      // Longer than the server's worst case (2 min for the cartoon + 2 min for the pages).
-      // A plain timer rather than AbortSignal.timeout, which older Safari doesn't have.
-      const controller = new AbortController();
-      giveUp = setTimeout(() => controller.abort(), 5 * 60 * 1000);
-      const res = await fetch('/api/book', { method: 'POST', body, headers: { 'X-App-Password': form.password.value },
-                                             signal: controller.signal });
+      const res = await fetch('/api/books', { method: 'POST', body, headers: { 'X-App-Password': password } });
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw Object.assign(new Error(data.detail || `Something went wrong (${res.status}).`), { status: res.status });
+        const d = errorDetail(data, res);
+        if (d.reason === 'wrong_password') return lockAgain(`The magic word changed. Please type it again. (reference ${d.ref})`);
+        showError(`${d.message}${d.ref ? ` (reference ${d.ref})` : ''}`);
+        return error.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
-      try { localStorage.setItem(PASSWORD_KEY, form.password.value); } catch {}
-      if (pdfUrl) URL.revokeObjectURL(pdfUrl);
-      pdfUrl = URL.createObjectURL(await res.blob());
-      Object.assign($('download'), { href: pdfUrl, download: PDF_NAME });
-      $('openPdf').href = pdfUrl;
-      $('bookWorking').hidden = true;
-      $('bookReady').hidden = false;
-      timer.textContent = `Done in ${Math.round((Date.now() - started) / 1000)}s`;
-    } catch (err) {
-      resultsWrap.hidden = true;
-      if (err.status === 401) {
-        showPasswordError(err.message);
-      } else {
-        showError(err.name === 'AbortError' ? 'This is taking much longer than usual, so we stopped waiting. Please try again.'
-          : err.message === 'Failed to fetch' ? 'Network problem. Check your connection and try again.' : err.message);
-        error.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
+      watch(data.id);
+    } catch {
+      showError('We couldn’t reach the book. Check your connection and try again.');
     } finally {
-      clearTimeout(giveUp);
-      clearInterval(tick);
-      $('again').hidden = false;
-      go.disabled = false;
-      go.textContent = 'Make my book';
+      go.textContent = 'Plant the magic beans';
+      updateReady();
     }
   });
 
-  $('again').addEventListener('click', () => {
+  // --- growing the book: one progress bar per picture -------------------------------------------------
+
+  // What each picture is "doing", by how far along it is. Showing the work holds attention and
+  // makes the wait feel worthwhile (Buell & Norton's labour illusion).
+  const STAGES = {
+    hero_sheet: ['Studying the photo', 'Sketching the face', 'Finding the likeness', 'Adding colour', 'Final sparkle'],
+    page: ['Setting the scene', 'Sketching {hero} and friends', 'Inking the lines', 'Painting the colours', 'Final sparkle'],
+  };
+
+  // How full a bar is, from how long the picture has been drawing (t) and how long that kind of
+  // picture usually takes (eta). Speeding up toward the end feels fastest and stalling near the end
+  // feels worst (Harrison et al., "Rethinking the progress bar"), so: gently accelerate to 88% at the
+  // usual time, keep creeping toward 97% without ever stopping, then sweep to 100% when it arrives.
+  function estimate(t, eta) {
+    const r = Math.max(0, t) / eta;
+    if (r <= 1) return 0.04 + 0.84 * Math.pow(r, 1.35);
+    return 0.97 - 0.09 * Math.exp(-(r - 1) * 1.6);
+  }
+
+  function stageText(img, fraction, overdue) {
+    if (overdue) return img.kind === 'page' ? 'Last little details…' : 'Taking a little longer than usual';
+    const list = STAGES[img.kind] || STAGES.page;
+    return list[Math.min(list.length - 1, Math.floor(fraction * list.length))].replace('{hero}', hero);
+  }
+
+  let book = null, clockOffset = 0, frame = 0, pollTimer = 0, watching = null;
+  const rows = new Map();  // "kind-page" -> {el, shown}
+
+  const key = (img) => `${img.kind}-${img.page}`;
+  const seconds = (ms) => `${Math.max(0, Math.round(ms / 1000))}s`;
+  const serverNow = () => Date.now() + clockOffset;
+
+  function makeRow(img) {
+    const li = document.createElement('li');
+    li.className = `plate waiting${img.kind === 'hero_sheet' ? ' hero' : ''}`;
+    li.innerHTML = '<div class="thumb"><img alt=""></div><div class="plate-body"><p class="plate-name"></p>' +
+      '<p class="plate-text"></p><p class="plate-stage"><span class="what"></span><span class="time"></span></p>' +
+      '<div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"><i></i></div></div>';
+    li.querySelector('.plate-name').textContent = img.label;
+    li.querySelector('.plate-text').textContent = img.text || 'Drawn first, so the child looks the same on every page.';
+    $('plates').append(li);
+    return { el: li, shown: 0 };
+  }
+
+  function paintRow(img) {
+    const row = rows.get(key(img));
+    const el = row.el, bar = el.querySelector('.bar i'), what = el.querySelector('.what'), time = el.querySelector('.time');
+    el.className = `plate ${img.status}${img.kind === 'hero_sheet' ? ' hero' : ''}`;
+    let fraction = 0;
+    if (img.status === 'waiting') {
+      const heroImg = book.images.find((i) => i.kind === 'hero_sheet');
+      what.textContent = img.kind === 'page' && heroImg && heroImg.status !== 'done' ? 'Waiting for the cartoon' : 'Up next';
+      time.textContent = '';
+    } else if (img.status === 'drawing') {
+      const t = serverNow() - Date.parse(img.started_at);
+      fraction = estimate(t / 1000, img.eta_seconds);
+      what.textContent = stageText(img, fraction, t / 1000 > img.eta_seconds * 1.3);
+      time.textContent = `${seconds(t)} · usually ${Math.round(img.eta_seconds)}s`;
+    } else if (img.status === 'done') {
+      fraction = 1;
+      what.textContent = 'Done!';
+      time.textContent = img.started_at && img.finished_at ? seconds(Date.parse(img.finished_at) - Date.parse(img.started_at)) : '';
+      const pic = el.querySelector('.thumb img');
+      if (!pic.getAttribute('src') && img.image_url) {
+        pic.onload = () => pic.classList.add('shown');
+        pic.src = `${img.image_url}?w=360`;
+        pic.alt = img.label;
+      }
+    } else if (img.status === 'failed') {
+      fraction = Math.max(row.shown, 0.1);
+      what.textContent = img.error || 'This picture couldn’t be drawn.';
+      time.textContent = '';
+    }
+    // Never move a bar backwards; when a picture arrives, sweep the rest of the way.
+    fraction = Math.max(row.shown, fraction);
+    bar.style.transition = img.status === 'done' && row.shown < 1 ? 'width .45s ease-out' : 'none';
+    bar.style.width = `${(fraction * 100).toFixed(2)}%`;
+    el.querySelector('.bar').setAttribute('aria-valuenow', String(Math.round(fraction * 100)));
+    row.shown = fraction;
+    return fraction;
+  }
+
+  function paintAll() {
+    if (!book) return;
+    const fractions = book.images.map(paintRow);
+    grow(0.12 + 0.88 * (fractions.reduce((a, b) => a + b, 0) / Math.max(1, fractions.length)));
+    const done = book.images.filter((i) => i.status === 'done').length;
+    $('tally').textContent = `${done} of ${book.images.length}`;
+    const starts = book.images.map((i) => i.started_at).filter(Boolean).map(Date.parse);
+    if (starts.length) {
+      const ends = book.images.map((i) => i.finished_at).filter(Boolean).map(Date.parse);
+      const end = book.status === 'done' || book.status === 'failed' ? Math.max(...ends) : serverNow();
+      $('elapsed').textContent = seconds(end - Math.min(...starts));
+    }
+    if (['running', 'queued', 'interrupted'].includes(book.status)) frame = requestAnimationFrame(paintAll);
+  }
+
+  async function poll() {
+    try {
+      const res = await fetch(`/api/books/${watching}`, { cache: 'no-store' });
+      if (res.status === 404) return finish({ id: watching, status: 'failed', error: 'We couldn’t find that book.' });
+      const data = await res.json();
+      clockOffset = Date.parse(data.server_time) - Date.now();
+      book = data;
+      for (const img of data.images) if (!rows.has(key(img))) rows.set(key(img), makeRow(img));
+      cancelAnimationFrame(frame);
+      paintAll();
+      if (['done', 'failed', 'refused'].includes(data.status)) return finish(data);
+    } catch {
+      // A blip in the connection: the book keeps growing on the server, so just ask again.
+    }
+    pollTimer = setTimeout(poll, POLL_MS);
+  }
+
+  function watch(id) {
+    watching = id;
+    store.set(BOOK_KEY, id);
+    if (location.hash !== `#book=${id}`) history.replaceState(null, '', `#book=${id}`);
+    rows.clear();
+    $('plates').replaceChildren();
+    $('ref').textContent = id;
+    $('readerRef').textContent = id;
+    $('bookError').hidden = true;
+    $('printingTitle').textContent = 'Growing your book';
+    gate.hidden = true;
+    form.hidden = true;
+    $('reader').hidden = true;
+    $('printing').hidden = false;
+    $('printing').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    clearTimeout(pollTimer);
+    poll();
+  }
+
+  function finish(data) {
+    cancelAnimationFrame(frame);
+    clearTimeout(pollTimer);
+    store.drop(BOOK_KEY);
+    if (data.status === 'done' && data.book) {
+      grow(1);
+      openReader(data);
+    } else {
+      $('printingTitle').textContent = 'Oh no, the beans didn’t grow';
+      $('bookError').textContent = `${data.error || 'This book couldn’t be finished.'} (reference ${data.id})`;
+      $('bookError').hidden = false;
+      const again = document.createElement('p');
+      again.innerHTML = '<button class="btn plain" type="button">Try again</button>';
+      again.style.textAlign = 'center';
+      again.style.marginTop = '14px';
+      again.querySelector('button').addEventListener('click', startOver);
+      $('printing').append(again);
+    }
+  }
+
+  // --- the flip book --------------------------------------------------------------------------------
+
+  let leaves = [], current = 0;
+
+  function el(tag, cls, text) {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+
+  function pageFace(spec, info) {
+    const face = el('div', 'face front');
+    if (spec.kind === 'cover') {
+      face.classList.add('cover-page');
+      const img = el('img'); img.src = `${info.cover_url}?w=700`; img.alt = `${info.child_name} as ${info.hero}`;
+      const words = el('div');
+      words.append(el('h3', null, info.title), el('p', null, `starring ${info.child_name}`));
+      face.append(img, words);
+    } else if (spec.kind === 'illustrated') {
+      face.classList.add('story-page', `zone-${spec.text_zone}`);
+      const img = el('img'); img.src = `${spec.image_url}?w=1400`; img.alt = spec.text;
+      face.append(img, el('p', 'story-text', spec.text));
+    } else if (spec.kind === 'about_me') {
+      face.classList.add('about-page');
+      const img = el('img'); img.src = `${info.cover_url}?w=600`; img.alt = info.child_name;
+      const words = el('div');
+      words.append(el('h3', null, 'About Me'), el('p', 'child', info.child_name));
+      const dl = el('dl');
+      for (const [label, value] of info.details) dl.append(el('dt', null, label), el('dd', null, value));
+      words.append(dl);
+      face.append(img, words);
+    } else {
+      face.classList.add('end-page');
+      face.append(el('h3', null, 'The End'));
+    }
+    return face;
+  }
+
+  // Load every picture before the book opens, so a turning page always has the next one ready under it.
+  function preload(bookEl) {
+    return Promise.all([...bookEl.querySelectorAll('img')].map((img) =>
+      img.decode ? img.decode().catch(() => {}) : new Promise((r) => { img.onload = img.onerror = r; })));
+  }
+
+  async function openReader(data) {
+    const info = data.book;
+    const specs = [{ kind: 'cover' }, ...info.pages, { kind: 'end' }];
+    const bookEl = $('flipbook');
+    bookEl.replaceChildren();
+    leaves = specs.map((spec, i) => {
+      const leaf = el('div', 'leaf');
+      leaf.style.zIndex = String(specs.length - i);
+      leaf.append(pageFace(spec, info), el('div', 'face back'));
+      bookEl.append(leaf);
+      return leaf;
+    });
+    current = 0;
+    $('printingTitle').textContent = 'Binding your book…';
+    await preload(bookEl);
+    $('printing').hidden = true;
+    Object.assign($('download'), { href: data.pdf_url, download: PDF_NAME });
+    $('reader').hidden = false;
+    $('reader').classList.add('reveal');
+    showPage();
+    $('reader').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // Stacking: unturned pages from front to back, turned pages underneath. A page that's mid-turn stays
+  // on top of everything until it has finished turning, so it never vanishes behind the next one.
+  let turningLeaf = null;
+  function stack() {
+    leaves.forEach((leaf, i) => {
+      leaf.style.zIndex = leaf === turningLeaf ? String(leaves.length * 3)
+        : String(i < current ? i + 1 : leaves.length * 2 - i);
+    });
+  }
+
+  function showPage() {
+    leaves.forEach((leaf, i) => leaf.classList.toggle('turned', i < current));
+    stack();
+    $('prevPage').disabled = current === 0;
+    $('nextPage').disabled = current >= leaves.length - 1;
+    $('pageCount').textContent = current === 0 ? 'Cover' : current === leaves.length - 1 ? 'The End' : `Page ${current} of ${leaves.length - 2}`;
+  }
+
+  function turn(step) {
+    const next = Math.max(0, Math.min(leaves.length - 1, current + step));
+    if (next === current) return;
+    const leaf = leaves[step > 0 ? current : next];
+    turningLeaf = leaf;
+    leaf.classList.add('turning');
+    current = next;
+    showPage();
+    clearTimeout(leaf._done);
+    leaf._done = setTimeout(() => {
+      leaf.classList.remove('turning');
+      if (turningLeaf === leaf) turningLeaf = null;
+      stack();
+    }, 900);
+  }
+
+  $('prevPage').addEventListener('click', () => turn(-1));
+  $('nextPage').addEventListener('click', () => turn(1));
+  $('flipbook').addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') { e.preventDefault(); turn(1); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); turn(-1); }
+  });
+  let swiped = false;
+  $('flipbook').addEventListener('click', (e) => {
+    if (swiped) { swiped = false; return; }  // the swipe already turned the page
+    const box = e.currentTarget.getBoundingClientRect();
+    turn(e.clientX - box.left > box.width / 2 ? 1 : -1);
+  });
+  let swipeX = null;
+  $('flipbook').addEventListener('pointerdown', (e) => { swipeX = e.clientX; });
+  $('flipbook').addEventListener('pointerup', (e) => {
+    if (swipeX != null && Math.abs(e.clientX - swipeX) > 40) { swiped = true; turn(e.clientX < swipeX ? 1 : -1); }
+    swipeX = null;
+  });
+
+  function startOver() {
+    clearTimeout(pollTimer);
+    cancelAnimationFrame(frame);
+    history.replaceState(null, '', location.pathname);
+    store.drop(BOOK_KEY);
+    $('printing').hidden = true;
+    $('reader').hidden = true;
+    for (const extra of $('printing').querySelectorAll('p:not(.ref):not(.tally):not(.error)')) extra.remove();
+    form.hidden = !password;
+    gate.hidden = !!password;
     photo = null;
     preview.hidden = true;
     drop.classList.remove('has-photo');
-    drop.querySelector('.drop-title').textContent = 'Drop a photo here';
-    resultsWrap.hidden = true;
-    go.disabled = true;
+    $('polaroidCaption').textContent = 'tap or drop a photo';
+    grow(0.12);
+    updateReady();
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  });
+  }
+  $('again').addEventListener('click', startOver);
+
+  // --- on load ----------------------------------------------------------------------------------------
+
+  updateReady();
+  const fromHash = (location.hash.match(/^#book=([a-f0-9]{8})$/) || [])[1];
+  const savedBook = store.get(BOOK_KEY);
+  const savedPassword = store.get(PASSWORD_KEY);
+  if (savedPassword) {
+    // Already know the magic word on this device: check it quietly and skip the gate.
+    tryPassword(savedPassword, false).then((ok) => { if (ok !== true) store.drop(PASSWORD_KEY); }).catch(() => {});
+  } else {
+    pwField.focus({ preventScroll: true });
+  }
+  if (fromHash || savedBook) watch(fromHash || savedBook);
 })();

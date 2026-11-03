@@ -1,13 +1,18 @@
 """Page types. The story file names a type per page; PAGE_TYPES maps it to a class.
 
-To add a page type: subclass Page, implement render(), register it in PAGE_TYPES.
+A page works in two steps, so drawn images can be saved and reused (resume after a restart, rebuild
+the PDF on download) without paying for them again:
+  draw(ctx)            -> the image this page needs, or None if it needs no API call
+  layout(ctx, image)   -> what the PDF puts on the page
+
+To add a page type: subclass Page, implement both, register it in PAGE_TYPES.
 """
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 
 from .cast import CastSheets
 from .prompts import PromptBuilder
-from .providers import PAGE_SIZE, ImageProvider
+from .providers import PAGE_SIZE, ImageProvider, ImageResult
 from .story import Casting, PageSpec
 
 
@@ -38,24 +43,38 @@ class RenderedPage:
 
 
 class Page(ABC):
+    needs_image = False
+
     def __init__(self, spec: PageSpec):
         self.spec = spec
 
+    @property
+    def label(self) -> str:
+        return f"page {self.spec.number}"
+
+    def prompt(self, ctx: BookContext) -> str | None:
+        return None
+
+    async def draw(self, ctx: BookContext) -> ImageResult | None:
+        return None
+
     @abstractmethod
-    async def render(self, ctx: BookContext) -> RenderedPage:
+    def layout(self, ctx: BookContext, image: bytes | None) -> RenderedPage:
         ...
 
 
 class IllustratedPage(Page):
-    """Art from the cast's reference sheets, story text drawn on top later by the PDF layer."""
+    """Art from the cast's reference sheets, story text drawn on top by the PDF layer."""
+    needs_image = True
 
-    async def render(self, ctx: BookContext) -> RenderedPage:
-        image = await ctx.provider.edit(
-            label=f"page {self.spec.number}",
-            refs=ctx.sheets.refs(self.spec.cast),
-            prompt=ctx.prompts.page(self.spec),
-            size=PAGE_SIZE,
-        )
+    def prompt(self, ctx):
+        return ctx.prompts.page(self.spec)
+
+    async def draw(self, ctx):
+        return await ctx.provider.edit(label=self.label, refs=ctx.sheets.refs(self.spec.cast),
+                                       prompt=self.prompt(ctx), size=PAGE_SIZE)
+
+    def layout(self, ctx, image):
         return RenderedPage(self.spec.number, "illustrated", image=image,
                             text=ctx.casting.fill(self.spec.text), text_zone=self.spec.text_zone)
 
@@ -63,7 +82,7 @@ class IllustratedPage(Page):
 class AboutMePage(Page):
     """Last page: the child's cartoon portrait, name and the details the uploader typed in. No API call."""
 
-    async def render(self, ctx: BookContext) -> RenderedPage:
+    def layout(self, ctx, image):
         return RenderedPage(self.spec.number, "about_me", image=ctx.sheets.hero_sheet, child=ctx.child)
 
 

@@ -38,6 +38,7 @@ class Story:
     title: str
     style: str
     world: str
+    theme: str
     hero_names: dict
     hero_outfit: str
     characters: dict[str, Character]
@@ -61,7 +62,7 @@ def load_story(path: Path = DEFAULT_STORY) -> Story:
         if spec.text_zone not in TEXT_ZONES:
             raise ValueError(f"Page {i} has unknown text_zone {spec.text_zone!r}")
         pages.append(spec)
-    return Story(title=raw["title"], style=raw["style"], world=raw["world"],
+    return Story(title=raw["title"], style=raw["style"], world=raw["world"], theme=raw.get("theme", "default"),
                  hero_names=raw["hero"]["names"], hero_outfit=raw["hero"]["outfit"],
                  characters=characters, pages=tuple(pages))
 
