@@ -16,6 +16,7 @@ from fastapi.staticfiles import StaticFiles  # noqa: E402
 from PIL import Image, ImageOps  # noqa: E402
 from pydantic import BaseModel, Field  # noqa: E402
 from sqlalchemy import select  # noqa: E402
+from sqlalchemy.orm import selectinload  # noqa: E402
 
 from . import admin, auth  # noqa: E402
 from .book import jobs  # noqa: E402
@@ -145,6 +146,25 @@ async def me(request: Request):
     return info
 
 
+@app.get("/api/my-books")
+async def my_books(request: Request):
+    """The signed-in person's bookshelf: every book they made, newest first (refused ones aren't books)."""
+    user = await auth.current_user(request)
+    if user is None:
+        raise HTTPException(401, {"message": "Please sign in first.", "ref": current_ref(), "reason": "not_signed_in"})
+    async with session() as s:
+        books = (await s.execute(select(Book).where(Book.user_id == user.id, Book.status != "refused")
+                                 .options(selectinload(Book.images)).order_by(Book.created_at.desc()))).scalars().all()
+    story = load_story()
+    out = []
+    for b in books:
+        hero = next((i for i in b.images if i.kind == "hero_sheet" and i.status == "done"), None)
+        out.append({"id": b.id, "status": b.status, "title": story.title, "child_name": b.child_name,
+                    "hero": story.hero_names.get(b.gender, ""), "created_at": jobs._iso(b.created_at),
+                    "cover_url": f"/api/books/{b.id}/images/hero_sheet-0" if hero else None})
+    return {"books": out}
+
+
 def password_problem(given: str | None) -> tuple[int, str, str] | None:
     """Every paid request needs APP_PASSWORD. If it isn't set, real books are refused (fail closed)."""
     expected = os.getenv("APP_PASSWORD", "")
@@ -205,7 +225,7 @@ async def create_book_route(
     # The row exists before any check, so even a refused request can be looked up by its ref.
     await jobs.create_book(ref, gender=gender, child_name=name.strip()[:MAX_FIELD], details=details,
                            provider=provider, model=model, quality=quality, user_id=user.id if user else None)
-    # Never log the password, the photo, or the child's name and details.
+    # Never log the password, the photo, or the name and details typed in.
     await record("INFO", "request", "received", ip=request.client.host if request.client else None,
                  gender=gender, details=len(details), user=str(user.id) if user else None, provider=provider,
                  model=model)
@@ -230,7 +250,7 @@ async def create_book_route(
     if gender not in PRONOUNS:
         await refuse(400, "unknown_gender", "Choose Jack or Jane.")
     if not name.strip():
-        await refuse(400, "no_name", "Please enter the child's name.")
+        await refuse(400, "no_name", "Please enter your name.")
     if any(len(v) > MAX_FIELD for v in (name, age, favourites, about)):
         await refuse(400, "field_too_long", f"Each answer can be up to {MAX_FIELD} characters.")
     try:

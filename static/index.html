@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#a8d4e8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0f1a36" media="(prefers-color-scheme: dark)">
-<title>Jack and the Beanstalk · a picture book starring your child</title>
+<title>Jack and the Beanstalk · a picture book starring you</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 30C16 20 10 18 10 12s4-9 6-10c2 1 6 4 6 10s-6 8-6 18z' fill='%233d8a2a'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,7 +18,7 @@
 
 <main class="stand">
   <header class="masthead">
-    <p class="hand kicker">a picture book starring your child<span class="mock" id="mockBadge" hidden> · pretend printing, no cost</span></p>
+    <p class="hand kicker">a picture book starring you<span class="mock" id="mockBadge" hidden> · pretend printing, no cost</span></p>
     <h1>Jack <span class="and">and the</span> Beanstalk</h1>
   </header>
 
@@ -53,11 +53,11 @@
       <h2>Who’s the star?</h2>
 
       <div class="star-grid">
-        <div id="drop" class="polaroid" tabindex="0" role="button" aria-label="Choose a photo of the child">
+        <div id="drop" class="polaroid" tabindex="0" role="button" aria-label="Choose a photo of yourself">
           <div class="polaroid-photo">
             <div class="polaroid-empty">
               <svg viewBox="0 0 64 48" aria-hidden="true"><rect x="4" y="10" width="56" height="34" rx="6"/><circle cx="32" cy="27" r="10"/><path d="M22 10l4-6h12l4 6"/></svg>
-              <p>Pop a photo of your child in here</p>
+              <p>Pop a photo of yourself in here</p>
             </div>
             <img id="preview" alt="The photo you chose" hidden>
           </div>
@@ -66,17 +66,17 @@
 
         <div class="star-fields">
           <label class="box">
-            <span class="box-label">Their name</span>
+            <span class="box-label">Your name</span>
             <input type="text" name="name" maxlength="300" autocomplete="off" required placeholder="Ruby">
           </label>
 
           <fieldset class="who">
-            <legend class="box-label">In the story they’ll be</legend>
+            <legend class="box-label">In the story you’ll be</legend>
             <label><input type="radio" name="gender" value="boy" checked><span>Jack</span></label>
             <label><input type="radio" name="gender" value="girl"><span>Jane</span></label>
           </fieldset>
 
-          <p class="hint">One child, facing the camera, in good light. Close up works best.
+          <p class="hint">Just you, facing the camera, in good light. Close up works best.
             <button type="button" class="link" id="selfieBtn">Or take a selfie</button></p>
         </div>
       </div>
@@ -89,7 +89,7 @@
       <div class="about-grid">
         <label class="box"><span class="box-label">Age</span><input type="text" name="age" maxlength="300" placeholder="7"></label>
         <label class="box wide"><span class="box-label">Favourite things</span><input type="text" name="favourites" maxlength="300" placeholder="dinosaurs, pancakes, the colour green"></label>
-        <label class="box wide"><span class="box-label">More about them</span><textarea name="about" maxlength="300" rows="2" placeholder="Wants to climb a real beanstalk one day"></textarea></label>
+        <label class="box wide"><span class="box-label">More about you</span><textarea name="about" maxlength="300" rows="2" placeholder="Wants to climb a real beanstalk one day"></textarea></label>
       </div>
       <p class="hint">All optional. We keep the photo and the book you make here.</p>
     </section>
@@ -127,12 +127,23 @@
     <p class="ref">Reference <span id="readerRef"></span></p>
   </section>
 
-  <!-- Each person rates their own book. Answering again updates it. -->
+  <!-- Every book this person has made, so a new tab or another day still finds them. -->
+  <section id="shelf" class="card shelf" hidden>
+    <h2>Your bookshelf</h2>
+    <ul class="shelf-books" id="shelfBooks"></ul>
+  </section>
+
+  <!-- Each person rates their own book (one review per person). -->
   <section id="review" class="card review" hidden>
-    <h2>Tell us what you think</h2>
+    <!-- Open if they haven't reviewed yet; closed (with a note) if they have. -->
+    <h2 class="review-head"><button class="review-toggle" id="reviewToggle" type="button" aria-expanded="true" aria-controls="reviewBody">
+      <span>Tell us what you think</span>
+      <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+    </button></h2>
+    <p class="hint" id="reviewAlready" hidden></p>
+    <div id="reviewBody">
     <p class="hand note">Four quick questions. Have a look through the whole book first:
       flip the pages above, or <a id="reviewPdf" target="_blank" rel="noopener">open the PDF</a>.</p>
-    <p class="hint" id="reviewAlready" hidden></p>
     <form id="reviewForm" novalidate>
         <fieldset class="rate">
           <legend>Does this look like me?</legend>
@@ -156,6 +167,7 @@
         <p class="error" id="reviewError" role="alert" hidden></p>
       </form>
       <p class="thanks hand" id="reviewThanks" hidden>Thank you! Your answers are saved. You can change them any time.</p>
+    </div>
   </section>
 </main>
 

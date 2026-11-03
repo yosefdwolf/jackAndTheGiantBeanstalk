@@ -92,6 +92,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
       $('signin').hidden = true;
       form.hidden = false;
       form.classList.add('reveal');
+      loadShelf();
     };
     if (animate) { gate.classList.add('opening'); setTimeout(show, 520); } else show();
   }
@@ -184,7 +185,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     const hasName = form.name.value.trim().length > 0;
     go.disabled = !(photo && hasName);
     $('goNote').textContent = !photo && !hasName ? 'Add a photo and a name to begin'
-      : !photo ? 'Now pop in a photo' : !hasName ? 'Now write their name' : 'Ready when you are!';
+      : !photo ? 'Now pop in a photo' : !hasName ? 'Now write your name' : 'Ready when you are!';
   }
   form.name.addEventListener('input', updateReady);
   form.addEventListener('change', (e) => { if (e.target.name === 'gender') hero = e.target.value === 'girl' ? 'Jane' : 'Jack'; });
@@ -241,8 +242,8 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    if (!photo) return showError('Pop in a photo of the child first.');
-    if (!form.name.value.trim()) return showError('Write the child’s name first.');
+    if (!photo) return showError('Pop in a photo of yourself first.');
+    if (!form.name.value.trim()) return showError('Write your name first.');
     showError('');
     go.disabled = true;
     go.textContent = 'Planting…';
@@ -309,7 +310,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
       '<p class="plate-text"></p><p class="plate-stage"><span class="what"></span><span class="time"></span></p>' +
       '<div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"><i></i></div></div>';
     li.querySelector('.plate-name').textContent = img.label;
-    li.querySelector('.plate-text').textContent = img.text || 'Drawn first, so the child looks the same on every page.';
+    li.querySelector('.plate-text').textContent = img.text || 'Drawn first, so you look the same on every page.';
     $('plates').append(li);
     return { el: li, shown: 0 };
   }
@@ -398,6 +399,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     $('signin').hidden = true;
     $('reader').hidden = true;
     $('review').hidden = true;
+    $('shelf').hidden = true;
     $('printing').hidden = false;
     $('printing').scrollIntoView({ behavior: 'smooth', block: 'start' });
     clearTimeout(pollTimer);
@@ -409,7 +411,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     clearTimeout(pollTimer);
     store.drop(BOOK_KEY);
     if (data.status === 'done' && data.book) {
-      openReader(data);
+      openReader(data).then(loadShelf);
       showReview(data.id);
     } else {
       $('printingTitle').textContent = 'Oh no, the beans didn’t grow';
@@ -561,6 +563,36 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     swipeX = null;
   });
 
+  // --- the bookshelf: every book this person made -------------------------------------------------
+
+  const SHELF_STATE = { running: 'still growing…', queued: 'still growing…', interrupted: 'still growing…',
+    failed: 'some pictures missing' };
+
+  async function loadShelf() {
+    if (!me || !me.signed_in) { $('shelf').hidden = true; return; }
+    let books = [];
+    try {
+      const res = await fetch('/api/my-books', { cache: 'no-store' });
+      if (res.ok) books = (await res.json()).books;
+    } catch { /* the shelf is a bonus; the page works without it */ }
+    $('shelfBooks').replaceChildren(...books.map((b) => {
+      const btn = el('button');
+      btn.type = 'button';
+      btn.setAttribute('aria-label', `Open ${b.child_name}’s book from ${new Date(b.created_at).toLocaleDateString()}`);
+      let cover;
+      if (b.cover_url) { cover = el('img'); cover.src = `${b.cover_url}?w=240`; cover.alt = ''; cover.loading = 'lazy'; }
+      else cover = el('span', 'no-cover', 'no picture yet');
+      btn.append(cover, el('b', null, b.child_name || b.hero),
+        el('small', null, new Date(b.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' })));
+      if (SHELF_STATE[b.status]) btn.append(el('span', 'state' + (b.status === 'failed' ? ' bad' : ''), SHELF_STATE[b.status]));
+      btn.addEventListener('click', () => watch(b.id));
+      const li = el('li');
+      li.append(btn);
+      return li;
+    }));
+    $('shelf').hidden = books.length === 0 || !$('printing').hidden;
+  }
+
   // --- what did you think? (each person rates their own book) ---------------------------------------
 
   // A crowd study links here as /?pid=PARTICIPANT_ID. Kept across the Google sign-in, and saved with
@@ -585,8 +617,15 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
   }
   reviewForm.addEventListener('input', updateReviewReady);
   reviewForm.addEventListener('change', updateReviewReady);
+  function setReviewOpen(open) {
+    $('reviewToggle').setAttribute('aria-expanded', String(open));
+    $('reviewBody').hidden = !open;
+  }
+  $('reviewToggle').addEventListener('click', () => setReviewOpen($('reviewBody').hidden));
+
   async function showReview(id) {
     $('review').hidden = false;
+    setReviewOpen(true);
     $('reviewPdf').href = `/api/books/${id}/pdf?inline=1`;
     $('reviewThanks').hidden = true;
     $('reviewError').hidden = true;
@@ -603,10 +642,12 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
         }
         reviewForm.not_good.value = review.not_good;
         $('reviewBtn').textContent = 'Update my answers';
-        // One review per person: answering here replaces what they said about an earlier book.
-        $('reviewAlready').textContent = review.book_id === id ? ''
-          : `You already answered for an earlier book (reference ${review.book_id}). It’s one review per person, so sending these replaces those answers.`;
-        $('reviewAlready').hidden = review.book_id === id;
+        // Already reviewed: start closed. One review per person, so sending again replaces it.
+        $('reviewAlready').textContent = (review.book_id === id ? 'You’ve already left a review. '
+          : `You already left a review for an earlier book (reference ${review.book_id}). `)
+          + 'Open this to change it: sending again replaces your earlier answers.';
+        $('reviewAlready').hidden = false;
+        setReviewOpen(false);
       } else {
         $('reviewBtn').textContent = 'Send my answers';
       }
@@ -643,7 +684,8 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
       }
       $('reviewError').hidden = true;
       $('reviewThanks').hidden = false;
-      $('reviewAlready').hidden = true;
+      $('reviewAlready').textContent = 'You’ve already left a review. Sending again replaces your earlier answers.';
+      $('reviewAlready').hidden = false;
       $('reviewBtn').textContent = 'Update my answers';
     } catch (err) {
       $('reviewError').textContent = err.message.startsWith('Failed') ? 'We couldn’t reach the book. Try again in a moment.' : err.message;
@@ -670,6 +712,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     drop.classList.remove('has-photo');
     $('polaroidCaption').textContent = 'tap or drop a photo';
     updateReady();
+    loadShelf();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
   $('again').addEventListener('click', startOver);

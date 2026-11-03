@@ -277,3 +277,17 @@ def test_one_review_per_person_across_their_books(client):
     sign_in(client, ADMIN)
     data = client.get("/admin/api/reviews").json()
     assert data["count"] == 1 and data["items"][0]["book_id"] == second and data["items"][0]["looks_like_me"] == 1
+
+
+# --- the bookshelf --------------------------------------------------------------------------------
+
+def test_bookshelf_lists_only_my_books_newest_first(client):
+    older, newer = finished_book(client), finished_book(client)
+    post_book(client, name=" ")  # refused: not a book, not on the shelf
+    shelf = client.get("/api/my-books").json()["books"]
+    assert [b["id"] for b in shelf] == [newer, older]
+    assert shelf[0]["status"] == "done" and shelf[0]["cover_url"] and shelf[0]["child_name"] == "Sam"
+    sign_in(client, "stranger@example.com")
+    assert client.get("/api/my-books").json()["books"] == []
+    client.cookies.clear()
+    assert client.get("/api/my-books").status_code == 401

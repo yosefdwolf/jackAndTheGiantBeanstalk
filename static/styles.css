@@ -230,6 +230,32 @@ dialog#camera::backdrop { background: rgba(20, 40, 60, .55); }
 .ends { display: flex; justify-content: space-between; font: 400 14px var(--hand); color: var(--ink-soft); margin-top: 6px; }
 .review .box { margin-top: 12px; }
 #reviewForm { display: grid; }
+.review-toggle { all: unset; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  width: 100%; cursor: pointer; border-radius: 14px; }
+.review .review-head { margin-bottom: 0; }
+.review-toggle:focus-visible { outline: 3px solid var(--accent-deep); outline-offset: 4px; }
+.review-toggle .chevron { flex: none; width: 34px; height: 34px; padding: 5px; border-radius: 50%; background: var(--accent);
+  fill: none; stroke: #fff; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; box-shadow: 0 3px 0 var(--accent-deep);
+  transition: transform .25s; }
+.review-toggle[aria-expanded="true"] .chevron { transform: rotate(90deg); }  /* > when closed, v when open */
+#reviewBody { margin-top: 10px; }
+#reviewAlready { margin-top: 8px; }
+@media (prefers-reduced-motion: reduce) { .review-toggle .chevron { transition: none; } }
+
+/* The bookshelf: each book a little cover you can open again */
+.shelf-books { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 16px; }
+.shelf-books button { all: unset; box-sizing: border-box; display: grid; gap: 6px; width: 100%; cursor: pointer; text-align: center;
+  padding: 10px 8px 12px; border-radius: 18px; background: #fff; border: 2.5px solid var(--card-edge); transition: transform .15s; }
+.shelf-books button:hover { transform: translateY(-3px) rotate(-1deg); border-color: var(--accent); }
+.shelf-books button:focus-visible { outline: 3px solid var(--accent-deep); outline-offset: 3px; }
+.shelf-books img, .shelf-books .no-cover { width: 76%; aspect-ratio: 1; margin: 0 auto; border-radius: 50%; object-fit: cover;
+  border: 4px solid var(--card); box-shadow: 0 4px 10px rgba(0,0,0,.12); background: var(--card-edge); }
+.shelf-books .no-cover { display: grid; place-items: center; font: 600 13px var(--hand); color: var(--ink-soft); }
+.shelf-books b { font: 800 17px/1.2 var(--display); color: var(--leaf-deep); }
+.shelf-books small { font: 400 13px var(--hand); color: var(--ink-soft); }
+.shelf-books .state { font: 600 13px var(--hand); color: var(--accent-deep); }
+.shelf-books .state.bad { color: var(--alert); }
+@media (prefers-reduced-motion: reduce) { .shelf-books button { transition: none; } }
 .try-again { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 16px; }
 .review .btn { justify-self: center; margin-top: 4px; }
 #reviewNote { text-align: center; margin-top: 6px; }
