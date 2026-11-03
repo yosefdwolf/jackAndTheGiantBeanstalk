@@ -175,10 +175,16 @@ def test_pdf_is_rebuilt_from_saved_images(client):
     assert "The End" in pages[-1].extract_text()
 
 
-def test_jane_book_uses_jane(client):
-    ref = post_book(client, gender="girl").json()["id"]
-    wait_for(client, ref)
-    assert "Jane and her mother" in PdfReader(io.BytesIO(client.get(f"/api/books/{ref}/pdf").content)).pages[1].extract_text()
+def test_story_uses_their_name_with_the_chosen_pronouns(client):
+    """Jack/Jane only picks he or she; the story says the name they typed."""
+    ref = post_book(client, gender="girl", name="Ella").json()["id"]
+    data = wait_for(client, ref)
+    assert data["images"][1]["text"].startswith("Ella and her mother")
+    assert data["book"]["pages"][0]["text"].startswith("Ella and her mother") and data["book"]["hero"] == "Jane"
+    # the image prompts still say the story's hero, never what was typed
+    prompts = [i.prompt for i in run(rows(BookImage, book_id=ref))]
+    assert all("Ella" not in p for p in prompts) and any("Jane" in p for p in prompts)
+    assert "Ella and her mother" in PdfReader(io.BytesIO(client.get(f"/api/books/{ref}/pdf").content)).pages[1].extract_text()
 
 
 def test_thumbnails_are_served(client):

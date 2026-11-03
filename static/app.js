@@ -188,7 +188,6 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
       : !photo ? 'Now pop in a photo' : !hasName ? 'Now write your name' : 'Ready when you are!';
   }
   form.name.addEventListener('input', updateReady);
-  form.addEventListener('change', (e) => { if (e.target.name === 'gender') hero = e.target.value === 'girl' ? 'Jane' : 'Jack'; });
 
   // Selfie: phones open the front camera through the file input; computers use the webcam.
   const camera = $('camera'), video = $('cameraVideo'), cameraError = $('cameraError');
@@ -247,7 +246,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     showError('');
     go.disabled = true;
     go.textContent = 'Planting…';
-    hero = new FormData(form).get('gender') === 'girl' ? 'Jane' : 'Jack';
+    hero = form.name.value.trim() || (new FormData(form).get('gender') === 'girl' ? 'Jane' : 'Jack');  // their own name, as in the story
 
     const body = new FormData(form);
     body.append('photo', photo, 'photo.jpg');
@@ -374,6 +373,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
       const data = await res.json();
       clockOffset = Date.parse(data.server_time) - Date.now();
       book = data;
+      if (data.hero) hero = data.hero;  // their own name, also for books opened from the bookshelf
       for (const img of data.images) if (!rows.has(key(img))) rows.set(key(img), makeRow(img));
       cancelAnimationFrame(frame);
       paintAll();

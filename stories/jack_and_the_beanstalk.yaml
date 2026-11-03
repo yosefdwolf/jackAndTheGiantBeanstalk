@@ -1,6 +1,6 @@
 # The storyboard. Adding a page = adding an entry here; no code changes.
 #
-# Placeholders, filled per book: {hero} (Jack/Jane), {he} {his} {him} and capitalized {He} {His}.
+# Placeholders, filled per book: {hero} (the reader's own name in the story text; Jack/Jane in image prompts), {he} {his} {him} and capitalized {He} {His}.
 # cast:  character keys from `characters` (plus `hero`). Only their sheets are sent with the page,
 #        and the prompt says no one else appears.
 # text_zone: where the story text is drawn on the art: bottom | top | bottom-dark.

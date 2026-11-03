@@ -202,8 +202,8 @@ async def _load(ref):
 
 def _context(book, hero_png, provider):
     story = load_story()
-    casting = Casting(story, book.gender)
-    prompts = PromptBuilder(get_style(story.style), story, casting)
+    casting = Casting(story, book.gender, book.child_name or None)  # the story text says their name
+    prompts = PromptBuilder(get_style(story.style), story, Casting(story, book.gender))  # prompts say "Jack"
     fallback = None
     if isinstance(provider, MockImageProvider):  # mock books work before the real sheets exist
         def fallback(key):
@@ -314,7 +314,7 @@ async def status(ref: str) -> dict | None:
     if book is None:
         return None
     story = load_story()
-    casting = Casting(story, book.gender)
+    casting = Casting(story, book.gender, book.child_name or None)
     texts = {spec.number: casting.fill(spec.text) for spec in story.pages}
     etas = {}
     images = []
@@ -329,7 +329,7 @@ async def status(ref: str) -> dict | None:
             "eta_seconds": etas[i.kind], "error": i.error_message,
             "image_url": f"/api/books/{ref}/images/{i.kind}-{i.page_number}" if i.status == "done" else None,
         })
-    result = {"id": book.id, "status": book.status, "error": book.error_message, "refused_reason": book.refused_reason,
+    result = {"id": book.id, "status": book.status, "hero": casting.hero_name, "error": book.error_message, "refused_reason": book.refused_reason,
               "server_time": _iso(utcnow()), "images": images,
               "pdf_url": f"/api/books/{ref}/pdf" if book.status == "done" else None}
     if book.status == "done":
@@ -346,7 +346,7 @@ def _flipbook(book, story, casting) -> dict:
                           "text_zone": spec.text_zone, "image_url": f"/api/books/{book.id}/images/page-{spec.number}"})
         else:
             pages.append({"kind": spec.type, "number": spec.number})
-    return {"title": story.title, "hero": casting.hero_name, "child_name": book.child_name,
+    return {"title": story.title, "hero": casting.story_hero, "child_name": book.child_name,
             "details": [list(d) for d in book.details], "cover_url": f"/api/books/{book.id}/images/hero_sheet-0",
             "pages": pages}
 

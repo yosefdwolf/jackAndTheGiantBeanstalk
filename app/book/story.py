@@ -69,12 +69,23 @@ def load_story(path: Path = DEFAULT_STORY) -> Story:
 
 @dataclass(frozen=True)
 class Casting:
-    """Who the uploaded child plays: fills {hero}, {he}, {his}, {him} (and capitalized forms)."""
+    """Who the reader plays: fills {hero}, {he}, {his}, {him} (and capitalized forms).
+
+    The Jack/Jane choice only picks the pronouns. With `name`, the story text says the reader's own name
+    ("Yosef and his mother"). Image prompts use a casting without a name, so they always say the story's
+    hero ("Jack") and nothing a person types ever goes into an image prompt.
+    """
     story: Story
     gender: str = "boy"
+    name: str | None = None
 
     @property
     def hero_name(self) -> str:
+        return self.name or self.story.hero_names[self.gender]
+
+    @property
+    def story_hero(self) -> str:
+        """The hero the story is about (Jack or Jane), whatever the reader is called."""
         return self.story.hero_names[self.gender]
 
     def fill(self, text: str) -> str:
