@@ -58,6 +58,7 @@ def client(tmp_path, monkeypatch):
     fake = PreparedPhoto(full_png=png(), face_png=png())
     monkeypatch.setattr(app.main, "prepare", lambda data: fake)
     monkeypatch.setattr(jobs, "prepare", lambda data: fake)
+    monkeypatch.setattr(app.main, "DAILY_LIMIT", 50)  # most tests make several books; limit tests set 1
     monkeypatch.setenv("SESSION_SECRET", "test-secret")
     monkeypatch.setenv("ADMIN_EMAILS", ADMIN)
     for name in ("GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "DEV_LOGIN", "COOKIE_DOMAIN"):
@@ -151,7 +152,7 @@ def test_book_runs_in_the_background_and_is_saved(client):
     data = wait_for(client, ref)
     assert data["status"] == "done"
     assert [(i["kind"], i["page"], i["status"]) for i in data["images"]] == \
-        [("hero_sheet", 0, "done"), ("page", 1, "done"), ("page", 2, "done"), ("page", 3, "done")]
+        [("hero_sheet", 0, "done")] + [("page", n, "done") for n in range(1, 21)]
     assert all(i["eta_seconds"] > 0 and i["started_at"] and i["finished_at"] for i in data["images"])
     # the photo and every image are kept for debugging
     book = run(rows(Book, id=ref))[0]
@@ -166,7 +167,8 @@ def test_pdf_is_rebuilt_from_saved_images(client):
     assert r.headers["content-type"] == "application/pdf"
     assert 'filename="JackAndTheBeanstalk.pdf"' in r.headers["content-disposition"]
     pages = PdfReader(io.BytesIO(r.content)).pages
-    assert len(pages) == 6  # cover, three story pages, About Me, The End: the same order as the flip book
+    assert len(pages) == 23  # cover, 20 story pages, About Me, The End: the same order as the flip book
+    assert len(r.content) < 3_000_000  # JPEG pictures; lossless PNG made real 20-page books about 65 MB
     cover = " ".join(pages[0].extract_text().split())
     assert "Jack and the Beanstalk" in cover and "starring Sam" in cover
     assert "nothing left to sell" in pages[1].extract_text()
@@ -330,7 +332,7 @@ def test_finished_book_has_flipbook_pages(client):
     data = wait_for(client, ref)
     book = data["book"]
     assert book["hero"] == "Jane" and book["child_name"] == "Sam"
-    assert [p["kind"] for p in book["pages"]] == ["illustrated", "illustrated", "illustrated", "about_me"]
+    assert [p["kind"] for p in book["pages"]] == ["illustrated"] * 20 + ["about_me"]
     assert book["pages"][1]["text_zone"] == "top" and "Five magic beans" in book["pages"][1]["text"]
 
 
@@ -385,7 +387,7 @@ def test_try_again_redraws_only_the_missing_pictures(client, monkeypatch):
     assert client.post(f"/api/books/{ref}/retry", headers={"X-App-Password": PASSWORD}).status_code == 202
     assert wait_for(client, ref)["status"] == "done"
     assert calls == ["page 2"]  # the cartoon and the other pages weren't paid for again
-    assert client.get("/api/me").json()["left"] == 2  # still one book
+    assert client.get("/api/me").json()["left"] == 49  # the retry finished the same book: still one
 
 
 def test_only_the_owner_can_try_again(client):
@@ -395,3 +397,42 @@ def test_only_the_owner_can_try_again(client):
     from tests.test_auth_admin import sign_in as other
     other(client, "stranger@example.com")
     assert client.post(f"/api/books/{ref}/retry", headers={"X-App-Password": PASSWORD}).status_code == 404
+
+
+
+def test_pictures_are_drawn_a_few_at_a_time(client, monkeypatch):
+    """20 pages at once gets refused by OpenAI, so only IMAGE_CONCURRENCY draw together."""
+    monkeypatch.setattr(jobs, "IMAGE_CONCURRENCY", 3)
+    original = providers.MockImageProvider.edit
+    now, most = 0, 0
+
+    async def counting(self, label, refs, prompt, size):
+        nonlocal now, most
+        now += 1
+        most = max(most, now)
+        await asyncio.sleep(0.01)
+        try:
+            return await original(self, label, refs, prompt, size)
+        finally:
+            now -= 1
+
+    monkeypatch.setattr(providers.MockImageProvider, "edit", counting)
+    assert wait_for(client, post_book(client).json()["id"])["status"] == "done"
+    assert most == 3
+
+
+def test_a_book_made_before_pages_were_added_still_opens(client):
+    """Books from the 3-page version have no rows for pages 4-20: they keep their own pages."""
+    ref = post_book(client).json()["id"]
+    wait_for(client, ref)
+
+    async def drop_new_pages():
+        async with db.session() as s:
+            for i in (await s.execute(select(BookImage).where(BookImage.book_id == ref,
+                                                              BookImage.page_number > 3))).scalars():
+                await s.delete(i)
+            await s.commit()
+    run(drop_new_pages())
+    book = client.get(f"/api/books/{ref}").json()["book"]
+    assert [p["kind"] for p in book["pages"]] == ["illustrated"] * 3 + ["about_me"]
+    assert len(PdfReader(io.BytesIO(client.get(f"/api/books/{ref}/pdf").content)).pages) == 6

@@ -30,7 +30,7 @@ from .faces import UploadError, prepare  # noqa: E402
 STATIC = Path(__file__).resolve().parent.parent / "static"
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024  # phone photos can be large; they are downscaled on arrival
 MAX_FIELD = 300
-DAILY_LIMIT = int(os.getenv("DAILY_BOOK_LIMIT", "3"))
+DAILY_LIMIT = int(os.getenv("DAILY_BOOK_LIMIT", "1"))  # finished books per person per UTC day
 
 setup_logging(os.getenv("LOG_LEVEL", "INFO"))
 
@@ -165,6 +165,12 @@ async def my_books(request: Request):
     return {"books": out}
 
 
+def limit_message() -> str:
+    if DAILY_LIMIT == 1:
+        return "You've made your book for today. Come back tomorrow for another!"
+    return f"You've made {DAILY_LIMIT} books today, the most for one day. Come back tomorrow for more!"
+
+
 def password_problem(given: str | None) -> tuple[int, str, str] | None:
     """Every paid request needs APP_PASSWORD. If it isn't set, real books are refused (fail closed)."""
     expected = os.getenv("APP_PASSWORD", "")
@@ -243,8 +249,7 @@ async def create_book_route(
     if user is None:
         await refuse(401, "not_signed_in", "Please sign in with Google first.")
     if not await auth.has_unlimited(user) and await jobs.books_today(user.id, exclude=ref) >= DAILY_LIMIT:
-        await refuse(429, "daily_limit", f"That's {DAILY_LIMIT} books today, the most for one day. "
-                                         "Come back tomorrow for more!")
+        await refuse(429, "daily_limit", limit_message())
     if len(data) > MAX_UPLOAD_BYTES:
         await refuse(413, "photo_too_large", "That photo is too large (max 25 MB).")
     if gender not in PRONOUNS:
@@ -323,6 +328,9 @@ async def retry_book(request: Request, ref: str, x_app_password: str | None = He
         book = await s.get(Book, ref)
     if user is None or book is None or book.user_id != user.id:
         raise HTTPException(404, {"message": "No book of yours with that reference.", "ref": current_ref()})
+    if not await auth.has_unlimited(user) and await jobs.books_today(user.id, exclude=ref) >= DAILY_LIMIT:
+        # Retrying a failed book finishes it, so it can't make a second finished book in one day.
+        raise HTTPException(429, {"message": limit_message(), "ref": current_ref(), "reason": "daily_limit"})
     if book.refused_reason or not await jobs.retry(ref):
         raise HTTPException(409, {"message": "That book can't be tried again.", "ref": ref})
     return {"id": ref, "status_url": f"/api/books/{ref}"}

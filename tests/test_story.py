@@ -25,8 +25,16 @@ def prompts(gender="boy", style=None):
 
 # --- story file ---------------------------------------------------------------------------------
 
-def test_story_has_three_illustrated_pages_then_about_me():
-    assert [p.type for p in STORY.pages] == ["illustrated", "illustrated", "illustrated", "about_me"]
+def test_story_has_twenty_story_pages_then_about_me():
+    assert [p.type for p in STORY.pages] == ["illustrated"] * 20 + ["about_me"]
+
+
+def test_every_cast_member_has_a_sheet_and_no_name_hides_inside_another():
+    """A hen-only page must not read as if the giant were in it ("the giant's golden hen")."""
+    names = [Casting(STORY).fill(c.name) for c in STORY.characters.values()]
+    assert not [(a, b) for a in names for b in names if a != b and a in b]
+    used = {k for p in STORY.pages for k in p.cast} - {"hero"}
+    assert used <= set(STORY.characters)
 
 
 def test_storyboard_text_is_exact():

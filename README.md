@@ -36,8 +36,9 @@ bar on the page, and saved as they finish, so a dropped connection or a restart 
 
 ## Sign-in and limits
 Making a book needs both the magic word (`APP_PASSWORD`, so only the class can use it) and a Google
-sign-in (so each person's books are kept together). Everyone can make 3 books per UTC day
-(`DAILY_BOOK_LIMIT`). Refused books never count, and a failed book counts only if a picture was drawn.
+sign-in (so each person's books are kept together). Everyone can make one finished book per UTC day
+(`DAILY_BOOK_LIMIT`). A book being drawn counts, so two can't run at once. A failed book doesn't count:
+its owner can retry just the missing pictures, and it counts once it's finished. Refused requests never count.
 Admins (`ADMIN_EMAILS`) and the emails on the admin site's unlimited list have no limit.
 
 ## Reviews (real user feedback)

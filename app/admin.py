@@ -243,7 +243,7 @@ async def reviews(_=Depends(require_admin)):
     return {"people": len(people), "count": len(rows), "questions": questions,
             "items": [{"book_id": r.book_id, "at": _iso(r.created_at), "email": email, "child_name": child,
                        "gender": gender, "not_good": r.not_good, **{k: getattr(r, k) for k, _ in QUESTIONS},
-                       "source": r.source, "participant_id": r.connect_id,
+                       "source": r.source, "participant_id": r.connect_id, "respondent": r.respondent_key,
                        "cover_url": f"/api/books/{r.book_id}/images/hero_sheet-0"}
                       for r, child, gender, email in rows]}
 

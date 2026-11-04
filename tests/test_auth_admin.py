@@ -3,11 +3,12 @@ import asyncio
 
 from sqlalchemy import select
 
+import app.main
 from app import admin, auth
 from app.book import jobs
 from app.db import session as db
 from app.db.models import Book, BookImage, RequestError
-from tests.test_books import ADMIN, PARENT, client, post_book, rows, run, sign_in, wait_for  # noqa: F401
+from tests.test_books import ADMIN, PARENT, PASSWORD, client, post_book, rows, run, sign_in, wait_for  # noqa: F401
 
 
 # --- signing in -----------------------------------------------------------------------------------
@@ -29,11 +30,12 @@ def test_tampered_cookie_is_ignored(client):
     assert client.get("/api/me").json()["signed_in"] is False
 
 
-def test_me_reports_books_left(client):
+def test_me_reports_books_left(client, monkeypatch):
+    monkeypatch.setattr(app.main, "DAILY_LIMIT", 1)
     me = client.get("/api/me").json()
-    assert me["signed_in"] and me["email"] == PARENT and me["left"] == 3 and not me["admin"]
+    assert me["signed_in"] and me["email"] == PARENT and me["left"] == 1 and not me["admin"]
     wait_for(client, post_book(client).json()["id"])
-    assert client.get("/api/me").json()["left"] == 2
+    assert client.get("/api/me").json()["left"] == 0
 
 
 def test_book_is_linked_to_the_user(client):
@@ -83,30 +85,59 @@ def test_callback_with_bad_state_is_refused_and_recorded(client, monkeypatch):
 
 # --- three books a day ----------------------------------------------------------------------------
 
-def test_fourth_book_in_a_day_is_refused(client):
+def test_one_finished_book_a_day(client, monkeypatch):
+    monkeypatch.setattr(app.main, "DAILY_LIMIT", 1)
     for _ in range(3):
-        assert post_book(client).status_code == 202
+        post_book(client, name=" ")  # refused requests never count
+    assert wait_for(client, post_book(client).json()["id"])["status"] == "done"
     r = post_book(client)
+    assert r.status_code == 429 and r.json()["detail"]["reason"] == "daily_limit"
+    assert "book for today" in r.json()["detail"]["message"]
+
+
+def test_a_book_being_drawn_counts_so_two_cant_run_at_once(client, monkeypatch):
+    monkeypatch.setattr(app.main, "DAILY_LIMIT", 1)
+    monkeypatch.setenv("MOCK_DELAY", "0.5")
+    ref = post_book(client).json()["id"]
+    assert post_book(client).status_code == 429  # the first is still drawing
+    wait_for(client, ref)
+
+
+def failed(ref):
+    async def mark():
+        async with db.session() as s:
+            (await s.get(Book, ref)).status = "failed"
+            for i in (await s.execute(select(BookImage).where(BookImage.book_id == ref,
+                                                              BookImage.page_number == 2))).scalars():
+                i.status = "failed"
+            await s.commit()
+    run(mark())
+
+
+def test_a_failed_book_gives_the_day_back_and_retry_finishes_it(client, monkeypatch):
+    monkeypatch.setattr(app.main, "DAILY_LIMIT", 1)
+    ref = post_book(client).json()["id"]
+    wait_for(client, ref)
+    failed(ref)
+    assert client.get("/api/me").json()["left"] == 1
+    assert client.post(f"/api/books/{ref}/retry", headers={"X-App-Password": PASSWORD}).status_code == 202
+    assert wait_for(client, ref)["status"] == "done"
+    assert client.get("/api/me").json()["left"] == 0
+
+
+def test_retry_cant_make_a_second_finished_book_in_a_day(client, monkeypatch):
+    monkeypatch.setattr(app.main, "DAILY_LIMIT", 1)
+    first = post_book(client).json()["id"]
+    wait_for(client, first)
+    failed(first)
+    second = post_book(client).json()["id"]  # allowed: the failed book gave the day back
+    assert wait_for(client, second)["status"] == "done"
+    r = client.post(f"/api/books/{first}/retry", headers={"X-App-Password": PASSWORD})
     assert r.status_code == 429 and r.json()["detail"]["reason"] == "daily_limit"
 
 
-def test_refused_and_undrawn_failures_dont_count(client):
-    for _ in range(3):
-        post_book(client, name=" ")  # refused: no name
-    ref = post_book(client).json()["id"]
-    wait_for(client, ref)
-
-    async def fail_without_images():
-        async with db.session() as s:
-            (await s.get(Book, ref)).status = "failed"
-            for i in (await s.execute(select(BookImage).where(BookImage.book_id == ref))).scalars():
-                i.status = "failed"
-            await s.commit()
-    run(fail_without_images())
-    assert run(jobs.books_today(run(rows(Book, id=ref))[0].user_id)) == 0
-
-
-def test_unlimited_list_and_admins_skip_the_limit(client):
+def test_unlimited_list_and_admins_skip_the_limit(client, monkeypatch):
+    monkeypatch.setattr(app.main, "DAILY_LIMIT", 1)
     sign_in(client, ADMIN)
     r = client.post("/admin/api/unlimited", json={"email": "Friend@Example.com"})
     assert r.status_code == 200 and r.json()["emails"][0]["email"] == "friend@example.com"

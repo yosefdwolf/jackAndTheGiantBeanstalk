@@ -33,8 +33,26 @@ characters:
   old_man:
     name: the strange old man
     description: >-
-      a small, hunched, mysterious old man with a long grey beard, a knowing smile, a ragged
-      patched long coat and a battered floppy hat
+      a slightly stooped, mysterious elderly man with ordinary, natural features and a straight,
+      ordinary nose (never a caricature), a short grey beard, a quiet knowing smile, a ragged
+      patched long coat and a battered flat cap
+  giant:
+    name: the giant
+    description: >-
+      an enormous, shaggy giant, as tall as a house, with a wild brown beard, bushy eyebrows, a
+      big round belly in a rough patched leather jerkin, coarse wool trousers and huge bare feet;
+      gruff and frightening in a storybook way, never gory
+  golden_hen:
+    name: the golden hen
+    description: >-
+      a plump little brown hen with feathers that shimmer gold at the tips, bright clever eyes and
+      a small red comb
+  golden_harp:
+    name: the golden harp
+    description: >-
+      an object, not a person: a small golden harp standing on its own with nobody holding it,
+      about the size of a child's arm, its frame carved at the top with a small gentle face,
+      shining strings, slightly worn and very old
 
 pages:
   - type: illustrated
@@ -86,6 +104,247 @@ pages:
       Keep the bottom quarter as plain, dark grass with no detail, for text added later.
     text_zone: bottom-dark
 
-  # Page 4 (the beanstalk at dawn) goes here next.
+  - type: illustrated
+    text: "In the morning, a beanstalk stood where the beans had fallen, reaching up into the clouds."
+    cast: [hero]
+    scene: >-
+      Early morning in the cottage garden. A colossal, twisting green beanstalk, thick as an old
+      tree, rises from the garden soil, coiling up and up until it disappears into low clouds.
+      {hero} stands at its foot in the same clothes, head tilted all the way back, mouth open in
+      wonder, one hand on the enormous stalk.
+    mood: >-
+      Wonder and a first touch of hope. Cool pale dawn light, mist on the ground, a soft glow
+      where the stalk meets the clouds.
+    composition: >-
+      Tall, upward-looking view with the stalk filling the middle. The top third is soft, plain
+      cloud and pale sky for text added later.
+    text_zone: top
+
+  - type: illustrated
+    text: "Up and up {hero} climbed, past the birds and into the clouds."
+    cast: [hero]
+    scene: >-
+      High on the beanstalk, among huge leaves. {hero} climbs, gripping the stalk with both hands,
+      boots on a curling tendril, looking up with determination. Far below, the cottage, the garden
+      and the village are tiny. Small birds fly past at {his} level.
+    mood: >-
+      Brave and dizzying, a little exciting. Brighter, clearer morning light the higher {he} goes.
+    composition: >-
+      {hero} and the stalk in the upper two-thirds. The lower third is soft white mist and cloud,
+      plain and low in detail, for text added later.
+    text_zone: bottom
+
+  - type: illustrated
+    text: "Above the clouds stood a castle so big its door could have swallowed the cottage. {He} crept inside."
+    cast: [hero]
+    scene: >-
+      On top of the clouds, a road of packed cloud leads to an ancient, enormous grey stone castle,
+      mossy and weathered, with a door many times taller than a house, standing slightly open.
+      {hero}, tiny beside it, tiptoes toward the gap in the door, glancing back over {his} shoulder.
+    mood: >-
+      Hushed and a little scary. Soft golden afternoon light above the clouds, long shadows from
+      the castle.
+    composition: >-
+      The castle fills the upper part of the picture. The lower third is smooth, plain cloud
+      ground, low in detail, for text added later.
+    text_zone: bottom
+
+  - type: illustrated
+    text: "“Fee-fi-fo-fum!” thundered the giant. {hero} hid in the oven, shaking."
+    cast: [hero, giant]
+    scene: >-
+      A vast, shadowy castle kitchen with a hearth as big as a room. The giant stomps in through a
+      huge doorway, sniffing the air, eyes narrowed. In the foreground, {hero} peeks out from inside
+      the open door of a giant iron oven, eyes wide with fear, a hand over {his} mouth.
+    mood: >-
+      Tense and scary in a storybook way. Warm firelight from the hearth against deep shadows.
+    composition: >-
+      The giant and the oven in the lower two-thirds. The top third is the dark, plain stone
+      ceiling in shadow, low in detail, for text added later.
+    text_zone: top
+
+  - type: illustrated
+    text: "The giant counted his gold, coin by coin, until his head drooped and he began to snore."
+    cast: [hero, giant]
+    scene: >-
+      The giant sits at an enormous wooden table, a heap of gold coins and open money bags in front
+      of him, his head nodding onto his folded arms, fast asleep. Across the room, {hero} watches
+      from the oven door, holding very still.
+    mood: >-
+      Quiet and drowsy, holding its breath. Warm candlelight glinting on the gold.
+    composition: >-
+      The table and the sleeping giant in the upper two-thirds. The lower third is the plain, dim
+      stone floor, low in detail, for text added later.
+    text_zone: bottom
+
+  - type: illustrated
+    text: "Quiet as a mouse, {hero} crept out and grabbed a bag of gold."
+    cast: [hero, giant]
+    scene: >-
+      Close to the table, the giant still snoring in the background, his huge hand resting near the
+      coins. {hero} tiptoes away hugging a heavy bag of gold almost as big as {his} chest, a few
+      coins spilling, glancing nervously back at the giant.
+    mood: >-
+      Sneaky and breathless. Warm candlelight, gold glints, deep shadows.
+    composition: >-
+      {hero} and the giant in the upper two-thirds. The lower third is the plain stone floor in
+      shadow, low in detail, for text added later.
+    text_zone: bottom
+
+  - type: illustrated
+    text: "Down the beanstalk {he} climbed and ran all the way home. {His} mother wept for joy."
+    cast: [hero, mother]
+    scene: >-
+      The cottage doorway. {hero}'s mother kneels and hugs {hero} tightly, tears of happiness on her
+      face; the open bag of gold sits at their feet, coins spilling onto the doorstep. The beanstalk
+      rises behind the cottage.
+    mood: >-
+      Joy and relief. The first warm sunshine in the book, soft and golden.
+    composition: >-
+      The two of them in the upper two-thirds. The lower third is the plain worn doorstep and
+      earth, low in detail, for text added later.
+    text_zone: bottom
+
+  - type: illustrated
+    text: "But gold does not last forever. When the last coin was spent, {hero} climbed the beanstalk again."
+    cast: [hero, mother]
+    scene: >-
+      The cottage kitchen again, the cupboard nearly bare. {hero}'s mother holds up an empty, limp
+      money bag, worried. {hero} stands at the open door, looking out toward the beanstalk with
+      quiet resolve, one hand on the door frame.
+    mood: >-
+      Back to hard times, but braver now. Cool grey daylight through the door.
+    composition: >-
+      Characters in the upper two-thirds. The lower third is the plain worn earth floor in soft
+      shadow, low in detail, for text added later.
+    text_zone: bottom
+
+  - type: illustrated
+    text: "“Lay!” said the giant, and his hen laid an egg of solid gold. When he dozed, {hero} snatched the hen and ran."
+    cast: [hero, giant, golden_hen]
+    scene: >-
+      The giant's table. The golden hen sits on the table beside a shining golden egg; the giant
+      slumps asleep in his huge chair. {hero} is mid-run toward the door, the hen tucked safely
+      under one arm, looking back.
+    mood: >-
+      Daring and quick. Warm candlelight, the golden egg glowing.
+    composition: >-
+      The scene in the lower two-thirds. The top third is the plain, dark stone wall in shadow,
+      low in detail, for text added later.
+    text_zone: top
+
+  - type: illustrated
+    text: "Now there was a golden egg every day. Still, {hero} kept wondering what else the giant kept up there."
+    cast: [hero, mother, golden_hen]
+    scene: >-
+      The cottage, now mended and cosy, with a full basket on the table. {hero}'s mother smiles,
+      holding up a golden egg. The golden hen sits in a straw nest on the table. {hero} stands at
+      the window, gazing up at the beanstalk disappearing into the clouds, thoughtful and curious.
+    mood: >-
+      Comfortable and happy, with a pull of curiosity. Warm afternoon sunlight.
+    composition: >-
+      Characters in the upper two-thirds. The lower third is the plain wooden floor in soft
+      shadow, low in detail, for text added later.
+    text_zone: bottom
+
+  - type: illustrated
+    text: "So {hero} climbed up once more. From behind the giant's chair, {he} eyed the golden harp that sang the giant to sleep."
+    cast: [hero, giant, golden_harp]
+    scene: >-
+      The giant's hall at night. The golden harp stands on the giant's table, playing all by itself,
+      soft glowing notes drifting from its strings; its carved face is calm, eyes half closed, as
+      if singing. The giant slumps in his huge chair, eyelids drooping, nodding off. {hero} peeks
+      out from behind one enormous chair leg, eyes fixed on the harp, wide with wonder.
+    mood: >-
+      Hushed, magical and sleepy. Low warm candlelight, a soft golden glow from the harp.
+    composition: >-
+      The scene in the lower two-thirds. The top third is the plain, dark stone ceiling in shadow,
+      low in detail, for text added later.
+    text_zone: top
+
+  - type: illustrated
+    text: "{hero} grabbed the harp, and it cried out, “Master! Master!”"
+    cast: [hero, giant, golden_harp]
+    scene: >-
+      The same hall. {hero} has just lifted the golden harp from the table and holds it in both
+      arms; the carved face on the harp has its mouth wide open, crying out. {hero} stares at the
+      harp in shock. Behind {him}, the giant is asleep in his chair, but one huge eye is starting
+      to open.
+    mood: >-
+      The moment it all goes wrong: startled and alarming. Low candlelight, the harp gleaming.
+    composition: >-
+      The scene in the lower two-thirds. The top third is the plain, dark stone ceiling in shadow,
+      low in detail, for text added later.
+    text_zone: top
+
+  - type: illustrated
+    text: "The giant woke with a roar and thundered after {him} across the clouds."
+    cast: [hero, giant, golden_harp]
+    scene: >-
+      Outside the castle, on the road of clouds. {hero} runs toward the top of the beanstalk,
+      clutching the harp. Behind {him}, the giant charges out of the castle door, arms reaching,
+      shouting, his huge footsteps sending up puffs of cloud.
+    mood: >-
+      A thrilling chase. Dramatic stormy light, the sky turning dark behind the giant.
+    composition: >-
+      The chase in the upper two-thirds. The lower third is smooth, plain cloud ground, low in
+      detail, for text added later.
+    text_zone: bottom
+
+  - type: illustrated
+    text: "Down the beanstalk {hero} scrambled, and the whole stalk shook as the giant climbed after {him}."
+    cast: [hero, giant, golden_harp]
+    scene: >-
+      The beanstalk seen from below. {hero} climbs down fast with the harp slung on {his} back.
+      High above, the giant climbs down after {him}, the stalk bending and swaying, leaves flying.
+      The cottage roof is close below.
+    mood: >-
+      Urgent and dizzying. Grey windy light, leaves whipping past.
+    composition: >-
+      {hero} and the giant in the lower two-thirds. The top third is plain, soft grey cloud for
+      text added later.
+    text_zone: top
+
+  - type: illustrated
+    text: "“Mother, the axe!” {hero} shouted."
+    cast: [hero, mother]
+    scene: >-
+      The cottage garden at the foot of the beanstalk. {hero} jumps the last few feet to the
+      ground, calling out. {hero}'s mother runs from the cottage holding out a woodcutter's axe.
+      The beanstalk shakes violently above them.
+    mood: >-
+      Urgent and determined. Windy grey light, leaves falling.
+    composition: >-
+      Characters in the upper two-thirds. The lower third is the plain garden grass, low in
+      detail, for text added later.
+    text_zone: bottom
+
+  - type: illustrated
+    text: "Chop! Chop! The beanstalk cracked and came crashing down, and the giant tumbled far away, never to be seen again."
+    cast: [hero, mother, giant]
+    scene: >-
+      {hero} swings the axe into the base of the beanstalk, which is snapping and toppling. Far up
+      in the sky, the giant tumbles away into the clouds, small and distant, arms flailing, like a
+      falling leaf; nothing violent or hurt is shown. {hero}'s mother watches, hands at her mouth.
+    mood: >-
+      The big climax, then relief. The clouds breaking and a burst of sunlight coming through.
+    composition: >-
+      The action in the lower two-thirds. The top third is plain, bright sky breaking through
+      the clouds, for text added later.
+    text_zone: top
+
+  - type: illustrated
+    text: "And {hero} and {his} mother lived happily ever after, with a golden hen, a singing harp, and never an empty cupboard again."
+    cast: [hero, mother, golden_hen, golden_harp]
+    scene: >-
+      The cottage, now mended, with flowers by the door and a full cupboard. {hero} and {his}
+      mother sit together by a warm fire, smiling. The golden hen sits in her nest, and the golden
+      harp plays on a shelf. Milky-White's old halter hangs on a peg by the door.
+    mood: >-
+      Warm, safe and happy. Golden evening firelight, the brightest and cosiest page in the book.
+    composition: >-
+      Characters in the upper two-thirds. The lower third is the plain wooden floor and rug in
+      soft shadow, low in detail, for text added later.
+    text_zone: bottom
 
   - type: about_me

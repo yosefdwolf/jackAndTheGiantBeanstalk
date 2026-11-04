@@ -135,3 +135,11 @@ input[type="radio"], input[type="checkbox"] { min-height: 0; padding: 0; width: 
 .score { font: 700 16px var(--display); }
 .score.low { color: var(--alert); }
 .panel p, .question p { margin: 0; }
+
+/* Review comments: every one starts the same height (3 lines, "…"), and opens on click */
+.comment { cursor: pointer; min-width: 260px; }
+.clamp { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+  line-height: 1.45; height: calc(1.45em * 3); }
+.clamp.open { display: block; height: auto; -webkit-line-clamp: unset; }
+.more { all: unset; cursor: pointer; color: var(--blue); font-size: 12px; font-weight: 600; margin-top: 2px; }
+.more:focus-visible { outline: 2px solid var(--gold); }

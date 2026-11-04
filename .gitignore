@@ -13,3 +13,6 @@ local.db
 
 # PyCharm / IntelliJ settings
 .idea/
+
+# Not for the public repo (e.g. the AI reviewer personas, until after the class compares approaches)
+private/

@@ -61,13 +61,14 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
   // --- then Google sign-in --------------------------------------------------------------------------
 
   let me = null;  // who's signed in (from /api/me)
-  const meReady = fetch('/api/me', { cache: 'no-store' }).then((r) => r.json()).then((m) => { me = m; paintAccount(); })
+  const meReady = fetch('/api/me', { cache: 'no-store' }).then((r) => r.json()).then((m) => { me = m; paintAccount(); updateReady(); })
     .catch(() => {});
 
   function paintAccount() {
     const a = $('account');
     if (!me || !me.signed_in) { a.hidden = true; return; }
-    const left = me.unlimited ? 'unlimited books' : me.left === 1 ? '1 book left today' : `${me.left} books left today`;
+    const left = me.unlimited ? 'unlimited books' : me.left === 0 ? 'today’s book is made'
+      : me.left === 1 ? '1 book left today' : `${me.left} books left today`;
     a.replaceChildren(`Hi ${me.name || me.email}! `, Object.assign(document.createElement('span'), { className: 'left', textContent: left }),
       ...(me.admin ? [' · ', Object.assign(document.createElement('a'), { href: '/admin', textContent: 'admin' })] : []),
       ' · ', Object.assign(document.createElement('a'), { href: '/auth/logout', textContent: 'sign out' }));
@@ -183,6 +184,11 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
 
   function updateReady() {
     const hasName = form.name.value.trim().length > 0;
+    if (me && me.left === 0) {  // today's book is made: the bookshelf below still has it
+      go.disabled = true;
+      $('goNote').textContent = 'You’ve made your book for today. Come back tomorrow for another!';
+      return;
+    }
     go.disabled = !(photo && hasName);
     $('goNote').textContent = !photo && !hasName ? 'Add a photo and a name to begin'
       : !photo ? 'Now pop in a photo' : !hasName ? 'Now write your name' : 'Ready when you are!';
@@ -411,6 +417,9 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     cancelAnimationFrame(frame);
     clearTimeout(pollTimer);
     store.drop(BOOK_KEY);
+    // A failed book gives the day's book back; a finished one uses it. Ask the server which.
+    fetch('/api/me', { cache: 'no-store' }).then((r) => r.json()).then((m) => { me = m; paintAccount(); updateReady(); })
+      .catch(() => {});
     if (data.status === 'done' && data.book) {
       openReader(data).then(loadShelf);
       showReview(data.id);

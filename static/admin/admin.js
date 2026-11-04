@@ -209,10 +209,28 @@
       el('td', { class: 'when', text: fmt.when(r.at) }),
       el('td', {}, el('img', { class: 'thumb', src: r.cover_url + '?w=120', alt: '', loading: 'lazy' }),
         el('span', { class: 'mono', text: r.book_id })),
-      el('td', {}, r.email || '—', r.participant_id && el('div', { class: 'kv', text: `participant ${r.participant_id}` })),
+      r.source === 'ai'  // an AI persona review: say which persona, not the book owner's email
+        ? el('td', {}, el('span', { class: 'pill', text: 'AI' }), ' ', (r.respondent || '').replace(/^ai:\d+-/, '').replace(/-/g, ' '))
+        : el('td', {}, r.email || '—', r.participant_id && el('div', { class: 'kv', text: `participant ${r.participant_id}` })),
       score(r.looks_like_me), score(r.story_rings_true), score(r.looks_professional),
-      el('td', { class: 'msg', text: r.not_good || '' })))
+      commentCell(r.not_good || '')))
       : [el('tr', { class: 'empty' }, el('td', { colspan: 7, text: 'No reviews yet. Share the QR code!' }))]));
+  }
+
+  // A review comment starts as 3 lines ending in "…"; clicking it opens the rest (and doesn't open the book).
+  function commentCell(text) {
+    const body = el('div', { class: 'clamp', text });
+    const toggle = el('button', { class: 'more', type: 'button', text: 'more', hidden: true });
+    const cell = el('td', { class: 'msg comment' }, body, toggle);
+    const flip = (e) => {
+      e.stopPropagation();
+      if (toggle.hidden) return;  // short comment: nothing more to show
+      const open = body.classList.toggle('open');
+      toggle.textContent = open ? 'less' : 'more';
+    };
+    cell.addEventListener('click', flip);
+    requestAnimationFrame(() => { toggle.hidden = body.scrollHeight <= body.clientHeight + 1; });
+    return cell;
   }
 
   // --- days --------------------------------------------------------------------------------------

@@ -7,6 +7,7 @@ One call per image, no retries.
 import asyncio
 import hashlib
 import io
+import os
 import statistics
 from datetime import datetime, timezone
 
@@ -30,6 +31,8 @@ from .styles import get_style
 PDF_NAME = "JackAndTheBeanstalk.pdf"
 HERO = ("hero_sheet", 0)
 DEFAULT_ETA = {"hero_sheet": 22.0, "page": 28.0}  # seconds, until there's history to go on
+# Pictures drawn at the same time. OpenAI refuses too many image calls at once, and a book now has 20.
+IMAGE_CONCURRENCY = int(os.getenv("IMAGE_CONCURRENCY", "5"))
 _tasks: set[asyncio.Task] = set()  # keep references so running books aren't garbage-collected
 
 
@@ -46,6 +49,13 @@ def to_webp(png: bytes) -> bytes:
 def to_png(data: bytes) -> bytes:
     buf = io.BytesIO()
     Image.open(io.BytesIO(data)).convert("RGB").save(buf, "PNG")
+    return buf.getvalue()
+
+
+def to_jpeg(data: bytes) -> bytes:
+    """Pictures go into the PDF as JPEG: lossless PNG made a 20-page book about 65 MB."""
+    buf = io.BytesIO()
+    Image.open(io.BytesIO(data)).convert("RGB").save(buf, "JPEG", quality=88, optimize=True)
     return buf.getvalue()
 
 
@@ -93,15 +103,18 @@ async def create_book(ref: str, *, gender: str, child_name: str, details: list, 
         await s.commit()
 
 
+COUNTS_TOWARD_LIMIT = ("done", "queued", "running", "interrupted")
+
+
 async def books_today(user_id, exclude: str | None = None) -> int:
-    """Books that count towards the daily limit (UTC day). Refused books never count; a failed book
-    counts only if at least one picture was drawn, since that's when it cost something."""
+    """Books that use up the daily allowance (UTC day): finished ones, and ones still being drawn (so
+    two can't be started at once). A failed book doesn't count; its owner can retry the missing
+    pictures, and it counts once it's done. Refused requests never count."""
     midnight = utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
     async with session() as s:
-        books = (await s.execute(select(Book).where(Book.user_id == user_id, Book.created_at >= midnight)
-                                 .options(selectinload(Book.images)))).scalars().all()
-    return sum(1 for b in books if b.id != exclude and b.status != "refused"
-               and (b.status != "failed" or any(i.status == "done" for i in b.images)))
+        statuses = (await s.execute(select(Book.id, Book.status).where(Book.user_id == user_id,
+                                                                      Book.created_at >= midnight))).all()
+    return sum(1 for ref, status in statuses if ref != exclude and status in COUNTS_TOWARD_LIMIT)
 
 
 async def refuse(ref: str, reason: str, message: str) -> None:
@@ -261,12 +274,18 @@ async def _run(ref: str) -> None:
 
     story, ctx = _context(book, hero_png, provider)
     pages = [make_page(spec) for spec in story.pages]
-    todo = [p for p in pages if p.needs_image and rows[("page", p.spec.number)].status != "done"]
-    # All pages at once: a book takes about as long as its slowest page.
-    outcomes = await asyncio.gather(
-        *(_draw(ref, ("page", p.spec.number), provider, p.prompt(ctx), list(p.spec.cast),
-                (lambda p=p: p.draw(ctx))) for p in todo),
-        return_exceptions=True)
+    # Only pages this book has rows for: books made before pages were added keep their own pages.
+    todo = [p for p in pages if p.needs_image and ("page", p.spec.number) in rows
+            and rows[("page", p.spec.number)].status != "done"]
+    # A few pages at a time; each picture waits its turn (shown as "waiting" on its progress bar).
+    gate = asyncio.Semaphore(IMAGE_CONCURRENCY)
+
+    async def draw_page(p):
+        async with gate:
+            return await _draw(ref, ("page", p.spec.number), provider, p.prompt(ctx), list(p.spec.cast),
+                               lambda: p.draw(ctx))
+
+    outcomes = await asyncio.gather(*(draw_page(p) for p in todo), return_exceptions=True)
     failures = [o for o in outcomes if isinstance(o, BaseException)]
 
     async with session() as s:
@@ -339,9 +358,12 @@ async def status(ref: str) -> dict | None:
 
 def _flipbook(book, story, casting) -> dict:
     """What the on-site flip book shows: the same pages and text as the PDF, plus a cover."""
+    drawn = {i.page_number for i in book.images if i.kind == "page" and i.status == "done"}
     pages = []
     for spec in story.pages:
         if make_page(spec).needs_image:
+            if spec.number not in drawn:
+                continue  # a page added to the story after this book was made
             pages.append({"kind": "illustrated", "number": spec.number, "text": casting.fill(spec.text),
                           "text_zone": spec.text_zone, "image_url": f"/api/books/{book.id}/images/page-{spec.number}"})
         else:
@@ -364,11 +386,13 @@ async def pdf_bytes(ref: str) -> bytes | None:
     if book.status != "done":
         return None
     rows = {(i.kind, i.page_number): i for i in book.images}
-    story, ctx = _context(book, to_png(rows[HERO].image), get_provider("mock"))
+    story, ctx = _context(book, to_jpeg(rows[HERO].image), get_provider("mock"))
     pages = []
     for spec in story.pages:
         page = make_page(spec)
-        image = to_png(rows[("page", spec.number)].image) if page.needs_image else None
+        if page.needs_image and ("page", spec.number) not in rows:
+            continue  # a page added to the story after this book was made
+        image = to_jpeg(rows[("page", spec.number)].image) if page.needs_image else None
         pages.append(page.layout(ctx, image))
     cover = RenderedPage(0, "cover", image=ctx.sheets.hero_sheet, child=ctx.child)
     return build_pdf(pages, story.title, cover=cover)

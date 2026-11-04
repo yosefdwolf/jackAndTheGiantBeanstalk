@@ -3,7 +3,7 @@
     python -m scripts.make_character_sheets            # only sheets that don't exist yet
     python -m scripts.make_character_sheets mother     # redo just these keys
 
-They are the same in every book, so commit them. Costs about $0.02 per sheet. You can also save a sheet
+They are the same in every book, so commit them. Costs about $0.04 per sheet. You can also save a sheet
 you made in the OpenAI Playground to assets/characters/<key>.png instead.
 """
 import asyncio
@@ -30,7 +30,8 @@ async def main(keys: list[str]) -> None:
         if (keys and key not in keys) or (not keys and path.exists()):
             continue
         print(f"drawing {key} …")
-        path.write_bytes(await provider.generate(f"{key} sheet", prompts.character_sheet(character), SHEET_SIZE))
+        result = await provider.generate(f"{key} sheet", prompts.character_sheet(character), SHEET_SIZE)
+        path.write_bytes(result.png)
         print(f"saved {path}")
 
 
