@@ -157,13 +157,18 @@ p { margin: 0; }
 .reader { display: grid; gap: 16px; justify-items: center; }
 .flipbook { position: relative; width: min(100%, 620px); aspect-ratio: 3 / 2; perspective: 2200px; touch-action: pan-y; }
 .flipbook:focus-visible { outline-offset: 8px; }
+/* One shadow under the whole book. A shadow on every page piled up into a thick haze once the book
+   had 21 stacked pages. */
+.flipbook::before { content: ""; position: absolute; inset: 0; border-radius: 6px 14px 14px 6px;
+  box-shadow: 0 14px 30px rgba(30, 50, 20, .28); pointer-events: none; }
 .leaf { position: absolute; inset: 0; transform-origin: left center; transform-style: preserve-3d; visibility: visible;
   transition: transform .9s cubic-bezier(.45, .05, .2, 1), visibility 0s 0s; border-radius: 6px 14px 14px 6px; }
 /* A turned page swings away to the left, then hides so it doesn't hang off the book. */
 .leaf.turned { transform: rotateY(-178deg); visibility: hidden;
   transition: transform .9s cubic-bezier(.45, .05, .2, 1), visibility 0s .9s; }
 .face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; overflow: hidden;
-  border-radius: inherit; background: var(--card); box-shadow: 0 14px 30px rgba(30, 50, 20, .28), inset 6px 0 10px -6px rgba(0,0,0,.25); }
+  border-radius: inherit; background: var(--card); box-shadow: inset 6px 0 10px -6px rgba(0,0,0,.25); }
+.leaf.turning .face { box-shadow: 0 14px 30px rgba(30, 50, 20, .22), inset 6px 0 10px -6px rgba(0,0,0,.25); }
 .face.back { transform: rotateY(180deg); background: #f3e6cb; }
 .leaf.turning .face.front::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0,0,0,.18), transparent 60%); }
 .story-page img { width: 100%; height: 100%; object-fit: cover; display: block; }
