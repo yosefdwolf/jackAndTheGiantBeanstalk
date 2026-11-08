@@ -114,6 +114,19 @@ class CharacterPicture(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
 
+class SharedPage(Base):
+    """A page with no hero on it comes out the same in every book, so it's drawn once and reused. `key` covers
+    everything that shapes it (prompt, the character pictures sent, the image model), so any change redraws it."""
+    __tablename__ = "shared_pages"
+    id: Mapped[int] = mapped_column(Id, primary_key=True, autoincrement=True)
+    key: Mapped[str] = mapped_column(String(40), unique=True)
+    story_key: Mapped[str] = mapped_column(String(64))
+    page_number: Mapped[int] = mapped_column(Integer)
+    image: Mapped[bytes] = mapped_column(Bytes)  # WebP, as book pages are kept
+    cost: Mapped[float | None] = mapped_column(Numeric(10, 4))  # what drawing it cost, once
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
 class Upload(Base):
     """The uploaded photo, kept so a failed or odd book can be compared with what was sent."""
     __tablename__ = "uploads"

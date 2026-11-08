@@ -301,3 +301,21 @@ def test_seeing_a_later_page_is_caught(stories):
     path = stories / "little_red_riding_hood.yaml"
     path.write_text(path.read_text().replace("see_pages: [12]", "see_pages: [14]"))
     assert any("see_pages 14 must be an earlier" in p for p in check_story(load_story(path)))
+
+
+def test_pages_without_the_hero_are_drawn_once_and_reused(client):
+    from tests.test_books import ADMIN, post_book, rows, sign_in, wait_for
+    from app.db.models import BookImage, SharedPage
+    sign_in(client, ADMIN)
+    first = post_book(client, story="little-red-riding-hood").json()["id"]
+    assert wait_for(client, first, timeout=30)["status"] == "done"
+    second = post_book(client, story="little-red-riding-hood", name="Ann", gender="girl").json()["id"]
+    assert wait_for(client, second, timeout=30)["status"] == "done"
+    assert sorted(r.page_number for r in run(rows(SharedPage))) == [8, 9, 10]  # the wolf and Grandmother alone
+    a = {i.page_number: i for i in run(rows(BookImage, book_id=first)) if i.kind == "page"}
+    b = {i.page_number: i for i in run(rows(BookImage, book_id=second)) if i.kind == "page"}
+    assert all(b[n].image == a[n].image for n in (8, 9, 10))  # the very same pictures
+    from app.db.models import BookEvent
+    reused = sorted(e.step for e in run(rows(BookEvent, book_id=second)) if e.event == "reused")
+    assert reused == ["page 10", "page 8", "page 9"]  # only those three; every page with the hero is drawn
+    assert not [e for e in run(rows(BookEvent, book_id=first)) if e.event == "reused"]

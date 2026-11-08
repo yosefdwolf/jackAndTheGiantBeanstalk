@@ -17,9 +17,10 @@ from datetime import datetime, timezone
 import openai
 from PIL import Image, ImageOps
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
 
-from ..db.models import Activity, Book, BookEvent, BookImage, Upload
+from ..db.models import Activity, Book, BookEvent, BookImage, SharedPage, Upload
 from ..db.session import session
 from ..faces import PreparedPhoto, UploadError, from_saved, prepare
 from . import bible
@@ -29,7 +30,7 @@ from .pages import BookContext, ChildInfo, RenderedPage, make_page
 from .pdf import build_pdf
 from .prompts import PromptBuilder
 from .providers import SHEET_SIZE, MockImageProvider, get_provider
-from .story import DEFAULT_STORY, Casting, display_name, story_file, story_for
+from .story import HERO as HERO_CAST, DEFAULT_STORY, Casting, display_name, story_file, story_for
 from .styles import get_style
 
 HERO = ("hero_sheet", 0)
@@ -223,6 +224,42 @@ async def _draw_once(ref, key, provider, prompt, refs, call, attempt):
     return result.png
 
 
+def _shared_key(story, page, ctx, provider) -> tuple[str, str, list]:
+    """Everything that shapes a page with no hero on it, hashed: the same key means the same picture."""
+    prompt = page.prompt(ctx)
+    refs = ctx.sheets.refs(page.spec.cast)
+    h = hashlib.sha1("\n".join([prompt, provider.name, str(provider.model), str(provider.quality)]).encode())
+    for name, data in refs:
+        h.update(name.encode() + hashlib.sha1(data).digest())
+    return h.hexdigest(), prompt, [name.removesuffix(".png") for name, _ in refs]
+
+
+async def _shared_page(ref, story, page, ctx, provider, gate) -> bytes:
+    key, prompt, refs = _shared_key(story, page, ctx, provider)
+    row_key = ("page", page.spec.number)
+    async with session() as s:
+        saved = (await s.execute(select(SharedPage.image).where(SharedPage.key == key))).scalar_one_or_none()
+    if saved is not None:
+        now = utcnow()
+        await _set_image(ref, row_key, status="done", attempts=1, started_at=now, finished_at=now, prompt=prompt,
+                         refs=refs, provider=provider.name, model=provider.model, quality=provider.quality,
+                         image=saved, cost=0, error_code=None, error_message=None)
+        await record("INFO", f"page {page.spec.number}", "reused", note="no hero on it: the saved picture")
+        return to_png(saved)
+    async with gate:
+        png = await _draw(ref, row_key, provider, prompt, refs, lambda: page.draw(ctx))
+    async with session() as s:
+        image = (await s.execute(select(BookImage.image, BookImage.cost).where(
+            BookImage.book_id == ref, BookImage.kind == "page", BookImage.page_number == page.spec.number))).one()
+        s.add(SharedPage(key=key, story_key=story.key, page_number=page.spec.number, image=image.image,
+                         cost=image.cost))
+        try:
+            await s.commit()
+        except IntegrityError:  # another book drew and saved it at the same moment
+            await s.rollback()
+    return png
+
+
 async def _load(ref):
     async with session() as s:
         return (await s.execute(select(Book).where(Book.id == ref)
@@ -311,9 +348,12 @@ async def _run(ref: str) -> None:
                 await finished[n]  # True or False: without it the page is still drawn, just without that picture
         number = p.spec.number
         try:
-            async with gate:
-                png = await _draw(ref, ("page", number), provider, p.prompt(ctx),
-                                  list(p.spec.cast) + [f"page-{n}" for n in p.earlier(ctx)], lambda: p.draw(ctx))
+            if HERO_CAST not in p.spec.cast and not p.spec.see:  # the same in every book: drawn once, then reused
+                png = await _shared_page(ref, story, p, ctx, provider, gate)
+            else:
+                async with gate:
+                    png = await _draw(ref, ("page", number), provider, p.prompt(ctx),
+                                      list(p.spec.cast) + [f"page-{n}" for n in p.earlier(ctx)], lambda: p.draw(ctx))
         except BaseException:
             if number in finished and not finished[number].done():
                 finished[number].set_result(False)

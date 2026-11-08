@@ -41,5 +41,9 @@ The story page then wears the shared story theme in the file's colours, over its
 or with no `look:` at all, it uses the library's look; without a cover, the library shows a plain book with the
 title. (A story can also have a fully custom theme folder with its own `theme.css`, like Jack's drifting clouds.)
 
+**Pages without the hero** (no `hero` in `cast`, no `see_pages`) come out the same in every book, so the first book
+draws them and every later book reuses them for free. Change the page, its characters' pictures or the image model,
+and the next book draws it again.
+
 **Before you pay for pictures,** read every prompt the story will send:
 `python -m scripts.show_prompts <story>` writes them to `docs/prompts/<story>.md`.
