@@ -29,16 +29,18 @@ PROPS = {"target", "source", "reason", "fresh", "cents", "story", "ref"}
 ID = re.compile(r"^[a-z0-9]{8,24}$")
 BOTS = re.compile(r"bot|crawl|spider|slurp|headless|preview|lighthouse|pingdom|monitor", re.I)
 
-# The book funnel: each step counts visitors who did it after the step before.
+# The book funnel: each step counts visitors who did it after the step before, except the last three, which
+# can happen in any order once the book is ready (the third value names the step they follow).
+GOT_BOOK = "Got their book"
 BOOK_STEPS = [
     ("Came to the site", lambda e: e.name == "page_view"),
     ("Opened a story", lambda e: e.name == "page_view" and e.path.startswith("/stories/")),
     ("Added a photo", lambda e: e.name == "photo_added"),
     ("Pressed Generate", lambda e: e.name == "book_requested"),
-    ("Got their book", lambda e: e.name == "book_ready" and (e.props or {}).get("fresh") == "1"),
-    ("Read to the end", lambda e: e.name == "reached_end"),
-    ("Downloaded the PDF", lambda e: e.name == "click" and (e.props or {}).get("target") == "download"),
-    ("Left a review", lambda e: e.name == "review_sent"),
+    (GOT_BOOK, lambda e: e.name == "book_ready" and (e.props or {}).get("fresh") == "1"),
+    ("Read to the end", lambda e: e.name == "reached_end", GOT_BOOK),
+    ("Downloaded the PDF", lambda e: e.name == "click" and (e.props or {}).get("target") == "download", GOT_BOOK),
+    ("Left a review", lambda e: e.name == "review_sent", GOT_BOOK),
 ]
 WALLET_STEPS = [
     ("Opened the wallet", lambda e: e.name == "page_view" and e.path == "/wallet"),
@@ -86,19 +88,23 @@ async def forget_old() -> None:
 
 
 def _funnel(by_visitor: dict, steps) -> list[dict]:
+    labels = [step[0] for step in steps]
+    parent = [labels.index(step[2]) if len(step) > 2 else i - 1 for i, step in enumerate(steps)]
     counts = [0] * len(steps)
     for events in by_visitor.values():
-        after = None
-        for i, (_, test) in enumerate(steps):
-            hit = next((e for e in events if test(e) and (after is None or e.at >= after)), None)
-            if hit is None:
-                break
-            counts[i] += 1
-            after = hit.at
+        when = [None] * len(steps)  # when this visitor first did each step (after its parent step)
+        for i, step in enumerate(steps):
+            after = when[parent[i]] if parent[i] >= 0 else None
+            if parent[i] >= 0 and after is None:
+                continue
+            hit = next((e for e in events if step[1](e) and (after is None or e.at >= after)), None)
+            if hit is not None:
+                when[i] = hit.at
+                counts[i] += 1
     out = []
-    for i, (label, _) in enumerate(steps):
-        prev = counts[i - 1] if i else None
-        out.append({"step": label, "visitors": counts[i],
+    for i, label in enumerate(labels):
+        prev = counts[parent[i]] if parent[i] >= 0 else None
+        out.append({"step": label, "visitors": counts[i], "after": labels[parent[i]] if parent[i] >= 0 else None,
                     "of_previous": round(counts[i] / prev, 3) if prev else None,
                     "of_first": round(counts[i] / counts[0], 3) if counts[0] else None})
     return out
@@ -197,5 +203,8 @@ async def funnel(days: int = 7, admins: bool = False, _=Depends(require_admin)):
                                   "count": len(to_first_book)},
         "drawing_seconds": {"p50": _pct(seconds, 0.5), "p95": _pct(seconds, 0.95), "books": len(seconds)},
         "second_book": {"makers": len(makers), "again": sum(n >= 2 for n in makers)},
+        "latest": [{"at": _utc(e.at).isoformat(), "person": e.visitor[:6], "signed_in": e.user_id is not None,
+                    "name": e.name, "path": e.path, "detail": (e.props or {}).get("target") or (e.props or {}).get("reason")}
+                   for e in reversed(events[-60:])],
         "keep_days": KEEP_DAYS,
     }

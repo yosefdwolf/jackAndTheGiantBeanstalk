@@ -177,3 +177,4 @@ input[type="radio"], input[type="checkbox"] { min-height: 0; padding: 0; width: 
 .plain-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
 .grid.small td, .grid.small th { padding: 6px 8px; }
 .days-wrap { max-width: 640px; }
+#tab-funnel .section-title { margin-top: 22px; }

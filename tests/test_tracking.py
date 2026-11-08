@@ -55,6 +55,17 @@ def test_the_funnel_counts_people_through_each_step_in_order(client):
     assert client.get("/admin/api/funnel?admins=true").json()["visitors"] == 4
 
 
+def test_review_and_download_count_in_any_order_after_the_book(client):
+    client.cookies.clear()
+    for name, props in (("page_view", {}), ("photo_added", {}), ("book_requested", {}), ("book_ready", {"fresh": "1"}),
+                        ("review_sent", {}), ("click", {"target": "download"})):  # a review before the download
+        send(client, name, visitor="eeeeeeee5", path="/stories/jack", **props)
+    sign_in(client, ADMIN)
+    steps = {s["step"]: s for s in client.get("/admin/api/funnel").json()["book_funnel"]}
+    assert steps["Left a review"]["visitors"] == 1 and steps["Downloaded the PDF"]["visitors"] == 1
+    assert steps["Left a review"]["after"] == "Got their book" and steps["Read to the end"]["visitors"] == 0
+
+
 def test_the_admin_page_asks_for_the_latest_script(client):
     sign_in(client, ADMIN)
     html = client.get("/admin").text

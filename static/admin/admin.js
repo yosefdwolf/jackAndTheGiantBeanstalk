@@ -366,7 +366,8 @@
       el('div', { class: 'bar', style: `--w:${top ? Math.max(2, (s.visitors / top) * 100) : 0}%` }),
       el('span', { class: 'label', text: s.step }),
       el('b', { text: s.visitors }),
-      el('span', { class: 'soft', text: !i ? 'people' : s.of_previous == null ? 'nobody reached the step before' : `${pct(s.of_previous)} of the step before` }))));
+      el('span', { class: 'soft', text: !i ? 'people' : s.of_previous == null ? `nobody reached “${s.after}”`
+        : s.after === steps[i - 1].step ? `${pct(s.of_previous)} of the step before` : `${pct(s.of_previous)} of “${s.after}”` }))));
   }
   async function loadFunnel() {
     const d = await api(`/funnel?days=${funnelFilters.days.value}&admins=${funnelFilters.admins.checked}`);
@@ -394,6 +395,13 @@
       : [el('tr', { class: 'empty' }, el('td', { colspan: 3, text: 'Nothing yet.' }))]);
     $('clickRows').replaceChildren(...rows(d.clicks, (c) => [el('td', { text: clickName(c.target) }),
       el('td', { class: 'num', text: c.clicks }), el('td', { class: 'num', text: c.visitors })]));
+    $('latestEvents').tBodies[0].replaceChildren(...(d.latest.length ? d.latest.map((x) => el('tr', {},
+      el('td', { class: 'when', text: fmt.when(x.at) }),
+      el('td', {}, el('span', { class: 'mono', text: x.person }), x.signed_in ? ' (signed in)' : ''),
+      el('td', { text: x.name === 'click' ? `Clicked ${clickName(x.detail || '?')}` : x.name === 'page_view' ? 'Opened the page'
+        : `${x.name.replace(/_/g, ' ')}${x.detail ? `: ${x.detail}` : ''}` }),
+      el('td', { class: 'mono', text: x.path })))
+      : [el('tr', { class: 'empty' }, el('td', { colspan: 4, text: 'Nothing yet.' }))]));
     $('pageRows').replaceChildren(...rows(d.pages, (p) => [el('td', { class: 'mono', text: p.path }),
       el('td', { class: 'num', text: p.views }), el('td', { class: 'num', text: p.visitors })]));
   }
@@ -491,6 +499,7 @@
     const h = readHash();
     if ((h.tab || 'books') === 'books') loadBooks();
     if (h.tab === 'activity') loadActivity();
+    if (h.tab === 'funnel') loadFunnel();
     if (h.book && ['queued', 'running', 'interrupted'].includes(openStatus)) openBook(h.book);
   }, 5000);
 })();
