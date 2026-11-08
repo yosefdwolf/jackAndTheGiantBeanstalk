@@ -1,0 +1,10 @@
+.env
+.venv/
+local.db
+*.db-journal
+private/
+eval/photos/*
+eval/out/
+__pycache__/
+.claude/
+.idea/
