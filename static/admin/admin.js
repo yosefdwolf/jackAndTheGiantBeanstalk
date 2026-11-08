@@ -413,21 +413,56 @@
     repo: 'a picture kept in the repo', 'matches the description': 'drawn from the current description',
     'not drawn yet': 'not drawn yet: the first book draws it', 'description changed': 'description changed: the next book draws a new version',
   };
+  function whyText(c) {
+    const source = (c.versions.find((v) => v.name === c.in_use) || {}).source;
+    if (c.why === 'matches the description' && source === 'uploaded') return 'uploaded here, in use';
+    if (c.why === 'matches the description' && source === 'imported') return 'imported from the repo, in use';
+    return WHY[c.why] || c.why;
+  }
   function copyPin(name, button) {
     const text = `picture: ${name}`;
     (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject()).then(
       () => { button.textContent = 'copied!'; setTimeout(() => { button.textContent = name; }, 1200); },
       () => window.prompt('Copy this into the story file:', text));
   }
+  // Click a character's picture to upload a new one: saved as a new version (the old ones stay) and used from now on.
+  function replaceButton(st, c) {
+    const input = el('input', { type: 'file', accept: 'image/*', hidden: true });
+    const note = el('span', { class: 'replace-note', text: c.in_use_url ? 'Click to replace' : 'Click to upload one' });
+    const button = el('button', { class: 'cast-main replace', type: 'button', title: `Upload a new picture of ${c.name}`,
+      onclick: () => input.click() },
+    c.in_use_url ? el('img', { src: c.in_use_url, alt: c.name, loading: 'lazy' }) : el('span', { text: 'No picture yet' }),
+    note);
+    input.addEventListener('change', async () => {
+      const file = input.files[0];
+      if (!file) return;
+      note.textContent = 'Uploading…';
+      button.disabled = true;
+      const body = new FormData();
+      body.append('photo', file);
+      try {
+        const res = await fetch(`${API}/characters/${encodeURIComponent(st.key)}/${encodeURIComponent(c.key)}/picture`,
+          { method: 'POST', body });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error((data.detail && data.detail.message) || `HTTP ${res.status}`);
+        if (data.note) window.alert(data.note);
+        await loadCharacters();
+      } catch (e) {
+        note.textContent = e.message;
+        button.disabled = false;
+      }
+    });
+    return el('div', {}, button, input);
+  }
+
   async function loadCharacters() {
     const stories = await api('/characters');
     $('characterStories').replaceChildren(...stories.map((st) => el('section', { class: 'cast-story' },
       el('h2', { class: 'section-title', text: st.title }),
       el('div', { class: 'cast-grid' }, ...st.characters.map((c) => el('article', { class: 'panel cast-card' },
-        c.in_use_url ? el('img', { class: 'cast-main', src: c.in_use_url, alt: c.name, loading: 'lazy' })
-          : el('div', { class: 'cast-main empty', text: 'No picture yet' }),
+        replaceButton(st, c),
         el('h3', { text: c.name }),
-        el('p', { class: `why ${c.why.replace(/ /g, '-')}`, text: `${c.in_use ? `${c.in_use}: ` : ''}${WHY[c.why] || c.why}` }),
+        el('p', { class: `why ${c.why.replace(/ /g, '-')}`, text: `${c.in_use ? `${c.in_use}: ` : ''}${whyText(c)}` }),
         el('details', {}, el('summary', { text: 'description' }), el('p', { class: 'soft', text: c.description })),
         c.versions.length ? el('div', { class: 'versions' }, ...c.versions.map((v) => el('figure', {
           class: v.name === c.in_use ? 'current' : null },

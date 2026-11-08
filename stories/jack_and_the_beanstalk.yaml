@@ -45,7 +45,7 @@ hero:
   names: {boy: Jack, girl: Jane}
   outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots
 
-# Sheets live in the repo (assets/characters/<story>/<key>.png) and are the same in every book.
+# Each character's picture is drawn once from this description and kept in the database (stories/README.md).
 characters:
   mother:
     name: "{hero}'s mother"

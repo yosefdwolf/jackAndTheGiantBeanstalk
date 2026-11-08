@@ -26,7 +26,7 @@ of the library, and the server log says why. `python -m pytest tests/test_new_st
 database as `<character>-1`; every later book reuses it. Nothing is ever replaced: change a description and the next
 book draws `<character>-2`, keeping the old one. To always use one version, add `picture: wolf-1` under that
 character (the admin site's Characters tab shows every version; click a name to copy it). A picture you made
-yourself can go at `assets/characters/<story>/<key>.png`; it's imported into the database on the next deploy.
+yourself: click the character's picture on the Characters tab to upload it.
 
 **The database mirrors the files.** On every startup the site copies each story file into the `stories` and
 `characters` tables (pictures are in `character_pictures`). Never edit those tables: the files win on the next

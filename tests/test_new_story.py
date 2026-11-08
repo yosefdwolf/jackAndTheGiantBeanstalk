@@ -148,12 +148,26 @@ def test_the_admin_sees_every_version(client, monkeypatch):
     assert [v["name"] for v in wolf["versions"]] == ["wolf-1"]
 
 
-def test_a_kept_picture_is_imported_instead_of_drawing(client, monkeypatch):
+@pytest.fixture
+def kept(tmp_path, monkeypatch):
+    """A folder of pictures someone put in the repo by hand: Jack's mother and giant."""
+    from app.book import cast
+    from tests.test_story import png
+    folder = tmp_path / "characters" / "jack_and_the_beanstalk"
+    folder.mkdir(parents=True)
+    for key in ("mother", "giant"):
+        (folder / f"{key}.png").write_bytes(png())
+    monkeypatch.setattr(cast, "SHEETS_DIR", tmp_path / "characters")
+    return folder
+
+
+def test_a_kept_picture_is_imported_instead_of_drawing(client, monkeypatch, kept):
     monkeypatch.setattr(bible, "MockImageProvider", type("NotThis", (), {}))
-    story = story_for("jack_and_the_beanstalk")  # its six sheets are kept in assets/characters/
+    story = story_for("jack_and_the_beanstalk")
     provider = CountingProvider()
     sheets = run(bible.sheets_for(story, builder(story), provider))
-    assert provider.drawn == [] and sheets["mother"].startswith(b"\x89PNG")
+    assert "mother sheet" not in provider.drawn and "giant sheet" not in provider.drawn
+    assert sheets["mother"].startswith(b"\x89PNG") and "milky_white sheet" in provider.drawn
 
 
 def test_startup_mirrors_the_story_files_into_the_tables(stories, client):
@@ -187,12 +201,47 @@ def test_startup_mirrors_the_story_files_into_the_tables(stories, client):
     assert not st["brave_little_tailor"].active and st["little_red_riding_hood"].active
 
 
-def test_jacks_kept_pictures_are_imported_on_startup(client):
+def test_kept_pictures_are_imported_on_startup(client, kept):
     run(bible.sync_stories())
-    names = saved_names("jack_and_the_beanstalk")
-    assert sorted(names) == ["giant-1", "golden_harp-1", "golden_hen-1", "milky_white-1", "mother-1", "old_man-1"]
+    assert sorted(saved_names("jack_and_the_beanstalk")) == ["giant-1", "mother-1"]
     run(bible.sync_stories())  # only once
-    assert len(saved_names("jack_and_the_beanstalk")) == 6
+    assert len(saved_names("jack_and_the_beanstalk")) == 2
+
+
+def upload(client, key="wolf", data=None):
+    from tests.test_story import png
+    return client.post(f"/admin/api/characters/little_red_riding_hood/{key}/picture",
+                       files={"photo": ("wolf.jpg", data or png(), "image/png")})
+
+
+def test_uploading_a_picture_adds_a_version_books_use(client, monkeypatch):
+    from tests.test_books import ADMIN, PARENT, sign_in
+    monkeypatch.setattr(bible, "MockImageProvider", type("NotThis", (), {}))
+    story = story_for("little_red_riding_hood")
+    run(bible.sheets_for(story, builder(story), CountingProvider()))  # wolf-1, drawn
+    sign_in(client, PARENT)
+    assert upload(client).status_code == 403
+    sign_in(client, ADMIN)
+    r = upload(client)
+    assert r.status_code == 200 and r.json() == {"name": "wolf-2", "in_use": True, "note": None}
+    assert saved_names(story.key).count("wolf-1") == 1  # the old one is kept
+    provider = CountingProvider()
+    sheets = run(bible.sheets_for(story, builder(story), provider))
+    assert sheets["wolf"].startswith(b"\x89PNG") and provider.drawn == []  # the upload, nothing redrawn
+    assert upload(client, data=b"not a picture").status_code == 400
+    assert upload(client, key="dragon").status_code == 404
+
+
+def test_an_upload_doesnt_beat_a_pin(client, monkeypatch, stories):
+    from tests.test_books import ADMIN, sign_in
+    monkeypatch.setattr(bible, "MockImageProvider", type("NotThis", (), {}))
+    path = stories / "little_red_riding_hood.yaml"
+    run(bible.sheets_for(story_for("little_red_riding_hood"), builder(story_for("little_red_riding_hood")),
+                         CountingProvider()))
+    path.write_text(path.read_text().replace("    name: the wolf\n", "    name: the wolf\n    picture: wolf-1\n"))
+    sign_in(client, ADMIN)
+    r = upload(client).json()
+    assert r["in_use"] is False and "pins wolf-1" in r["note"]
 
 
 def test_a_draft_story_is_only_for_admins(client):

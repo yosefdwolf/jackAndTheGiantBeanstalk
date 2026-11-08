@@ -9,7 +9,7 @@ import os
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from pydantic import BaseModel
 from sqlalchemy import func, or_, select
@@ -329,6 +329,32 @@ async def characters(_=Depends(require_admin)):
                                       for v in versions]})
         out.append({"key": story.key, "title": story.title, "characters": cast})
     return out
+
+
+@router.post("/api/characters/{story_key}/{key}/picture")
+async def upload_character(story_key: str, key: str, photo: UploadFile = File(...), _=Depends(require_admin)):
+    """Replace a character's picture: the upload becomes a new version (the old ones are kept)."""
+    from PIL import Image, UnidentifiedImageError
+    story = next((s for s in all_stories() if s.key == story_key), None)
+    if story is None or key not in story.characters:
+        raise HTTPException(404, {"message": "No such character."})
+    data = await photo.read()
+    if len(data) > 20 * 1024 * 1024:
+        raise HTTPException(413, {"message": "That picture is too large (max 20 MB)."})
+    try:
+        img = Image.open(io.BytesIO(data))
+        img.load()
+    except (UnidentifiedImageError, OSError):
+        raise HTTPException(400, {"message": "That file isn't a picture we can read."})
+    img = img.convert("RGBA" if img.mode in ("RGBA", "LA", "P") else "RGB")
+    img.thumbnail((1536, 1536))
+    buf = io.BytesIO()
+    img.save(buf, "PNG", optimize=True)
+    picture, in_use = await bible.add_upload(story, key, buf.getvalue())
+    pin = story.characters[key].picture
+    return {"name": picture.name, "in_use": in_use,
+            "note": None if in_use else f"Saved as {picture.name}, but the story file pins {pin}, so books keep using "
+                                        f"that until the picture: line is changed."}
 
 
 @router.get("/api/characters/{picture_id}.png")

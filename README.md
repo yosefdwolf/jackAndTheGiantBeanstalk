@@ -12,7 +12,7 @@ type or image provider is one new class.
 |---|---|---|
 | Story | `stories/jack_and_the_beanstalk.yaml` | The storyboard. Per page: text, cast, scene, mood, composition, where the text goes, and the line the progress card shows while it's drawn. Also everything on the site that belongs to the story (`site:`: the title, the button, the progress words, placeholders, the PDF name), its library blurb and cover, and which page becomes each book's cover on the bookshelf. |
 | Style | `app/book/styles.py` | `ArtStyle` abstract class. `Animated3DStyle` is the book's style; its wording is sent unchanged in every call. |
-| Cast | `app/book/cast.py` | Reference sheets. The child's is drawn from the upload. The mother's, Milky-White's and the old man's are drawn once and kept in `assets/characters/<story>/`. |
+| Cast | `app/book/cast.py`, `app/book/bible.py` | Reference sheets. The child's is drawn from the upload. Every story character's is drawn once from the story file and kept, with every version, in the database (the admin site's Characters tab). |
 | Prompts | `app/book/prompts.py` | Builds every prompt: reference images, style, world, scene, mood, composition, then "only these characters appear." |
 | Pages | `app/book/pages.py` | `Page` abstract class. `IllustratedPage` and `AboutMePage` are registered by type name. |
 | Providers | `app/book/providers.py` | `ImageProvider` abstract class. OpenAI (`gpt-image-2.5-flare`) and a free mock. |

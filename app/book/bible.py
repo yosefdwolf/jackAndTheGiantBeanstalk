@@ -181,6 +181,20 @@ async def sheet(story: Story, key: str, prompts: PromptBuilder, provider: ImageP
         return await _use(c, (await _save(c, result.png, prompt, "drawn", result.cost)).id)
 
 
+async def add_upload(story: Story, key: str, png: bytes) -> tuple[CharacterPicture, bool]:
+    """A picture an admin uploaded for a character: a new version, and the one books use from now on (unless
+    the story file pins another). Counts as drawn from the current description, so it stays until that changes.
+    Returns the picture and whether books use it."""
+    prompt = prompts_for(story).character_sheet(story.characters[key])
+    async with _lock("character", story.key, key):
+        c = await _character(story, key)
+        picture = await _save(c, png, prompt, "uploaded", None)
+        if not c.pin:
+            await _use(c, picture.id)
+        await record("INFO", f"{key} sheet", "uploaded", story=story.key, picture=picture.name)
+        return picture, not c.pin
+
+
 async def sheets_for(story: Story, prompts: PromptBuilder, provider: ImageProvider) -> dict[str, bytes]:
     """Every character the story's pages use, drawn at the same time if any are missing."""
     keys = sorted({k for page in story.pages for k in page.cast if k in story.characters})

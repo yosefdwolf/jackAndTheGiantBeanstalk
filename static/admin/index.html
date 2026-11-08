@@ -26,7 +26,8 @@
     <button role="tab" data-tab="errors">Errors</button>
     <button role="tab" data-tab="settings">Settings</button>
   </nav>
-  <p class="who"><a href="{{SITE}}">← back to the book site</a> · <a href="{{SITE}}wallet">my wallet</a> · {{EMAIL}} · <a href="/auth/logout">sign out</a></p>
+  <p class="who"><span class="email" title="Signed in as {{EMAIL}}">{{EMAIL}}</span>
+    <a href="{{SITE}}">Book site</a><a href="{{SITE}}wallet">Wallet</a><a href="/auth/logout">Sign out</a></p>
 </header>
 
 <main>
@@ -118,7 +119,8 @@
   <section id="tab-characters" class="tab" hidden>
     <p class="summary soft">Each story’s characters, as every book draws them. A picture is drawn from the story file’s
       description by the first book that needs it, and kept; nothing is ever replaced. To always use one version, put
-      <span class="mono">picture: wolf-2</span> under that character in the story file (click a name to copy it).</p>
+      <span class="mono">picture: wolf-2</span> under that character in the story file (click a name to copy it). Click a
+      picture to upload your own instead: it becomes a new version, used from then on.</p>
     <div id="characterStories"></div>
   </section>
 
