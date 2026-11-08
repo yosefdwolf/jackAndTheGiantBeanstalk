@@ -181,6 +181,20 @@ async def sheet(story: Story, key: str, prompts: PromptBuilder, provider: ImageP
         return await _use(c, (await _save(c, result.png, prompt, "drawn", result.cost)).id)
 
 
+async def draw_new(story: Story, key: str, provider: ImageProvider) -> tuple[CharacterPicture, bool]:
+    """An admin asked for a (new) drawing from the current description: always a new version, used from now on
+    unless the story file pins another. Returns the picture and whether books use it."""
+    prompt = prompts_for(story).character_sheet(story.characters[key])
+    async with _lock("character", story.key, key):
+        c = await _character(story, key)
+        await record("INFO", f"{key} sheet", "drawing", story=story.key, reason="asked for in the admin site")
+        result = await provider.generate(f"{key} sheet", prompt, SHEET_SIZE)
+        picture = await _save(c, result.png, prompt, "drawn", result.cost)
+        if not c.pin:
+            await _use(c, picture.id)
+        return picture, not c.pin
+
+
 async def add_upload(story: Story, key: str, png: bytes) -> tuple[CharacterPicture, bool]:
     """A picture an admin uploaded for a character: a new version, and the one books use from now on (unless
     the story file pins another). Counts as drawn from the current description, so it stays until that changes.

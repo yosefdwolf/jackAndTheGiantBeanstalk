@@ -255,3 +255,14 @@ def test_a_draft_story_is_only_for_admins(client):
     sign_in(client, ADMIN)
     assert "Draft: only admins see this" in client.get("/").text
     assert client.get("/stories/little-red-riding-hood").status_code == 200
+
+
+def test_the_admin_can_draw_a_character_now(client):
+    from tests.test_books import ADMIN, PARENT, sign_in
+    sign_in(client, PARENT)
+    assert client.post("/admin/api/characters/little_red_riding_hood/wolf/draw").status_code == 403
+    sign_in(client, ADMIN)
+    first = client.post("/admin/api/characters/little_red_riding_hood/wolf/draw").json()
+    again = client.post("/admin/api/characters/little_red_riding_hood/wolf/draw").json()
+    assert (first["name"], again["name"]) == ("wolf-1", "wolf-2") and again["in_use"]
+    assert client.post("/admin/api/characters/little_red_riding_hood/dragon/draw").status_code == 404

@@ -211,3 +211,5 @@ input[type="radio"], input[type="checkbox"] { min-height: 0; padding: 0; width: 
 .cast-main.replace:hover .replace-note, .cast-main.replace:focus-visible .replace-note, .cast-main.replace:disabled .replace-note,
 .cast-main.replace:not(:has(img)) .replace-note { opacity: 1; }
 .cast-main.replace:not(:has(img)) { border-color: var(--edge); }
+.cast-picture { display: grid; gap: 6px; }
+.cast-picture .draw { justify-self: start; }

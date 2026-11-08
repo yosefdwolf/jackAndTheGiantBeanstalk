@@ -357,6 +357,21 @@ async def upload_character(story_key: str, key: str, photo: UploadFile = File(..
                                         f"that until the picture: line is changed."}
 
 
+@router.post("/api/characters/{story_key}/{key}/draw")
+async def draw_character(story_key: str, key: str, _=Depends(require_admin)):
+    """Draw a character now from the story file's description (about 4 cents): a new version, used from then on."""
+    from .book.providers import get_provider
+    story = next((s for s in all_stories() if s.key == story_key), None)
+    if story is None or key not in story.characters:
+        raise HTTPException(404, {"message": "No such character."})
+    name, model, quality = await provider_for(None)  # what customers' books use (placeholders when MOCK=1)
+    picture, in_use = await bible.draw_new(story, key, get_provider(name, model, quality))
+    pin = story.characters[key].picture
+    return {"name": picture.name, "in_use": in_use,
+            "note": None if in_use else f"Drew {picture.name}, but the story file pins {pin}, so books keep using "
+                                        f"that until the picture: line is changed."}
+
+
 @router.get("/api/characters/{picture_id}.png")
 async def character_png(picture_id: int, w: int = 360, _=Depends(require_admin)):
     from PIL import Image

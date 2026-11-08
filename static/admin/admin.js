@@ -452,7 +452,24 @@
         button.disabled = false;
       }
     });
-    return el('div', {}, button, input);
+    const draw = el('button', { class: 'btn plain small draw', type: 'button',
+      text: c.in_use_url ? 'Draw a new version' : 'Draw it now', onclick: async () => {
+        if (!window.confirm(`Draw ${c.name} from the story file’s description? It costs about 4¢ and takes about a minute.`)) return;
+        draw.disabled = true;
+        draw.textContent = 'Drawing… (about a minute)';
+        try {
+          const res = await fetch(`${API}/characters/${encodeURIComponent(st.key)}/${encodeURIComponent(c.key)}/draw`,
+            { method: 'POST' });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error((data.detail && data.detail.message) || `HTTP ${res.status}`);
+          if (data.note) window.alert(data.note);
+          await loadCharacters();
+        } catch (e) {
+          draw.textContent = `Didn’t work: ${e.message}`;
+          draw.disabled = false;
+        }
+      } });
+    return el('div', { class: 'cast-picture' }, button, input, draw);
   }
 
   async function loadCharacters() {
