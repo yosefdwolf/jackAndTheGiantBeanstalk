@@ -56,6 +56,7 @@ class Story:
     site: dict = field(default_factory=dict)  # the story page's own words (button, titles, placeholders)
     pronouns: dict = field(default_factory=dict)  # the form's boy/girl question and its two buttons' labels
     draft: bool = False  # only admins see it, to try it before customers can buy it
+    cover: dict = field(default_factory=dict)  # the library cover's scene / mood / composition (scripts/make_cover.py)
 
     @property
     def slug(self) -> str:
@@ -95,7 +96,8 @@ def load_story(path: Path = DEFAULT_STORY) -> Story:
                  characters=characters, pages=tuple(pages), key=Path(path).stem,
                  blurb=" ".join(raw.get("blurb", "").split()), library_cover=raw.get("library_cover", ""),
                  cover_page=int(raw.get("cover_page", 0)), site=raw.get("site", {}),
-                 pronouns=raw.get("pronouns", {}), draft=bool(raw.get("draft", False)))
+                 pronouns=raw.get("pronouns", {}), draft=bool(raw.get("draft", False)),
+                 cover=raw.get("cover", {}))
 
 
 def check_story(story: Story) -> list[str]:

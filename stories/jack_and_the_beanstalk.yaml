@@ -10,6 +10,17 @@ style: animated3d
 theme: jack   # the website's look: static/themes/jack/
 blurb: You trade the family cow for five magic beans. By morning, nothing will ever be the same.
 library_cover: /static/themes/jack/art/cover.webp   # the library's cover (the site sets the title on it)
+# The library's cover picture (drawn once by `python -m scripts.make_cover <story>`; the site sets the title on it).
+cover:
+  scene: >-
+    High on the beanstalk, among huge leaves. Jack, a storybook boy of about ten with messy brown hair and
+    freckles, climbs, gripping the stalk, boots on a curling tendril, and looks back over his shoulder with an
+    excited, brave smile. Far below, the cottage, the garden and the village are tiny. Small birds fly past at
+    his level.
+  mood: Brave and dizzying, a little exciting. Clear morning light the higher he goes, soft mist far below.
+  composition: >-
+    Jack large and close, near the middle. The top quarter is soft, plain pale sky and cloud with nothing in it,
+    for a title added later. Only Jack appears. No other people.
 cover_page: 5   # each book's cover on the bookshelf is this page, cropped upright around the hero
 
 # The story page's own words. Everything on the site that belongs to this story lives here.

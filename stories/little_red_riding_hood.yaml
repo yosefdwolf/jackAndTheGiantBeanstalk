@@ -7,6 +7,20 @@ draft: true   # only admins see it until this line is removed
 style: animated3d
 theme: red   # the website's look: static/themes/red/ if it exists, otherwise the library's
 blurb: Grandmother's cottage is just through the woods. Stay on the path, and don't talk to strangers.
+# The library's cover picture (drawn once by `python -m scripts.make_cover <story>`; the site sets the title on it).
+cover:
+  scene: >-
+    A forest path in a deep, beautiful wood of tall old oaks and pines, wildflowers along the edges. Little Red, a
+    storybook child of about eight with the red hood up (so it could be a boy or a girl), walks along the path
+    carrying a wicker basket covered with a checked cloth, and looks back over the shoulder with a curious,
+    happy smile. Deep in the shadows between the trees behind, two yellow eyes and a hint of a grey wolf's snout
+    peek out from behind a huge oak trunk.
+  mood: >-
+    Enchanting and a little mysterious. Warm shafts of sunlight fall across the path; the forest grows darker
+    behind. The red cape is the brightest thing in the picture.
+  composition: >-
+    Little Red large and close, a little below the middle. The top quarter is soft, plain, hazy light through
+    the high leaves with nothing in it, for a title added later. Only Little Red and the wolf appear.
 cover_page: 3   # walking into the wood: the bookshelf cover, cropped upright around the hero
 
 site:
