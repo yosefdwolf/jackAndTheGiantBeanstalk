@@ -12,6 +12,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Grandstander:wght@600;800&family=Shantell+Sans:wght@400;600&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/static/styles.css">
 <!--THEME_CSS-->
+<script>
+  // Already know the magic word on this device? Keep its card from flashing up before the page's
+  // script has quietly checked the word (app.js shows it again if the word has changed).
+  try { if (localStorage.getItem('beanstalk-password')) document.documentElement.classList.add('known-word'); } catch {}
+</script>
 </head>
 <body data-story="{{STORY}}">
 <!--SCENE-->

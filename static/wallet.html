@@ -95,6 +95,7 @@
     <section class="card wallet" id="bookCard">
       <h2>A book came out wrong?</h2>
       <p>Tell us what went wrong. We’ll look at the book, and if we agree, its price goes back into your wallet.</p>
+      <p class="hint" id="noBooks" hidden></p>
       <form id="bookForm" novalidate>
         <label class="field">Which book
           <select name="book"></select></label>
@@ -232,7 +233,12 @@
       o.value = b.id;
       return o;
     }));
-    $('bookCard').hidden = data.books_to_ask_about.length === 0;
+    // Free books (admins, the unlimited list) have nothing to give back, so the card stays away for them.
+    const none = data.books_to_ask_about.length === 0;
+    $('bookCard').hidden = data.free;
+    $('bookForm').hidden = none;
+    $('noBooks').hidden = !none;
+    $('noBooks').textContent = 'Books you’ve paid for will show up here once you’ve made one. Each book can be asked about once.';
     check();
 
     // History: every credit and debit, plus book refunds asked for that haven't moved money (still

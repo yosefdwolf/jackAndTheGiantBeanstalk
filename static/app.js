@@ -100,6 +100,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
 
   function lockAgain(message) {
     store.drop(PASSWORD_KEY);
+    document.documentElement.classList.remove('known-word');
     password = '';
     form.hidden = true;
     $('signin').hidden = true;
@@ -719,7 +720,10 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
   const savedPassword = store.get(PASSWORD_KEY);
   if (savedPassword) {
     // Already know the magic word on this device: check it quietly and skip the gate.
-    tryPassword(savedPassword, false).then((ok) => { if (ok !== true) store.drop(PASSWORD_KEY); }).catch(() => {});
+    gate.hidden = true;
+    const showGate = () => { document.documentElement.classList.remove('known-word'); gate.hidden = false; };
+    tryPassword(savedPassword, false).then((ok) => { if (ok !== true) { store.drop(PASSWORD_KEY); showGate(); } })
+      .catch(showGate);
   } else {
     pwField.focus({ preventScroll: true });
   }
