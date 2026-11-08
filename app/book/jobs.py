@@ -23,7 +23,7 @@ from sqlalchemy.orm import selectinload
 
 from ..db.models import Activity, Book, BookEvent, BookImage, SharedPage, Upload
 from ..db.session import session
-from ..faces import PreparedPhoto, UploadError, choose_zone, from_saved, prepare, zone_clear_of
+from ..faces import PreparedPhoto, UploadError, choose_zone, clear_zone, from_saved, prepare, zone_clear_of
 from . import bible, scenes
 from .cast import CastSheets, MissingSheetError
 from .log import record, start_book, step
@@ -272,13 +272,16 @@ class Verdict:
     problem: str = ""
 
 
-def verdict(seen: dict, expect_children: int) -> Verdict:
+def verdict(seen: dict, expect_children: int, zone: str) -> Verdict:
     """A page passes unless the vision model counted a different number of children than the page should have
-    (a second child, or none). Can't tell: it passes."""
+    (a second child, or none), or found faces at both ends of the page, so the words would cover one wherever
+    they went. What it can't tell passes."""
     children = seen.get("children")
-    if children is None or children == expect_children:
-        return Verdict(True, 0)
-    return Verdict(False, -abs(children - expect_children), f"{children} children, expected {expect_children}")
+    if children is not None and children != expect_children:
+        return Verdict(False, -2 * abs(children - expect_children), f"{children} children, expected {expect_children}")
+    if seen.get("faces") and clear_zone(seen["faces"], zone) is None:
+        return Verdict(False, -1, "faces at both ends of the page, where the words go")
+    return Verdict(True, 0)
 
 
 def _shared_key(story, page, ctx, provider) -> tuple[str, str, list]:
@@ -397,7 +400,12 @@ async def _run(ref: str) -> None:
 
         async def check(png):  # extra children are redrawn; where the faces are decides where the words go
             looked[id(png)] = seen = await provider.look_at_page(png)
-            return verdict(seen, expect)
+            await record("INFO", f"page {number}", "looked", children=seen.get("children"),
+                         faces=" ".join(f"{f['top']:.2f}-{f['bottom']:.2f}" for f in seen.get("faces") or []) or None)
+            result = verdict(seen, expect, p.spec.text_zone)
+            if result.problem.startswith("faces"):
+                ctx.keep_clear.add(number)  # the next try is asked to keep faces out of the words' band
+            return result
         if HERO_CAST not in p.spec.cast:  # the same in every book: drawn once, then reused
             png = await _shared_page(ref, story, p, ctx, provider, gate, check)
         else:

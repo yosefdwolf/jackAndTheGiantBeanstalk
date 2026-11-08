@@ -26,3 +26,10 @@ Also costing: a second, stock Little Red girl appears beside Sam on Red pp. 5 an
 - Extra children: the same vision check counts children; a page with the wrong number is drawn again (up to 3 tries, the best kept). Scenes, which caused the stock children, are off.
 - The text shading is one smooth gradient (no stripes), darker over bright sky or flowers.
 - The hero's cartoon is asked for as one portrait, not a sheet or grid.
+- Checked on a test book after the fixes: Little Red took 49 s (was 102); the face check moved the words on 8 of
+  20 pages, each clear of faces. A Jack book took 142 s because the safety filter falsely blocked the hero's cartoon
+  once and page 3 twice (each blocked try is drawn again). On it, pages 7 and 8 had faces at both ends (the giant
+  up top, Jack below), so the words covered the giant, and page 12 had two hens because its scene asked for two.
+  Now a page with faces at both ends is drawn again, asked to keep faces out of the words' band, and page 12's
+  scene has one hen.
+

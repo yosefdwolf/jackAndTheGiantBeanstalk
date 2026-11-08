@@ -450,3 +450,43 @@ def test_a_rate_limit_is_waited_out_not_counted_as_a_try(client, monkeypatch):
     assert wait_for(client, ref, timeout=30)["status"] == "done" and refused == ["page 3"]
     page3 = next(i for i in run(rows(BookImage, book_id=ref)) if i.kind == "page" and i.page_number == 3)
     assert page3.attempts == 1  # waiting for the rate limit didn't use up a try
+
+
+def test_faces_at_both_ends_draw_the_page_again(client, monkeypatch):
+    from tests.test_books import ADMIN, post_book, rows, sign_in, wait_for
+    from app.book import jobs
+    from app.book.providers import MockImageProvider
+    from app.db.models import BookEvent, BookImage
+    prompts = []
+    original = MockImageProvider.edit
+
+    async def edit(self, label, refs, prompt, size):
+        if label == "page 7":
+            prompts.append(prompt)
+        return await original(self, label, refs, prompt, size)
+
+    async def look(self, png):  # page 7's first try has the giant's face up top and the hero's down low
+        crowded = len(prompts) == 1 and self._last == "page 7"
+        faces = [{"top": 0.05, "bottom": 0.25, "left": 0.2, "right": 0.4}]
+        if crowded:
+            faces.append({"top": 0.75, "bottom": 0.9, "left": 0.6, "right": 0.7})
+        return {"faces": faces, "children": 1}
+    original_edit = edit
+
+    async def edit_tracking(self, label, refs, prompt, size):
+        self._last = label
+        return await original_edit(self, label, refs, prompt, size)
+    monkeypatch.setattr(MockImageProvider, "edit", edit_tracking)
+    monkeypatch.setattr(MockImageProvider, "look_at_page", look)
+    monkeypatch.setattr(jobs, "IMAGE_CONCURRENCY", 1)
+    sign_in(client, ADMIN)
+    ref = post_book(client).json()["id"]
+    assert wait_for(client, ref, timeout=30)["status"] == "done"
+    assert len(prompts) == 2 and "Important: keep every face" not in prompts[0]
+    assert "keep every face, of people and of animals, completely out of the top third" in prompts[1]
+    failed = [e for e in run(rows(BookEvent, book_id=ref)) if e.event == "picture check failed"]
+    assert [(e.step, e.fields["problem"]) for e in failed] == [("page 7", "faces at both ends of the page, where the words go")]
+    page7 = next(i for i in run(rows(BookImage, book_id=ref)) if i.kind == "page" and i.page_number == 7)
+    assert page7.text_zone == "bottom"  # the redraw's only face is up top, so the words go below
+    looked = [e for e in run(rows(BookEvent, book_id=ref)) if e.event == "looked" and e.step == "page 7"]
+    assert looked and looked[0].fields["faces"] == "0.05-0.25 0.75-0.90"

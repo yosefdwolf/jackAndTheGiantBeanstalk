@@ -129,17 +129,31 @@ def drawn_faces(img: Image.Image) -> list[tuple[int, int, int, int]]:
     return found
 
 
+def _covered(faces: list[dict], zone: str) -> float:
+    """How much face is inside a text band: each face's share of its height that's in the band, added up."""
+    top, bottom = ZONE_BANDS[zone]
+    return sum(max(0.0, min(f["bottom"], bottom) - max(f["top"], top)) / max(0.01, f["bottom"] - f["top"])
+               for f in faces)
+
+
+CLEAR = 0.15  # a band with less face in it than this counts as clear (a chin's edge, not a face)
+
+
+def clear_zone(faces: list[dict], zone: str) -> str | None:
+    """The template's place for the words if no face is in it, else the other end of the page if that's
+    clear, else None (faces at both ends: the page should be drawn again)."""
+    if _covered(faces, zone) <= CLEAR:
+        return zone
+    return OTHER_ZONE[zone] if _covered(faces, OTHER_ZONE[zone]) <= CLEAR else None
+
+
 def zone_clear_of(faces: list[dict], zone: str) -> str:
-    """Where a page's words go, given where faces are ({"top", "bottom"} as fractions, 0 = top edge): the
-    template's place if no face is in it, else the other end of the page if that's clear, else whichever end
-    covers less of the faces."""
-    def covered(band_zone):
-        top, bottom = ZONE_BANDS[band_zone]
-        return sum(max(0.0, min(f["bottom"], bottom) - max(f["top"], top)) / max(0.01, f["bottom"] - f["top"])
-                   for f in faces)
-    other = OTHER_ZONE[zone]
-    here, there = covered(zone), covered(other)
-    return zone if here <= 0.15 or here <= there else other
+    """Where a page's words go, given where faces are ({"top", "bottom"} as fractions, 0 = top edge): the clear
+    end of the page, or if neither is clear, whichever end covers less of the faces."""
+    clear = clear_zone(faces, zone)
+    if clear:
+        return clear
+    return zone if _covered(faces, zone) <= _covered(faces, OTHER_ZONE[zone]) else OTHER_ZONE[zone]
 
 
 def choose_zone(png: bytes, zone: str) -> str:

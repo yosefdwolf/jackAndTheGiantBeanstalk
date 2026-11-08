@@ -31,6 +31,7 @@ class BookContext:
     sheets: CastSheets
     child: ChildInfo
     scenes: dict[int, bytes] = field(default_factory=dict)  # page -> its scene from the scene bible (scenes.py)
+    keep_clear: set[int] = field(default_factory=set)  # pages redrawn because faces landed where the words go
 
 
 @dataclass
@@ -73,7 +74,10 @@ class IllustratedPage(Page):
         return self.spec.number in ctx.scenes
 
     def prompt(self, ctx):
-        return ctx.prompts.on_scene(self.spec) if self.on_scene(ctx) else ctx.prompts.page(self.spec)
+        prompt = ctx.prompts.on_scene(self.spec) if self.on_scene(ctx) else ctx.prompts.page(self.spec)
+        if self.spec.number in ctx.keep_clear:
+            prompt += "\n" + ctx.prompts.keep_faces_clear(self.spec)
+        return prompt
 
     def refs(self, ctx) -> list[tuple[str, bytes]]:
         if self.on_scene(ctx):

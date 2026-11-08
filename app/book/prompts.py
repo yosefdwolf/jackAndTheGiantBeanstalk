@@ -108,6 +108,12 @@ class PromptBuilder:
             cast,
         ])
 
+    def keep_faces_clear(self, spec: PageSpec) -> str:
+        """Added when a page is drawn again because faces landed at both ends, where the words go."""
+        band = {"top": "top third", "bottom": "bottom third", "bottom-dark": "bottom quarter"}[spec.text_zone]
+        return (f"Important: keep every face, of people and of animals, completely out of the {band} of the picture. "
+                "That part must stay plain, with no heads in it, for the story text.")
+
     def swap(self, spec: PageSpec) -> str:
         """Prompt for a book's page from a scene that has a stand-in child in it (image 2): the stand-in is replaced
         by the hero (image 1), keeping the stand-in's pose, place and size. Being tried on single pages first."""

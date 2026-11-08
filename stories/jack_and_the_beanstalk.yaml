@@ -301,9 +301,9 @@ pages:
     text: "“Lay!” said the giant, and his hen laid an egg of solid gold. When he dozed, {hero} snatched the hen and ran."
     cast: [hero, giant, golden_hen]
     scene: >-
-      The giant's table. The golden hen sits on the table beside a shining golden egg; the giant
-      slumps asleep in his huge chair. {hero} is mid-run toward the door, the hen tucked safely
-      under one arm, looking back.
+      The giant's table. A single shining golden egg lies on the table; the giant slumps asleep in his
+      huge chair. {hero} is mid-run toward the door with the golden hen tucked safely under one arm,
+      looking back. There is only one hen in the picture: the one under {hero}'s arm.
     mood: >-
       Daring and quick. Warm candlelight, the golden egg glowing.
     composition: >-
