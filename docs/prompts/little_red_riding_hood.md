@@ -229,7 +229,7 @@ Only these characters appear: Grandmother and the wolf. No other people or anima
 
 ## Page 10
 
-**Words on the page** (text at the bottom): The wolf put on Grandmother’s nightcap and spectacles, and climbed into her bed.
+**Words on the page** (text at the bottom): The wolf put on Grandmother’s nightgown, nightcap and spectacles, and climbed into her bed.
 
 **While it's drawn:** Trying on Grandmother’s nightcap…
 
@@ -240,9 +240,10 @@ Image 1 is the wolf: draw them exactly as shown.
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
-Scene: Grandmother's bedroom. The wolf, wearing Grandmother's lace nightcap and round spectacles perched on his long snout, pulls the patchwork quilt up to his chin in her bed. The wardrobe door is closed; one eye peeks through the crack.
+Scene: Grandmother's bedroom: a wooden bed with a patchwork quilt, a tall wooden wardrobe, a small window with half-drawn curtains. The wolf, in Grandmother's nightgown and nightcap with her round spectacles perched on his long snout, pulls the patchwork quilt up to his chin in her bed. The wardrobe door is closed; one eye peeks through the crack.
 Mood and light: Silly and sinister at once. Curtains half drawn, dim golden light.
 Composition: The bed in the upper two-thirds. The lower third is the plain wooden floor at the foot of the bed, low in detail, for text added later.
+Costumes (exactly as on the other pages): The wolf wears Grandmother's long pale-blue nightgown and her white lace nightcap, the same on every page from when he climbs into her bed until he runs away into the forest.
 Only these characters appear: the wolf. No other people or animals.
 ```
 
@@ -278,9 +279,10 @@ Image 1 is Little Red: use him exactly (same face, hair, skin tone, and outfit: 
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
-Scene: Beside the bed. The wolf, in nightcap and spectacles, lies under the quilt with his big furry ears poking out of the cap. Little Red stands at the bedside holding the flowers, head tilted, puzzled.
+Scene: Grandmother's bedroom, beside the wooden bed with the patchwork quilt. The wolf lies in the bed under the quilt, in Grandmother's nightgown and nightcap and her round spectacles, his big furry ears sticking up out of the nightcap: the ears are what the picture is about. Little Red stands at the bedside holding the flowers, head tilted, puzzled.
 Mood and light: Funny and creepy. Dim, cosy bedroom light.
 Composition: Characters in the lower two-thirds. The top third is the plain bedroom wall and a beam, softly lit, for text added later.
+Costumes (exactly as on the other pages): The wolf wears Grandmother's long pale-blue nightgown and her white lace nightcap, the same on every page from when he climbs into her bed until he runs away into the forest.
 Only these characters appear: Little Red and the wolf. No other people or animals.
 ```
 
@@ -297,9 +299,10 @@ Image 1 is Little Red: use him exactly (same face, hair, skin tone, and outfit: 
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
-Scene: Closer in. The wolf peers over his spectacles with huge yellow eyes. Little Red leans back a little, shown full face, eyes wide, starting to worry.
+Scene: Inside Grandmother's bedroom, the same wooden bed and patchwork quilt as on the page before, a little closer in. The wolf is still lying in the bed under the quilt, in the nightgown and nightcap, peering over the round spectacles with huge yellow eyes: the eyes are what the picture is about. Little Red stands at the bedside and leans back a little, shown full face, eyes wide, starting to worry.
 Mood and light: Growing suspense. Dim light, the wolf's eyes catching the light.
 Composition: Characters in the upper two-thirds. The lower third is the plain patchwork quilt in soft shadow, low in detail, for text added later.
+Costumes (exactly as on the other pages): The wolf wears Grandmother's long pale-blue nightgown and her white lace nightcap, the same on every page from when he climbs into her bed until he runs away into the forest.
 Only these characters appear: Little Red and the wolf. No other people or animals.
 ```
 
@@ -316,9 +319,10 @@ Image 1 is Little Red: use him exactly (same face, hair, skin tone, and outfit: 
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
-Scene: The wolf leaps up out of the bed, the nightcap flying off, jaws wide with big storybook teeth (not gory). Little Red jumps back, flowers flying, shown full face with a shocked expression.
+Scene: Grandmother's bedroom. The wolf leaps up out of the wooden bed, throwing off the patchwork quilt, the round spectacles flying off his snout, jaws wide with big storybook teeth (not gory). Little Red jumps back, flowers flying, shown full face with a shocked expression.
 Mood and light: The scariest moment, but storybook-scary. Sudden, dramatic light.
 Composition: Characters in the lower two-thirds. The top third is the plain bedroom wall and beams, for text added later.
+Costumes (exactly as on the other pages): The wolf wears Grandmother's long pale-blue nightgown and her white lace nightcap, the same on every page from when he climbs into her bed until he runs away into the forest.
 Only these characters appear: Little Red and the wolf. No other people or animals.
 ```
 
@@ -335,9 +339,10 @@ Image 1 is Little Red: use him exactly (same face, hair, skin tone, and outfit: 
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
-Scene: Outside the cottage. Little Red runs out through the open door towards the viewer, red cape streaming, shouting, shown full face. The wolf bursts out of the doorway behind, still in Grandmother's nightgown.
+Scene: Outside Grandmother's cottage. Little Red runs out through the open door towards the viewer, red cape streaming, shouting, shown full face. The wolf bursts out of the doorway behind, still in Grandmother's nightgown and nightcap.
 Mood and light: Fast and exciting. Bright afternoon light.
 Composition: Characters in the lower two-thirds. The top third is plain sky and treetops with no detail, for text added later.
+Costumes (exactly as on the other pages): The wolf wears Grandmother's long pale-blue nightgown and her white lace nightcap, the same on every page from when he climbs into her bed until he runs away into the forest.
 Only these characters appear: Little Red and the wolf. No other people or animals.
 ```
 
@@ -354,9 +359,10 @@ Image 1 is Little Red: use him exactly (same face, hair, skin tone, and outfit: 
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
-Scene: At the forest edge. The woodcutter strides in from the trees, axe raised, looking brave and determined. Little Red runs to him and points back at the wolf, who skids to a stop, startled.
+Scene: At the forest edge near the cottage. The woodcutter strides in from the trees, axe raised, looking brave and determined. Little Red runs to him and points back at the wolf, who skids to a stop, startled, still in Grandmother's nightgown and nightcap.
 Mood and light: Relief arriving. Warm light breaking through the trees.
 Composition: Characters in the upper two-thirds. The lower third is the plain grassy ground, low in detail, for text added later.
+Costumes (exactly as on the other pages): The wolf wears Grandmother's long pale-blue nightgown and her white lace nightcap, the same on every page from when he climbs into her bed until he runs away into the forest.
 Only these characters appear: Little Red, the woodcutter and the wolf. No other people or animals.
 ```
 
@@ -373,9 +379,10 @@ Image 1 is the woodcutter: draw them exactly as shown. Image 2 is the wolf: draw
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
-Scene: The wolf flees into the dark forest with his tail between his legs, Grandmother's nightgown snagging on a bush. The woodcutter chases after him waving the axe. Little Red watches from the cottage gate, hands on his cape, relieved.
+Scene: The wolf flees into the dark forest with his tail between his legs, still in Grandmother's nightgown and nightcap, the nightgown snagging on a bush. The woodcutter chases after him waving the axe. Little Red watches from the cottage gate, hands on his cape, relieved.
 Mood and light: Triumphant and a bit funny. Golden late-afternoon light.
 Composition: Characters in the lower two-thirds. The top third is plain sky over the treetops, for text added later.
+Costumes (exactly as on the other pages): The wolf wears Grandmother's long pale-blue nightgown and her white lace nightcap, the same on every page from when he climbs into her bed until he runs away into the forest.
 Only these characters appear: the woodcutter, the wolf and Little Red. No other people or animals.
 ```
 

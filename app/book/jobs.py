@@ -296,11 +296,33 @@ async def _run(ref: str) -> None:
             and rows[("page", p.spec.number)].status != "done"]
     # A few pages at a time; each picture waits its turn (shown as "waiting" on its progress bar).
     gate = asyncio.Semaphore(IMAGE_CONCURRENCY)
+    # A page that sees earlier pages (see_pages:) waits for them, then gets them as pictures too.
+    seen = {n for p in pages for n in p.spec.see}
+    for n in seen:
+        row = rows.get(("page", n))
+        if row is not None and row.status == "done":
+            ctx.drawn[n] = to_png(row.image)
+    drawing_now = {p.spec.number for p in todo}  # only wait for pages this run will actually draw
+    finished = {n: asyncio.get_running_loop().create_future() for n in seen if n not in ctx.drawn and n in drawing_now}
 
     async def draw_page(p):
-        async with gate:
-            return await _draw(ref, ("page", p.spec.number), provider, p.prompt(ctx), list(p.spec.cast),
-                               lambda: p.draw(ctx))
+        for n in p.spec.see:
+            if n in finished:
+                await finished[n]  # True or False: without it the page is still drawn, just without that picture
+        number = p.spec.number
+        try:
+            async with gate:
+                png = await _draw(ref, ("page", number), provider, p.prompt(ctx),
+                                  list(p.spec.cast) + [f"page-{n}" for n in p.earlier(ctx)], lambda: p.draw(ctx))
+        except BaseException:
+            if number in finished and not finished[number].done():
+                finished[number].set_result(False)
+            raise
+        if number in seen:
+            ctx.drawn[number] = png
+            if number in finished and not finished[number].done():
+                finished[number].set_result(True)
+        return png
 
     outcomes = await asyncio.gather(*(draw_page(p) for p in todo), return_exceptions=True)
     failures = [o for o in outcomes if isinstance(o, BaseException)]

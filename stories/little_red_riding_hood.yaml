@@ -238,12 +238,17 @@ pages:
 
   - type: illustrated
     progress: "Trying on Grandmother’s nightcap…"
-    text: "The wolf put on Grandmother’s nightcap and spectacles, and climbed into her bed."
+    text: "The wolf put on Grandmother’s nightgown, nightcap and spectacles, and climbed into her bed."
     cast: [wolf]
+    # The wolf's disguise, worded once and used on every page he wears it (pages 10 and 12 to 17).
+    costume: &wolf_disguise >-
+      The wolf wears Grandmother's long pale-blue nightgown and her white lace nightcap, the same on every
+      page from when he climbs into her bed until he runs away into the forest.
     scene: >-
-      Grandmother's bedroom. The wolf, wearing Grandmother's lace nightcap and round spectacles
-      perched on his long snout, pulls the patchwork quilt up to his chin in her bed. The wardrobe
-      door is closed; one eye peeks through the crack.
+      Grandmother's bedroom: a wooden bed with a patchwork quilt, a tall wooden wardrobe, a small window with
+      half-drawn curtains. The wolf, in Grandmother's nightgown and nightcap with her round spectacles perched
+      on his long snout, pulls the patchwork quilt up to his chin in her bed. The wardrobe door is closed;
+      one eye peeks through the crack.
     mood: Silly and sinister at once. Curtains half drawn, dim golden light.
     composition: >-
       The bed in the upper two-thirds. The lower third is the plain wooden floor at the foot of the
@@ -268,10 +273,12 @@ pages:
     progress: "Noticing Grandmother’s big ears…"
     text: "“Grandmother, what big ears you have!” “All the better to hear you with, my dear.”"
     cast: [hero, wolf]
+    costume: *wolf_disguise
     scene: >-
-      Beside the bed. The wolf, in nightcap and spectacles, lies under the quilt with his big furry
-      ears poking out of the cap. {hero} stands at the bedside holding the flowers, head tilted,
-      puzzled.
+      Grandmother's bedroom, beside the wooden bed with the patchwork quilt. The wolf lies in the bed under
+      the quilt, in Grandmother's nightgown and nightcap and her round spectacles, his big furry ears
+      sticking up out of the nightcap: the ears are what the picture is about. {hero} stands at the bedside
+      holding the flowers, head tilted, puzzled.
     mood: Funny and creepy. Dim, cosy bedroom light.
     composition: >-
       Characters in the lower two-thirds. The top third is the plain bedroom wall and a beam, softly
@@ -282,9 +289,13 @@ pages:
     progress: "Noticing Grandmother’s big eyes…"
     text: "“Grandmother, what big eyes you have!” “All the better to see you with, my dear.”"
     cast: [hero, wolf]
+    see_pages: [12]   # the same bed, a moment later: page 12 is sent along as a picture
+    costume: *wolf_disguise
     scene: >-
-      Closer in. The wolf peers over his spectacles with huge yellow eyes. {hero} leans back a little,
-      shown full face, eyes wide, starting to worry.
+      Inside Grandmother's bedroom, the same wooden bed and patchwork quilt as on the page before, a little
+      closer in. The wolf is still lying in the bed under the quilt, in the nightgown and nightcap, peering
+      over the round spectacles with huge yellow eyes: the eyes are what the picture is about. {hero} stands
+      at the bedside and leans back a little, shown full face, eyes wide, starting to worry.
     mood: Growing suspense. Dim light, the wolf's eyes catching the light.
     composition: >-
       Characters in the upper two-thirds. The lower third is the plain patchwork quilt in soft shadow,
@@ -295,9 +306,11 @@ pages:
     progress: "Noticing Grandmother’s very big teeth…"
     text: "“Grandmother, what big teeth you have!” “All the better to EAT you with!”"
     cast: [hero, wolf]
+    costume: *wolf_disguise
     scene: >-
-      The wolf leaps up out of the bed, the nightcap flying off, jaws wide with big storybook teeth
-      (not gory). {hero} jumps back, flowers flying, shown full face with a shocked expression.
+      Grandmother's bedroom. The wolf leaps up out of the wooden bed, throwing off the patchwork quilt, the
+      round spectacles flying off his snout, jaws wide with big storybook teeth (not gory). {hero} jumps
+      back, flowers flying, shown full face with a shocked expression.
     mood: The scariest moment, but storybook-scary. Sudden, dramatic light.
     composition: >-
       Characters in the lower two-thirds. The top third is the plain bedroom wall and beams, for text
@@ -308,10 +321,11 @@ pages:
     progress: "Running for help…"
     text: "{hero} dodged, ran out of the door and shouted for help as loud as {he} could."
     cast: [hero, wolf]
+    costume: *wolf_disguise
     scene: >-
-      Outside the cottage. {hero} runs out through the open door towards the viewer, red cape
+      Outside Grandmother's cottage. {hero} runs out through the open door towards the viewer, red cape
       streaming, shouting, shown full face. The wolf bursts out of the doorway behind, still in
-      Grandmother's nightgown.
+      Grandmother's nightgown and nightcap.
     mood: Fast and exciting. Bright afternoon light.
     composition: >-
       Characters in the lower two-thirds. The top third is plain sky and treetops with no detail, for
@@ -322,9 +336,11 @@ pages:
     progress: "Calling the woodcutter…"
     text: "A woodcutter working nearby heard {him} and came running with his axe."
     cast: [hero, woodcutter, wolf]
+    costume: *wolf_disguise
     scene: >-
-      At the forest edge. The woodcutter strides in from the trees, axe raised, looking brave and
-      determined. {hero} runs to him and points back at the wolf, who skids to a stop, startled.
+      At the forest edge near the cottage. The woodcutter strides in from the trees, axe raised, looking
+      brave and determined. {hero} runs to him and points back at the wolf, who skids to a stop, startled,
+      still in Grandmother's nightgown and nightcap.
     mood: Relief arriving. Warm light breaking through the trees.
     composition: >-
       Characters in the upper two-thirds. The lower third is the plain grassy ground, low in detail,
@@ -335,9 +351,10 @@ pages:
     progress: "Chasing the wolf away…"
     text: "The woodcutter chased the wolf deep into the forest, and he was never seen again."
     cast: [woodcutter, wolf, hero]
+    costume: *wolf_disguise
     scene: >-
-      The wolf flees into the dark forest with his tail between his legs, Grandmother's nightgown
-      snagging on a bush. The woodcutter chases after him waving the axe. {hero} watches from the
+      The wolf flees into the dark forest with his tail between his legs, still in Grandmother's nightgown
+      and nightcap, the nightgown snagging on a bush. The woodcutter chases after him waving the axe. {hero} watches from the
       cottage gate, hands on {his} cape, relieved.
     mood: Triumphant and a bit funny. Golden late-afternoon light.
     composition: >-

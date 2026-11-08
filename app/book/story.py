@@ -38,6 +38,8 @@ class PageSpec:
     composition: str = ""
     text_zone: str = "bottom"
     progress: str = ""  # the witty line the progress card shows while this picture is drawn
+    costume: str = ""   # what characters wear on this page, worded the same on every page they wear it
+    see: tuple[int, ...] = ()  # earlier pages sent along as pictures, to keep the same place (see_pages:)
 
 
 @dataclass(frozen=True)
@@ -88,7 +90,8 @@ def load_story(path: Path = DEFAULT_STORY) -> Story:
         spec = PageSpec(number=i, type=p["type"], text=p.get("text", ""), cast=tuple(p.get("cast", ())),
                         scene=p.get("scene", ""), mood=p.get("mood", ""),
                         composition=p.get("composition", ""), text_zone=p.get("text_zone", "bottom"),
-                        progress=p.get("progress", ""))
+                        progress=p.get("progress", ""), costume=" ".join(str(p.get("costume", "")).split()),
+                        see=tuple(int(n) for n in p.get("see_pages", ()) or ()))
         unknown = [c for c in spec.cast if c != HERO and c not in characters]
         if unknown:
             raise ValueError(f"Page {i} casts unknown characters: {unknown}")
@@ -133,6 +136,8 @@ def check_story(story: Story) -> list[str]:
                      if not getattr(p, k)]
         if not p.cast:
             problems.append(f"page {p.number}: cast is empty")
+        problems += [f"page {p.number}: see_pages {n} must be an earlier painted page" for n in p.see
+                     if n >= p.number or n not in {q.number for q in painted}]
     cover = next((p for p in painted if p.number == story.cover_page), None)
     if cover is None or HERO not in cover.cast:
         problems.append("cover_page must be a painted page with the hero in it")

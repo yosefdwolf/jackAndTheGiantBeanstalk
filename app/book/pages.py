@@ -30,6 +30,7 @@ class BookContext:
     provider: ImageProvider
     sheets: CastSheets
     child: ChildInfo
+    drawn: dict[int, bytes] = field(default_factory=dict)  # finished pages, for pages that see them (see_pages:)
 
 
 @dataclass
@@ -67,12 +68,15 @@ class IllustratedPage(Page):
     """Art from the cast's reference sheets, story text drawn on top by the PDF layer."""
     needs_image = True
 
+    def earlier(self, ctx) -> tuple[int, ...]:
+        return tuple(n for n in self.spec.see if n in ctx.drawn)
+
     def prompt(self, ctx):
-        return ctx.prompts.page(self.spec)
+        return ctx.prompts.page(self.spec, self.earlier(ctx))
 
     async def draw(self, ctx):
-        return await ctx.provider.edit(label=self.label, refs=ctx.sheets.refs(self.spec.cast),
-                                       prompt=self.prompt(ctx), size=PAGE_SIZE)
+        refs = ctx.sheets.refs(self.spec.cast) + [(f"page-{n}.png", ctx.drawn[n]) for n in self.earlier(ctx)]
+        return await ctx.provider.edit(label=self.label, refs=refs, prompt=self.prompt(ctx), size=PAGE_SIZE)
 
     def layout(self, ctx, image):
         return RenderedPage(self.spec.number, "illustrated", image=image,

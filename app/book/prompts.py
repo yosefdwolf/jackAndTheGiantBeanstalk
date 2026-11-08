@@ -48,8 +48,9 @@ class PromptBuilder:
             NO_TEXT,
         ])
 
-    def page(self, spec: PageSpec) -> str:
-        """Prompt for one illustrated page. Reference images are attached in spec.cast order."""
+    def page(self, spec: PageSpec, earlier: tuple[int, ...] = ()) -> str:
+        """Prompt for one illustrated page. Reference images are attached in spec.cast order, then the earlier
+        pages in `earlier` (the ones from spec.see that have been drawn)."""
         c = self.casting
         refs = []
         for i, key in enumerate(spec.cast, 1):
@@ -58,6 +59,9 @@ class PromptBuilder:
                             f"skin tone, and outfit: {self.story.hero_outfit}).")
             else:
                 refs.append(f"Image {i} is {c.name_of(key)}: draw them exactly as shown.")
+        for i, n in enumerate(earlier, len(spec.cast) + 1):
+            refs.append(f"Image {i} is page {n} of this same book, the moment just before: keep the same place, "
+                        "furniture, light and costumes, so the two pages follow on.")
         names = [c.name_of(k) for k in spec.cast]
         only = (", ".join(names[:-1]) + " and " + names[-1]) if len(names) > 1 else names[0]
         return "\n".join([
@@ -67,5 +71,6 @@ class PromptBuilder:
             f"Scene: {c.fill(spec.scene)}",
             f"Mood and light: {c.fill(spec.mood)}",
             f"Composition: {c.fill(spec.composition)}",
+            *([f"Costumes (exactly as on the other pages): {c.fill(spec.costume)}"] if spec.costume else []),
             f"Only these characters appear: {only}. No other people or animals.",
         ])

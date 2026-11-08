@@ -283,3 +283,21 @@ def test_a_bad_colour_is_caught(stories):
     path = stories / "little_red_riding_hood.yaml"
     path.write_text(path.read_text().replace('accent: "#d6322b"', 'accent: "red; } body { display: none"'))
     assert any("accent must be a colour" in p for p in check_story(load_story(path)))
+
+
+def test_a_page_that_sees_another_waits_for_it_and_gets_it(client):
+    from tests.test_books import ADMIN, post_book, rows, sign_in, wait_for
+    from app.db.models import BookImage
+    sign_in(client, ADMIN)
+    ref = post_book(client, story="little-red-riding-hood").json()["id"]
+    assert wait_for(client, ref, timeout=30)["status"] == "done"
+    pages = {i.page_number: i for i in run(rows(BookImage, book_id=ref)) if i.kind == "page"}
+    assert pages[13].refs == ["hero", "wolf", "page-12"] and "Image 3 is page 12" in pages[13].prompt
+    assert pages[13].started_at >= pages[12].finished_at  # drawn after page 12 was finished
+    assert "Costumes (exactly as on the other pages)" in pages[16].prompt
+
+
+def test_seeing_a_later_page_is_caught(stories):
+    path = stories / "little_red_riding_hood.yaml"
+    path.write_text(path.read_text().replace("see_pages: [12]", "see_pages: [14]"))
+    assert any("see_pages 14 must be an earlier" in p for p in check_story(load_story(path)))
