@@ -1,7 +1,7 @@
 <nav class="sitenav" aria-label="Site">
   <a href="/">Library</a>
   <a href="/bookshelf">Bookshelf</a>
-  <a href="/wallet" id="navWallet">My wallet</a>
+  <a href="/wallet" id="navWallet">Wallet</a>
   <a href="/admin" id="navAdmin" hidden>Admin</a>
   <a href="/auth/login?next=/" id="navSign">Sign in</a>
 </nav>
@@ -17,7 +17,7 @@
     sign.textContent = 'Sign out';
     sign.href = '/auth/logout';
     document.getElementById('navAdmin').hidden = !me.admin;
-    if (!me.unlimited) document.getElementById('navWallet').textContent = `My wallet · $${(me.balance_cents / 100).toFixed(2)}`;
+    if (!me.unlimited) document.getElementById('navWallet').textContent = `Wallet · $${(me.balance_cents / 100).toFixed(2)}`;
   }).catch(() => {});
 })();
 </script>

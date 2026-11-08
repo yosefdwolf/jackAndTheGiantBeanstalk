@@ -1,7 +1,8 @@
-"""Paint a story theme's website art ONCE, in the book's own style, and save it to static/themes/<theme>/art/.
+"""Paint a theme's website art ONCE, in the books' own style, and save it to static/themes/<theme>/art/.
 
-    python -m scripts.make_theme_art              # only images that don't exist yet
-    python -m scripts.make_theme_art cloud beans  # redo just these
+    python -m scripts.make_theme_art jack               # only images that don't exist yet
+    python -m scripts.make_theme_art jack cloud beans   # redo just these
+    python -m scripts.make_theme_art library            # the shared pages (library, bookshelf, wallet)
 
 The art is the same for every visitor, so commit it. About $0.02–0.04 per image with gpt-image-2.5-flare.
 """
@@ -24,8 +25,8 @@ from app.book.styles import get_style  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 
-# (name, size, transparent background, what to paint)
-ART = [
+# Per theme: (name, size, transparent background, what to paint)
+JACK = [
     ("scene-wide", "1536x1024", False,
      "A wide, cheerful storybook landscape for a children's website background. A bright soft daytime sky with "
      "a few fluffy clouds. Rolling bright green hills along the bottom with wildflowers. A small cosy thatched "
@@ -45,7 +46,43 @@ ART = [
     ("icon-key", "1024x1024", True, "A cute golden storybook key with a little leaf on its bow, rounded and chunky. Nothing else."),
     ("icon-book", "1024x1024", True,
      "A cute open storybook icon with a tiny beanstalk sprouting from its pages, rounded and chunky. Nothing else."),
+    # The library's cover for this story. The title is set by the website on top, never painted.
+    ("cover", "1024x1536", False,
+     "The front cover painting of a children's picture book of Jack and the Beanstalk. A huge, curling green "
+     "beanstalk climbs from a cosy thatched cottage in a green meadow up into fluffy clouds, where a grey "
+     "fairy-tale castle sits. A small boy in a brown vest climbs the beanstalk, seen from behind and far away, "
+     "so his face isn't shown. Bright, magical morning light, golden glints of magic on the leaves. Leave the "
+     "top quarter as soft, plain sky for a title to be added later."),
 ]
+
+# The shared pages belong to every story: a cosy library that holds a hint of each one.
+LIBRARY = [
+    ("room-wide", "1536x1024", False,
+     "A cosy, magical children's storybook library, as a wide website background. Tall warm wooden bookshelves "
+     "full of colourful picture books run up the far left and far right edges. A big round window at the top "
+     "centre shows a bright blue sky with a fluffy cloud. A soft red armchair with a knitted blanket in the "
+     "lower left corner, a round rug, a little reading lamp glowing. Hints of fairy tales tucked on the "
+     "shelves: a small glass jar of glowing magic beans, a tiny red hooded cape hanging from a hook, a little "
+     "golden harp. Warm, golden afternoon light. Keep the whole middle of the picture as a calm, plain, softly "
+     "lit cream wall with nothing on it, for cards to sit on."),
+    ("room-tall", "1024x1536", False,
+     "A cosy, magical children's storybook library, as a tall phone background. Warm wooden bookshelves full of "
+     "colourful picture books along the left and right edges, a round window at the top showing blue sky and a "
+     "cloud, a soft red armchair and a glowing reading lamp at the bottom. A small jar of glowing magic beans and "
+     "a tiny red hooded cape on a hook tucked on the shelves. Warm golden light. Keep the whole middle as a "
+     "calm, plain, softly lit cream wall with nothing on it."),
+    ("purse", "1024x1024", True,
+     "A cute, chunky storybook coin purse made of soft red leather with a golden clasp, slightly open, with a "
+     "few shiny gold coins spilling out. Nothing else."),
+    ("icon-stories", "1024x1024", True,
+     "A cute little stack of three colourful storybooks, rounded and chunky, a small golden star on top. "
+     "Nothing else."),
+    ("icon-flip", "1024x1024", True,
+     "A cute open picture book with its pages fanning as if being turned, rounded and chunky, a few tiny "
+     "golden sparkles. Nothing else."),
+]
+
+ART = {"jack": JACK, "library": LIBRARY}
 
 
 def to_webp(png: bytes, transparent: bool, max_side: int) -> bytes:
@@ -57,14 +94,13 @@ def to_webp(png: bytes, transparent: bool, max_side: int) -> bytes:
     return buf.getvalue()
 
 
-async def main(names: list[str]) -> None:
-    story = load_story()
-    style = get_style(story.style)
-    out = ROOT / "static" / "themes" / story.theme / "art"
+async def main(theme: str, names: list[str]) -> None:
+    style = get_style(load_story().style)  # every story shares the book style, so the site does too
+    out = ROOT / "static" / "themes" / theme / "art"
     out.mkdir(parents=True, exist_ok=True)
     client = AsyncOpenAI(max_retries=0, timeout=180)
     model = os.getenv("IMAGE_MODEL", "gpt-image-2.5-flare")
-    for name, size, transparent, what in ART:
+    for name, size, transparent, what in ART[theme]:
         path = out / f"{name}.webp"
         if (names and name not in names) or (not names and path.exists()):
             continue
@@ -77,10 +113,11 @@ async def main(names: list[str]) -> None:
         print(f"painting {name} …", flush=True)
         resp = await client.images.generate(model=model, prompt=prompt, size=size, quality="medium", **extra)
         png = base64.b64decode(resp.data[0].b64_json)
-        path.write_bytes(to_webp(png, transparent, 1600 if name.startswith("scene") else 900))
+        big = name.startswith(("scene", "room", "cover"))
+        path.write_bytes(to_webp(png, transparent, 1600 if big else 900))
         has_alpha = Image.open(io.BytesIO(png)).mode in ("RGBA", "LA")
         print(f"saved {path.name} ({path.stat().st_size // 1024} KB, transparent={has_alpha})", flush=True)
 
 
 if __name__ == "__main__":
-    asyncio.run(main(sys.argv[1:]))
+    asyncio.run(main(sys.argv[1], sys.argv[2:]))

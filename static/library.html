@@ -12,25 +12,48 @@
 <link rel="stylesheet" href="/static/styles.css">
 <!--THEME_CSS-->
 <style>
-  .lead { text-align: center; font-size: 19px; margin: 6px auto 0; max-width: 34em; }
-  .stories { list-style: none; margin: 0; padding: 0; display: grid; gap: 18px; }
-  .story-card a { display: grid; grid-template-columns: 200px 1fr; gap: 0; text-decoration: none; color: var(--ink);
-    background: var(--card); border: 3px solid var(--card-edge); border-radius: 22px; overflow: hidden;
-    box-shadow: 0 6px 0 var(--card-edge); transition: transform .15s ease; }
-  .story-card a:hover { transform: translateY(-2px); }
-  .story-card a:focus-visible { outline: 3px solid var(--accent-deep); outline-offset: 3px; }
-  .story-card img { width: 100%; height: 100%; min-height: 240px; object-fit: cover; display: block; }
-  .story-info { display: grid; align-content: start; gap: 10px; padding: 20px 22px; }
-  .story-info b { font: 800 30px/1.1 var(--display); color: var(--leaf-deep); }
-  .story-info .blurb { font-size: 17px; }
+  .lead { text-align: center; font-size: 19px; margin: 8px auto 0; max-width: 32em; background: rgba(255, 251, 242, .7);
+    border-radius: 14px; padding: 6px 12px; }
+  .stories { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px 26px; }
+  .story { display: grid; align-content: start; }
+  .story .stand-books { display: flex; justify-content: center; padding: 0 18px; }
+  .story .book-object { width: min(220px, 70%); transform: rotate(-2deg); transition: transform .2s ease; }
+  .story:nth-child(even) .book-object { transform: rotate(1.5deg); }
+  .story a.book-object:hover, .story a.book-object:focus-visible { transform: translateY(-8px) rotate(0); }
+  .story a.book-object:focus-visible { outline: 3px solid var(--accent-deep); outline-offset: 4px; }
+  /* The title is set on the cover by the site, never painted by the image model. */
+  .cover-title { position: absolute; z-index: 2; left: 12%; right: 6%; top: 7%; padding: 8px 10px; border-radius: 10px;
+    background: rgba(255, 251, 242, .92); box-shadow: 0 2px 0 var(--card-edge); text-align: center;
+    font: 800 19px/1.05 var(--display); color: var(--leaf-deep); }
+  .cover-title small { display: block; font: 600 12px var(--hand); color: var(--accent-deep); margin-top: 3px; }
+  .story .plank { margin-top: -4px; }
+  .story-info { margin-top: 18px; display: grid; gap: 8px; align-content: start; }
+  .story-info h2 { font-size: 26px; margin: 0; }
+  .story-info p { margin: 0; font-size: 17px; }
   .story-info .meta { font: 600 15px var(--hand); color: var(--ink-soft); }
-  .story-info .btn { justify-self: start; margin-top: 4px; }
-  .soon { text-align: center; font-size: 16px; color: var(--ink-soft); }
+  .story-info .btn { justify-self: start; margin-top: 6px; }
+  /* A story that isn't ready yet is a wrapped present on the shelf. */
+  .book-object.wrapped { background: #c79a63 repeating-linear-gradient(45deg, rgba(255, 255, 255, .05) 0 6px, transparent 6px 12px); }
+  .book-object.wrapped::after { content: ""; position: absolute; inset: 0; z-index: 1;
+    background: linear-gradient(90deg, transparent 47%, var(--berry) 47% 53%, transparent 53%),
+                linear-gradient(transparent 40%, var(--berry) 40% 45%, transparent 45%); }
+  .book-object.wrapped .tag { position: absolute; z-index: 2; left: 50%; top: 42.5%; transform: translate(-50%, -50%) rotate(-6deg);
+    background: var(--card); border: 2px solid var(--card-edge); border-radius: 8px; padding: 6px 10px; text-align: center;
+    font: 800 15px/1.1 var(--display); color: var(--berry); width: 70%; }
+  .soon .story-info { opacity: .9; }
+  .how h2 { margin-bottom: 6px; }
+  .how ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .how li { display: grid; justify-items: center; text-align: center; gap: 4px; }
+  .how img { width: 84px; height: 84px; object-fit: contain; }
+  .how b { font: 800 18px var(--display); color: var(--leaf-deep); }
+  .how span { font-size: 15px; color: var(--ink-soft); }
   @media (max-width: 560px) {
-    .story-card a { grid-template-columns: 1fr; }
-    .story-card img { min-height: 0; aspect-ratio: 4 / 3; }
+    .story .book-object { width: 150px; }
+    .how ul { grid-template-columns: 1fr; }
+    .how li { grid-template-columns: 64px 1fr; justify-items: start; text-align: left; column-gap: 14px; }
+    .how img { width: 64px; height: 64px; grid-row: span 2; }
   }
-  @media (prefers-reduced-motion: reduce) { .story-card a { transition: none; } }
+  @media (prefers-reduced-motion: reduce) { .story .book-object { transition: none; } }
 </style>
 </head>
 <body class="library">
@@ -40,21 +63,38 @@
   <header class="masthead">
     <p class="hand kicker">picture books starring you</p>
     <h1>The Library</h1>
-    <p class="lead">Pick a story and add a photo. We’ll draw you as the hero on every page, then you can flip through it here or download the PDF.</p>
+    <p class="lead">Pick a story and add a photo. We’ll draw you as the hero on every page.</p>
   </header>
 
   <ul class="stories" aria-label="Stories you can make">
     <!--STORIES-->
+    <li class="story soon">
+      <div class="stand-books"><span class="book-object wrapped" role="img" aria-label="Little Red Riding Hood, still wrapped">
+        <span class="tag">Little Red Riding Hood</span></span></div>
+      <div class="plank"></div>
+      <div class="card story-info">
+        <h2>Little Red Riding Hood</h2>
+        <p>A walk through the woods to Grandma’s house, and a wolf who isn’t what he seems.</p>
+        <p class="meta">Coming soon</p>
+      </div>
+    </li>
   </ul>
-  <p class="soon hand">More stories are on the way.</p>
 
+  <section class="card how" aria-labelledby="howTitle">
+    <h2 id="howTitle">How it works</h2>
+    <ul>
+      <li><img src="/static/themes/library/art/icon-stories.webp" alt=""><b>Pick a story</b><span>Every story is 20 painted pages.</span></li>
+      <li><img src="/static/themes/library/art/icon-photo.webp" alt=""><b>Add your photo</b><span>We draw you as the hero, in the book’s style.</span></li>
+      <li><img src="/static/themes/library/art/icon-flip.webp" alt=""><b>Flip through it</b><span>Read it here, or download the PDF.</span></li>
+    </ul>
+  </section>
 </main>
 
 <script>
 (() => {
   // A crowd study links to the front page with ?pid=…; carry it into the story so the review keeps it.
   if (location.search) {
-    for (const a of document.querySelectorAll('.story-card a')) a.href += location.search;
+    for (const a of document.querySelectorAll('.story a[href^="/stories/"]')) a.href += location.search;
   }
 })();
 </script>

@@ -1,18 +1,22 @@
-/* The library: the pages every story shares (the front door, the wallet, privacy). A warm morning
-   reading room, drawn in CSS, so no single story's scenery is on it. Same palette and type as the books. */
+/* The library: the pages every story shares (the front door, the bookshelf, the wallet, privacy).
+   A cosy reading room painted in the books' style (scripts/make_theme_art.py library), with a hint
+   of each story on its shelves. The cards sit on the plain wall in the middle. */
 :root {
-  --sky: #fbefd6;
+  --sky: #f6e6c8;
   --leaf: #3f9a2e;
   --leaf-deep: #2c7a1f;
   --on-leaf: #ffffff;
   --accent: #f5b62a;
   --accent-deep: #c98a06;
-  --berry: #e2546b;
+  --berry: #c8402f;          /* the armchair's red */
   --card: #fffbf2;
-  --card-edge: #f1dfb8;
+  --card-edge: #ead3a8;
   --ink: #2b2219;
   --ink-soft: #6f5d4a;
   --alert: #c0392b;
+  --wood: #9a6434;
+  --wood-light: #c08a52;
+  --wood-dark: #6b4220;
   --display: "Grandstander", "Comic Sans MS", cursive;
   --hand: "Shantell Sans", "Comic Sans MS", cursive;
   --text: "Literata", Georgia, serif;
@@ -21,21 +25,32 @@
 
 body { background: var(--sky); }
 
-/* Sunlight from the top, a soft wall of book spines along the bottom. */
-.scene { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden;
-  background:
-    radial-gradient(1200px 600px at 50% -10%, #fff8e6 0%, rgba(255, 248, 230, 0) 70%),
-    radial-gradient(500px 400px at 12% 30%, rgba(245, 182, 42, .18), rgba(245, 182, 42, 0) 70%),
-    radial-gradient(520px 420px at 88% 55%, rgba(63, 154, 46, .14), rgba(63, 154, 46, 0) 70%),
-    var(--sky); }
-.scene .shelf-wall { position: absolute; left: 0; right: 0; bottom: 0; height: 120px;
-  background:
-    linear-gradient(#8a5a33, #6e4526) bottom / 100% 14px no-repeat,
-    repeating-linear-gradient(90deg,
-      #3f9a2e 0 22px, #2c7a1f 22px 26px, #e2546b 26px 44px, #b93e53 44px 48px, #f5b62a 48px 72px,
-      #c98a06 72px 76px, #4a7fc1 76px 94px, #36629a 94px 98px, #8e5fb0 98px 114px, #6d4790 114px 118px,
-      #e98d3a 118px 140px, #c06c22 140px 144px) bottom 14px left 0 / 100% 92px no-repeat;
-  opacity: .5; }
+/* The painting sits in one fixed layer behind the page (a fixed background lags on Safari). */
+.scene { position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background: var(--sky) url("/static/themes/library/art/room-wide.webp") center / cover no-repeat; }
+@media (max-aspect-ratio: 1/1) {
+  .scene { background-image: url("/static/themes/library/art/room-tall.webp"); }
+}
 
-/* Light paper behind the title, so the title is ink-green rather than the books' white-on-sky. */
-.masthead h1 { color: var(--leaf-deep); -webkit-text-stroke: 0; text-shadow: 0 3px 0 #fff, 0 6px 0 var(--card-edge); }
+/* On the cream wall the title is ink-green, with a little paper lift. */
+.masthead h1 { font-size: clamp(40px, 8vw, 66px); color: var(--leaf-deep); -webkit-text-stroke: 0; text-shadow: 0 3px 0 #fff, 0 6px 0 var(--card-edge); }
+.masthead .kicker { display: inline-block; color: var(--wood-dark); background: rgba(255, 251, 242, .85); border-radius: 999px; padding: 2px 14px; }
+
+/* The link bar is a wooden shelf sign. */
+.sitenav { background: linear-gradient(var(--wood-light), var(--wood)); border: 2px solid var(--wood-dark);
+  box-shadow: 0 4px 0 var(--wood-dark), 0 10px 18px rgba(60, 35, 10, .22); }
+.sitenav a { color: #fff7e6; text-shadow: 0 1px 0 var(--wood-dark); }
+.sitenav a:hover { background: rgba(255, 247, 230, .16); }
+.sitenav a[aria-current="page"] { background: #fff7e6; color: var(--wood-dark); text-shadow: none; }
+.sitenav a:focus-visible { outline-color: #fff7e6; }
+
+/* A wooden shelf plank, for books to stand on. */
+.plank { height: 16px; border-radius: 4px; background: linear-gradient(var(--wood-light), var(--wood) 55%, var(--wood-dark));
+  box-shadow: 0 8px 14px rgba(60, 35, 10, .25); }
+
+/* A book standing up: its cover, a darker spine on the left, a page edge on the right. */
+.book-object { position: relative; display: block; aspect-ratio: 2 / 3; border-radius: 4px 10px 10px 4px; overflow: hidden;
+  background: var(--card); box-shadow: 6px 8px 0 -2px #f3ead8, 6px 8px 0 0 var(--card-edge), 0 14px 22px rgba(60, 35, 10, .28); }
+.book-object img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.book-object::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 9%; z-index: 1;
+  background: linear-gradient(90deg, rgba(0, 0, 0, .32), rgba(0, 0, 0, .06) 70%, rgba(255, 255, 255, .18)); }

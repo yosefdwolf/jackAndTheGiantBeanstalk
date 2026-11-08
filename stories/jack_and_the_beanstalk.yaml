@@ -11,7 +11,7 @@ theme: jack   # the website's look: static/themes/jack/
 blurb: >-
   You trade the family cow for five magic beans, climb the beanstalk that grows overnight, and sneak
   past a giant to bring home his gold, his golden hen and his singing harp.
-cover: /static/themes/jack/art/scene-tall.webp   # the library card's picture
+cover: /static/themes/jack/art/cover.webp   # the library's cover painting (the site sets the title on it)
 
 world: >-
   a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly

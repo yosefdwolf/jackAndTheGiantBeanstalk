@@ -29,7 +29,7 @@ Prompts were developed by hand in the OpenAI Playground first, then moved into t
 `cover` from the story file. Each story has its own page at
 `/stories/<name>` (e.g. `/stories/jack-and-the-beanstalk`), dressed in that story's theme. The pages
 every story shares (the library, the bookshelf at `/bookshelf` with every book you've made, the wallet,
-privacy) use the general `static/themes/library/` look.
+privacy) use the general `static/themes/library/` look: a reading room painted once by `python -m scripts.make_theme_art library`.
 Every page has the same link bar (`static/nav.html`), which stays at the top while scrolling.
 
 ## Database

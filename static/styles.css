@@ -31,6 +31,10 @@ p { margin: 0; }
 .sitenav a:hover { background: #fff; }
 .sitenav a[aria-current="page"] { background: var(--leaf); color: var(--on-leaf); }
 .sitenav a:focus-visible { outline: 3px solid var(--accent-deep); outline-offset: 2px; }
+@media (max-width: 480px) {  /* one row on a phone */
+  .sitenav { gap: 2px; padding: 4px; flex-wrap: nowrap; justify-content: space-between; }
+  .sitenav a { font-size: 14px; padding: 8px 7px; white-space: nowrap; }
+}
 .masthead { text-align: center; padding: 18px 8px 4px; }
 .kicker { font-size: 18px; font-weight: 600; color: var(--leaf-deep);
   text-shadow: 0 0 6px #fff, 0 0 2px #fff; }

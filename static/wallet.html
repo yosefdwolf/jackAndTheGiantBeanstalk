@@ -11,6 +11,10 @@
 <!--THEME_CSS-->
 <style>
   .wallet h2 { margin-bottom: 4px; }
+  .purse-card { display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: 18px; }
+  .purse-card .purse { width: 120px; height: 120px; object-fit: contain; }
+  .purse-card .flash { grid-column: 1 / -1; }
+  @media (max-width: 420px) { .purse-card .purse { width: 84px; height: 84px; } }
   .wallet .balance { font-family: var(--display); font-size: 56px; line-height: 1; color: var(--leaf-deep); margin: 8px 0 6px; }
   .wallet p { font-size: 17px; }
   .amounts { display: flex; flex-wrap: wrap; gap: 12px; margin: 14px 0 6px; }
@@ -47,7 +51,7 @@
 <main class="stand">
   <!--NAV-->
   <header class="masthead">
-    <p class="hand kicker">a picture book starring you</p>
+    <p class="hand kicker">picture books starring you</p>
     <h1>Your wallet</h1>
   </header>
 
@@ -58,10 +62,13 @@
   </section>
 
   <div id="main" hidden>
-    <section class="card wallet">
-      <h2>Balance</h2>
-      <p class="balance" id="balance">$0.00</p>
-      <p class="hand note" id="balanceNote"></p>
+    <section class="card wallet purse-card">
+      <img class="purse" src="/static/themes/library/art/purse.webp" alt="">
+      <div>
+        <h2>Balance</h2>
+        <p class="balance" id="balance">$0.00</p>
+        <p class="hand note" id="balanceNote"></p>
+      </div>
       <p class="flash" id="flash" role="status" hidden></p>
     </section>
 

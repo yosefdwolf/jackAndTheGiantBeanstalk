@@ -105,13 +105,16 @@ def themed(page: str, story: Story | None = None) -> str:
 
 
 def story_card(story: Story) -> str:
-    pages = len(story.pages)
-    return (f'<li class="story-card"><a href="/stories/{story.slug}">'
+    """One story on the library's shelf: its book standing up, then what it is and the button."""
+    pages = sum(1 for p in story.pages if p.type == "illustrated")
+    title, href = escape(story.title), f"/stories/{story.slug}"
+    return (f'<li class="story"><div class="stand-books"><a class="book-object" href="{href}" tabindex="-1" aria-hidden="true">'
             f'<img src="{escape(story.cover)}" alt="" loading="lazy">'
-            f'<span class="story-info"><b>{escape(story.title)}</b>'
-            f'<span class="blurb">{escape(story.blurb)}</span>'
-            f'<span class="meta">{pages} pages · ${wallet.BOOK_PRICE_CENTS / 100:.2f}</span>'
-            f'<span class="btn bean">Make this book</span></span></a></li>')
+            f'<span class="cover-title">{title}<small>starring you</small></span></a></div>'
+            f'<div class="plank"></div>'
+            f'<div class="card story-info"><h2>{title}</h2><p>{escape(story.blurb)}</p>'
+            f'<p class="meta">{pages} painted pages · ${wallet.BOOK_PRICE_CENTS / 100:.2f}</p>'
+            f'<a class="btn bean" href="{href}">Make this book</a></div></li>')
 
 
 @app.get("/")
