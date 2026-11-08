@@ -44,7 +44,7 @@
   function showTab(name) {
     tabs.forEach((t) => t.setAttribute('aria-selected', String(t.dataset.tab === name)));
     document.querySelectorAll('.tab').forEach((s) => { s.hidden = s.id !== `tab-${name}`; });
-    ({ books: loadBooks, reviews: loadReviews, refunds: loadRefunds, days: loadDays, errors: loadErrors, settings: loadSettings })[name]();
+    ({ books: loadBooks, activity: loadActivity, funnel: loadFunnel, reviews: loadReviews, refunds: loadRefunds, days: loadDays, errors: loadErrors, settings: loadSettings })[name]();
   }
   tabs.forEach((t) => t.addEventListener('click', () => { setHash({ tab: t.dataset.tab, book: '' }); }));
 
@@ -292,6 +292,113 @@
       : [el('tr', { class: 'empty' }, el('td', { colspan: 8, text: 'No books in the last 30 days.' }))]));
   }
 
+  // --- activity ----------------------------------------------------------------------------------
+  const activityFilters = $('activityFilters');
+  const usd = (c) => `$${((Number(c) || 0) / 100).toFixed(2)}`;
+  // Each logged step/event in words. Anything not listed shows as "<step> <event>".
+  const SAYS = {
+    'wallet paid': (f) => [`Added ${usd(f.cents)} to their wallet`, 'in'],
+    'wallet checkout opened': (f) => [`Opened the card page for ${usd(f.cents)}`],
+    'wallet checkout failed': (f) => [`Couldn’t open the card page: ${f.error || ''}`],
+    'wallet check failed': (f) => [`Couldn’t check a payment with Stripe: ${f.error || ''}`],
+    'wallet charged': (f) => [`Paid ${usd(f.cents)} for a book`, 'out'],
+    'wallet refunded to card': (f) => [`Got ${usd(f.cents)} back on their card${f.problem ? ` (${f.problem})` : ''}`, 'out'],
+    'wallet book refund asked': () => ['Asked for a book refund'],
+    'wallet book refund approved': () => ['Book refund approved', 'in'],
+    'wallet book refund denied': () => ['Book refund denied'],
+    'sign-in done': (f) => [f.admin === 'True' ? 'Signed in (admin)' : 'Signed in'],
+    'sign-in dev': () => ['Signed in (local test)'],
+    'sign-in refused': (f) => [`Sign-in failed: ${f.reason || ''}`],
+    'unlock refused': () => ['Typed the wrong magic word'],
+    'request received': () => ['Asked for a book'],
+    'request refused': (f) => [`Book refused: ${f.reason || ''}`],
+    'book start': () => ['Drawing started'],
+    'book done': (f) => [`Book finished${f.seconds ? ` in ${fmt.secs(Number(f.seconds))}` : ''}`],
+    'book failed': (f) => [`Book failed${f.error ? `: ${f.error}` : ''}`],
+    'book retry': () => ['Asked to redraw the missing pictures'],
+    'book interrupted': () => ['Server restarted mid-book; resuming'],
+    'review saved': (f) => [`Left a review (${f.scores || ''})`],
+    'email sent': (f) => [`Email sent: ${f.subject || ''}`],
+    'email failed': (f) => [`Email failed: ${f.subject || ''}`],
+    'email not set up': (f) => [`Email not sent (not set up): ${f.subject || ''}`],
+    'page script error': () => ['The page hit a script error'],
+  };
+  async function loadActivity() {
+    const p = new URLSearchParams([...new FormData(activityFilters)].filter(([, v]) => v));
+    const d = await api('/activity?' + p);
+    const m = d.money, period = activityFilters.days.selectedOptions[0].text;
+    $('moneyTotals').replaceChildren(...[
+      ['Added', m.added], ['Spent on books', m.spent], ['Back to cards', m.refunded_to_cards],
+      ['Book refunds', m.books_refunded], ['In wallets now', m.in_wallets, true],
+    ].map(([label, c, now]) => el('div', { class: 'stat' }, el('b', { text: usd(c) }),
+      el('span', { text: now ? label : `${label}, last ${period}` }))));
+    $('activityTable').tBodies[0].replaceChildren(...(d.items.length ? d.items.map((a) => {
+      const say = SAYS[`${a.step} ${a.event}`];
+      const [text, flow] = say ? say(a.fields) : [`${a.step} ${a.event}`];
+      return el('tr', { class: a.level !== 'INFO' ? 'problem' : null },
+        el('td', { class: 'when', text: fmt.when(a.at) }), el('td', { text: a.email || 'signed out' }),
+        el('td', {}, flow && el('span', { class: `flow ${flow}`, text: flow === 'in' ? '+' : '−' }), text),
+        el('td', {}, a.book_id && el('a', { class: 'mono', href: `#tab=books&book=${a.book_id}`, text: a.book_id })));
+    }) : [el('tr', { class: 'empty' }, el('td', { colspan: 4, text: 'Nothing yet.' }))]));
+  }
+  activityFilters.addEventListener('input', () => { clearTimeout(typing); typing = setTimeout(loadActivity, 250); });
+  activityFilters.addEventListener('submit', (e) => { e.preventDefault(); loadActivity(); });
+
+  // --- funnel ------------------------------------------------------------------------------------
+  const funnelFilters = $('funnelFilters');
+  // Clicks are named by data-track, an id, or a link's path (static/track.js); these read better.
+  const CLICK_NAMES = {
+    go: 'Generate (make my book)', download: 'Download the PDF', again: 'Make another book', selfieBtn: 'Take a selfie',
+    drop: 'Photo frame', reviewToggle: 'Open the review', reviewBtn: 'Send the review', reviewPdf: 'Review: open the PDF',
+    prevPage: 'Flip book: back', nextPage: 'Flip book: next', customBtn: 'Add a custom amount', cardBtn: 'Refund to card',
+    bookBtn: 'Ask about a book', navSign: 'Sign in / out', navWallet: 'Nav: Wallet', navAdmin: 'Nav: Admin',
+    '/': 'Library', '/bookshelf': 'Bookshelf', '/wallet': 'Wallet', '/privacy': 'Privacy', '/auth/login': 'Sign in',
+    '/auth/logout': 'Sign out',
+  };
+  const clickName = (t) => CLICK_NAMES[t] || (t.startsWith('top_up_') ? `Add ${usd(t.slice(7))}`
+    : t.startsWith('/stories/') ? `Story: ${t.slice(9)}` : t);
+  const pct = (x) => (x == null ? '' : `${Math.round(x * 100)}%`);
+  function paintFunnel(list, steps) {
+    const top = steps[0] && steps[0].visitors;
+    const drops = steps.slice(1).map((s) => (s.of_previous == null ? 1 : s.of_previous));
+    const worst = drops.length && Math.min(...drops) < 1 ? drops.indexOf(Math.min(...drops)) + 1 : -1;
+    list.replaceChildren(...steps.map((s, i) => el('li', { class: i === worst ? 'worst' : null },
+      el('div', { class: 'bar', style: `--w:${top ? Math.max(2, (s.visitors / top) * 100) : 0}%` }),
+      el('span', { class: 'label', text: s.step }),
+      el('b', { text: s.visitors }),
+      el('span', { class: 'soft', text: !i ? 'people' : s.of_previous == null ? 'nobody reached the step before' : `${pct(s.of_previous)} of the step before` }))));
+  }
+  async function loadFunnel() {
+    const d = await api('/funnel?days=' + funnelFilters.days.value);
+    $('keepDays').textContent = d.keep_days;
+    const ft = d.minutes_to_first_book, dr = d.drawing_seconds, sb = d.second_book;
+    $('funnelStats').replaceChildren(...[
+      [d.visitors, `different people (${d.new_visitors} new)`], [d.signed_in, 'of them signed in'],
+      [d.sessions, 'visits'],
+      [ft.median == null ? '—' : `${ft.median} min`, `typical time to a first book (${ft.count})`],
+      [dr.p50 == null ? '—' : fmt.secs(dr.p50), `typical drawing time, slowest 5%: ${dr.p95 == null ? '—' : fmt.secs(dr.p95)}`],
+      [sb.makers ? pct(sb.again / sb.makers) : '—', `made a second book (${sb.again} of ${sb.makers}, all time)`],
+    ].map(([big, label]) => el('div', { class: 'stat' }, el('b', { text: big }), el('span', { text: label }))));
+    $('peopleDays').tBodies[0].replaceChildren(...(d.days.length ? d.days.map((x) => el('tr', {},
+      el('td', { text: x.day }), el('td', { class: 'num', text: x.people }), el('td', { class: 'num', text: x.new }),
+      el('td', { class: 'num', text: x.signed_in }), el('td', { class: 'num', text: x.visits })))
+      : [el('tr', { class: 'empty' }, el('td', { colspan: 5, text: 'Nobody yet.' }))]));
+    paintFunnel($('bookFunnel'), d.book_funnel);
+    paintFunnel($('walletFunnel'), d.wallet_funnel);
+    const none = (text) => el('li', { class: 'soft', text });
+    $('blocked').replaceChildren(...(d.blocked.length ? d.blocked.map((b) => el('li', {}, el('b', { text: b.times }), ` ${b.what}`))
+      : [none('Nothing yet.')]));
+    $('rageRows').replaceChildren(...(d.rage_clicks.length ? d.rage_clicks.map((r) => el('li', {}, el('b', { text: r.times }),
+      ` ${clickName(r.target)} on `, el('span', { class: 'mono', text: r.path }))) : [none('None. Good.')]));
+    const rows = (items, cells) => (items.length ? items.map((x) => el('tr', {}, ...cells(x)))
+      : [el('tr', { class: 'empty' }, el('td', { colspan: 3, text: 'Nothing yet.' }))]);
+    $('clickRows').replaceChildren(...rows(d.clicks, (c) => [el('td', { text: clickName(c.target) }),
+      el('td', { class: 'num', text: c.clicks }), el('td', { class: 'num', text: c.visitors })]));
+    $('pageRows').replaceChildren(...rows(d.pages, (p) => [el('td', { class: 'mono', text: p.path }),
+      el('td', { class: 'num', text: p.views }), el('td', { class: 'num', text: p.visitors })]));
+  }
+  funnelFilters.addEventListener('input', loadFunnel);
+
   // --- errors ------------------------------------------------------------------------------------
   const errorFilters = $('errorFilters');
   async function loadErrors() {
@@ -383,6 +490,7 @@
     if (document.hidden || !$('live').checked) return;
     const h = readHash();
     if ((h.tab || 'books') === 'books') loadBooks();
+    if (h.tab === 'activity') loadActivity();
     if (h.book && ['queued', 'running', 'interrupted'].includes(openStatus)) openBook(h.book);
   }, 5000);
 })();

@@ -110,6 +110,25 @@ def test_wallet_needs_sign_in(client, stripe):
     assert client.get("/api/wallet").status_code == 401
 
 
+def test_the_admin_sees_money_coming_in_and_going_out(client, stripe):
+    broke(client)
+    sid = top_up(client, stripe)
+    client.get(f"/api/wallet?paid={sid}")
+    ref = post_book(client).json()["id"]
+    wait_for(client, ref)
+    assert client.get("/admin/api/activity").status_code == 403
+
+    sign_in(client, ADMIN)
+    d = client.get("/admin/api/activity?kind=money").json()
+    mine = [(a["step"], a["event"], a["fields"].get("cents")) for a in d["items"] if a["email"] == "new@example.com"]
+    assert ("wallet", "checkout opened", "500") in mine and ("wallet", "paid", "500") in mine
+    assert ("wallet", "charged", "99") in mine
+    assert d["money"]["added"] >= 500 and d["money"]["spent"] >= 99
+    books = client.get("/admin/api/activity?kind=books&q=" + ref).json()["items"]
+    assert {(a["event"], a["email"]) for a in books} >= {("received", "new@example.com"), ("done", "new@example.com")}
+    assert not any(a["step"].startswith("page") for a in books)  # each picture stays in the book's own trail
+
+
 # --- paying for books -----------------------------------------------------------------------------
 
 def test_a_book_costs_99_cents_and_says_so_in_the_history(client, stripe):

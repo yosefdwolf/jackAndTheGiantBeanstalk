@@ -148,3 +148,32 @@ input[type="radio"], input[type="checkbox"] { min-height: 0; padding: 0; width: 
   background: var(--alert); color: #fff; font-size: 12px; line-height: 20px; text-align: center; }
 .s-pending { background: var(--gold-soft); color: #7a5300; } .s-approved { background: #dff0d6; color: var(--leaf); }
 .decide input { width: 100%; min-width: 180px; margin-bottom: 6px; }
+
+/* activity */
+.money { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
+.money .stat { background: var(--paper); border: 2px solid var(--edge); border-radius: 14px; padding: 10px 14px; min-width: 140px; }
+.money .stat b { display: block; font: 800 22px var(--display); color: var(--leaf); }
+.money .stat span { font-size: 13px; color: var(--soft); }
+.flow { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; margin-right: 8px;
+  font-weight: 700; color: #fff; background: var(--soft); }
+.flow.in { background: var(--leaf); }
+.flow.out { background: var(--gold); }
+.grid tr.problem td { background: var(--alert-soft); }
+
+/* funnel */
+#tab-funnel .panels { max-width: none; margin-top: 18px; }
+.filter-note { margin: 0 0 6px; font-size: 13px; max-width: 520px; }
+.panel h2.sub { font-size: 18px; margin-top: 8px; }
+.funnel { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.funnel li { position: relative; display: grid; grid-template-columns: 1fr auto; column-gap: 12px; padding: 8px 12px;
+  border-radius: 10px; overflow: hidden; background: #fff; border: 2px solid var(--edge); }
+.funnel .bar { position: absolute; inset: 0 auto 0 0; width: var(--w); background: var(--blue-soft); }
+.funnel .label, .funnel b, .funnel .soft { position: relative; }
+.funnel b { font: 800 18px var(--display); grid-row: span 2; align-self: center; }
+.funnel .soft { font-size: 13px; }
+.funnel li.worst { border-color: var(--alert); }
+.funnel li.worst .bar { background: var(--alert-soft); }
+.funnel li.worst .soft { color: var(--alert); font-weight: 600; }
+.plain-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.grid.small td, .grid.small th { padding: 6px 8px; }
+.days-wrap { max-width: 640px; }

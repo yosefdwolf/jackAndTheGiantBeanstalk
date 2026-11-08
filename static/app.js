@@ -19,6 +19,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
 
 (() => {
   const $ = (id) => document.getElementById(id);
+  const track = window.track || (() => {});  // static/track.js; a blocker may have stopped it loading
   const form = $('form'), drop = $('drop'), preview = $('preview'), go = $('go'), error = $('error');
   const MAX_SIDE = 1600;
   const COPY = JSON.parse($('storyCopy').textContent);  // this story's own words, from its story file
@@ -177,6 +178,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     drop.classList.add('has-photo');
     $('polaroidCaption').textContent = 'what a star!';
     updateReady();
+    track('photo_added');
   }
 
   function showError(msg) {
@@ -184,9 +186,11 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     error.hidden = !msg;
   }
 
+  let toldNoMoney = false;
   function updateReady() {
     const hasName = form.name.value.trim().length > 0;
     if (me && me.left === 0) {  // not enough in the wallet for a book
+      if (!toldNoMoney) { toldNoMoney = true; track('no_money'); }
       go.disabled = true;
       $('goNote').replaceChildren(`A book costs ${money(me.price_cents)}. `,
         Object.assign(document.createElement('a'), { href: '/wallet', textContent: 'Add money to your wallet' }));
@@ -260,11 +264,13 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     const body = new FormData(form);
     body.append('photo', photo, 'photo.jpg');
     body.append('story', document.body.dataset.story || '');
+    track('book_requested', { story: document.body.dataset.story });
     try {
       const res = await fetch('/api/books', { method: 'POST', body, headers: { 'X-App-Password': password } });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         const d = errorDetail(data, res);
+        track('book_refused', { reason: d.reason });
         if (d.reason === 'wrong_password') return lockAgain(`The magic word changed. Please type it again. (reference ${d.ref})`);
         if (d.reason === 'not_signed_in') { me = null; return askToSignIn(`Please sign in again. (reference ${d.ref})`); }
         showError(`${d.message}${d.ref ? ` (reference ${d.ref})` : ''}`);
@@ -373,8 +379,10 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     $('printing').hidden = false;
   }
 
+  let watchingFresh = false;
   function watch(id, fresh = false) {
     watching = id;
+    watchingFresh = fresh;
     store.set(BOOK_KEY, id);
     if (location.hash !== `#book=${id}`) history.replaceState(null, '', `#book=${id}`);
     line = null;  // a fresh line for this book, made on the first paint
@@ -403,9 +411,11 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     fetch('/api/me', { cache: 'no-store' }).then((r) => r.json()).then((m) => { me = m; paintAccount(); updateReady(); })
       .catch(() => {});
     if (data.status === 'done' && data.book) {
+      track('book_ready', { fresh: watchingFresh ? '1' : '0', ref: data.id });
       openReader(data);
       showReview(data.id);
     } else {
+      track('book_failed', { ref: data.id });
       $('printingTitle').textContent = COPY.failed;
       $('bookError').textContent = `${data.error || 'This book couldn’t be finished.'} (reference ${data.id})`;
       $('bookError').hidden = false;
@@ -492,6 +502,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
       return leaf;
     });
     current = 0;
+    readToEnd = false;
     $('printingTitle').textContent = COPY.binding;
     await preload(bookEl);
     $('printing').hidden = true;
@@ -521,6 +532,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     $('pageCount').textContent = current === 0 ? 'Cover' : current === leaves.length - 1 ? 'The End' : `Page ${current} of ${leaves.length - 2}`;
   }
 
+  let readToEnd = false;
   function turn(step) {
     const next = Math.max(0, Math.min(leaves.length - 1, current + step));
     if (next === current) return;
@@ -529,6 +541,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     leaf.classList.add('turning');
     current = next;
     showPage();
+    if (current === leaves.length - 1 && !readToEnd) { readToEnd = true; track('reached_end', { ref: watching }); }
     clearTimeout(leaf._done);
     leaf._done = setTimeout(() => {
       leaf.classList.remove('turning');
@@ -584,7 +597,10 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     $('reviewToggle').setAttribute('aria-expanded', String(open));
     $('reviewBody').hidden = !open;
   }
-  $('reviewToggle').addEventListener('click', () => setReviewOpen($('reviewBody').hidden));
+  $('reviewToggle').addEventListener('click', () => {
+    if ($('reviewBody').hidden) track('review_opened');
+    setReviewOpen($('reviewBody').hidden);
+  });
 
   async function showReview(id) {
     $('review').hidden = false;
@@ -644,6 +660,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
         const d = errorDetail(await res.json().catch(() => ({})), res);
         throw new Error(`${d.message || 'That didn’t save.'}${d.ref ? ` (reference ${d.ref})` : ''}`);
       }
+      track('review_sent', { ref: watching });
       $('reviewError').hidden = true;
       $('reviewThanks').hidden = false;
       $('reviewAlready').textContent = 'You’ve already left a review. Sending again replaces your earlier answers.';

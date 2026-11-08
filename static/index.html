@@ -129,12 +129,12 @@
   </section>
 
   <section id="reader" class="reader" hidden>
-    <div class="flipbook" id="flipbook" tabindex="0" aria-roledescription="flip book" aria-label="Your picture book"></div>
+    <div class="flipbook" id="flipbook" tabindex="0" aria-roledescription="flip book" aria-label="Your picture book" data-repeat></div>
     <div class="reader-controls">
-      <button class="btn round" id="prevPage" type="button" aria-label="Previous page">
+      <button class="btn round" id="prevPage" type="button" data-repeat aria-label="Previous page">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
       <p class="hand page-count" id="pageCount" aria-live="polite"></p>
-      <button class="btn round" id="nextPage" type="button" aria-label="Next page">
+      <button class="btn round" id="nextPage" type="button" data-repeat aria-label="Next page">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
     </div>
     <div class="reader-actions">
@@ -162,9 +162,9 @@
           <p class="ends"><span>not at all</span><span>just like me!</span></p>
         </fieldset>
         <fieldset class="rate">
-          <legend>Does the story ring true?</legend>
+          <legend>Does the story make sense from page to page?</legend>
           <div class="stamps"><label><input type="radio" name="story_rings_true" value="1" required><span>1</span></label><label><input type="radio" name="story_rings_true" value="2" required><span>2</span></label><label><input type="radio" name="story_rings_true" value="3" required><span>3</span></label><label><input type="radio" name="story_rings_true" value="4" required><span>4</span></label><label><input type="radio" name="story_rings_true" value="5" required><span>5</span></label></div>
-          <p class="ends"><span>not really</span><span>totally</span></p>
+          <p class="ends"><span>hard to follow</span><span>easy to follow</span></p>
         </fieldset>
         <fieldset class="rate">
           <legend>Does it look professional?</legend>

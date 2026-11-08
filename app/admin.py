@@ -16,12 +16,14 @@ from sqlalchemy.orm import selectinload
 
 from . import auth, wallet
 from .book.providers import CHOICES, is_mock
-from .db.models import AdminSettings, Book, BookEvent, BookImage, RequestError, Review, UnlimitedEmail, Upload, User
+from .db.models import (Activity, AdminSettings, Book, BookEvent, BookImage, RequestError, Review,
+                        Transaction, UnlimitedEmail, Upload, User)
 from .db.session import session
 
 STATIC = Path(__file__).resolve().parent.parent / "static"
 SLOW_SECONDS = 60  # an image slower than this is flagged
-QUESTIONS = [("looks_like_me", "Does this look like me?"), ("story_rings_true", "Does the story ring true?"),
+QUESTIONS = [("looks_like_me", "Does this look like me?"),
+             ("story_rings_true", "Does the story make sense from page to page?"),
              ("looks_professional", "Does it look professional?")]
 router = APIRouter(prefix="/admin")
 
@@ -257,6 +259,38 @@ async def qr(url: str = "", _=Depends(require_admin)):
     segno.make(target, error="m").save(buf, kind="svg", scale=10, border=2, dark="#2b2219")
     return Response(buf.getvalue(), media_type="image/svg+xml",
                     headers={"Content-Disposition": 'inline; filename="jack-qr.svg"'})
+
+
+# --- activity ------------------------------------------------------------------------------------
+
+# Each Activity filter is a set of steps (problems: anything logged as a warning or error).
+ACTIVITY_KINDS = {"money": ["wallet"], "sign-ins": ["sign-in", "unlock"], "books": ["book", "request"],
+                  "reviews": ["review"]}
+
+
+@router.get("/api/activity")
+async def activity(kind: str = "", q: str = "", days: int = 7, limit: int = 300, _=Depends(require_admin)):
+    """Everything people did, newest first, plus the money totals for the period (from the ledger)."""
+    since = datetime.now(timezone.utc) - timedelta(days=max(1, min(days, 365)))
+    query = (select(Activity, User.email).outerjoin(User, User.id == Activity.user_id)
+             .where(Activity.at >= since).order_by(Activity.at.desc(), Activity.id.desc()).limit(min(limit, 1000)))
+    if kind == "problems":
+        query = query.where(Activity.level != "INFO")
+    elif kind in ACTIVITY_KINDS:
+        query = query.where(Activity.step.in_(ACTIVITY_KINDS[kind]))
+    if q:
+        like = f"%{q.strip().lower()}%"
+        query = query.where(or_(func.lower(User.email).like(like), func.lower(Activity.book_id).like(like)))
+    async with session() as s:
+        rows = (await s.execute(query)).all()
+        money = dict((await s.execute(select(Transaction.kind, func.sum(Transaction.amount_cents))
+                                      .where(Transaction.created_at >= since).group_by(Transaction.kind))).all())
+        held = (await s.execute(select(func.sum(Transaction.amount_cents)))).scalar() or 0
+    return {"items": [{"id": a.id, "at": _iso(a.at), "email": email, "book_id": a.book_id, "level": a.level,
+                       "step": a.step, "event": a.event, "fields": a.fields or {}} for a, email in rows],
+            "money": {"added": money.get("deposit", 0), "spent": -money.get("book", 0),
+                      "refunded_to_cards": -money.get("refund", 0), "books_refunded": money.get("book_refund", 0),
+                      "in_wallets": held}}
 
 
 # --- errors outside books -------------------------------------------------------------------------

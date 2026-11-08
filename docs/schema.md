@@ -25,6 +25,8 @@ starts (`Procfile`).
 | `images` | generated image | the hero sheet (page 0) and each page: status (waiting, drawing, done, failed), the exact prompt, the attached character sheets, the image (WebP), tokens, cost, the provider's request ID, any error, and timings. Unique on (book, kind, page), so a resumed book can't duplicate an image. |
 | `book_events` | step event | the trail: start, done, failed, info, refused, with a duration and fields. Never holds the password, the photo, or the child's name and details. |
 | `request_errors` | failure outside a book | the ref, path, status, error type, message, traceback and browser |
+| `activity` | something a person did | sign-ins, money in and out, books asked for, finished and failed, reviews: everything logged outside a book, plus a book's milestones. The admin's Activity tab. |
+| `page_events` | a page view or click | for the admin's Funnel tab: an anonymous visitor ID from the browser, the event name, the path and a few whitelisted fields. No IP, never typed text. Deleted after 90 days; nothing from Do Not Track or GPC browsers. |
 | `admin_settings` | admin | the debug panel's provider, model, quality and size; these apply only to that admin's books |
 | `reviews` | review response | three 1–5 ratings plus "what isn't good", by the book's owner only. `respondent_key` is the user's id (one review per person; answering again, on any of their books, replaces it). `source` is `site` or `connect`; `connect_id` is the crowd participant ID from the study link |
 | `settings` | site-wide value | e.g. `featured_review_book_id` |

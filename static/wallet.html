@@ -144,6 +144,7 @@
   const money = (c) => `${c < 0 ? '−' : ''}$${(Math.abs(c) / 100).toFixed(2)}`;
   const when = (iso) => new Date(iso);
   const params = new URLSearchParams(location.search);
+  const track = window.track || (() => {});  // static/track.js, loaded with the nav
   let data = null;
 
   function el(tag, cls, text) {
@@ -215,6 +216,7 @@
       history.replaceState(null, '', '/wallet');
       params.delete('paid');
       const dep = data.transactions.find((t) => t.kind === 'deposit');
+      if (dep) track('money_added', { cents: dep.cents });
       flash(dep ? `Thank you! ${money(dep.cents)} was added to your wallet.`
         : 'Stripe hasn’t confirmed the payment yet. Reload in a moment.');
     }
@@ -236,6 +238,7 @@
     $('amounts').replaceChildren(...data.top_ups.map((c) => {
       const b = el('button', 'btn bean', money(c));
       b.type = 'button';
+      b.dataset.track = `top_up_${c}`;
       b.addEventListener('click', () => addMoney(c, b));
       return b;
     }));
@@ -294,7 +297,9 @@
     showError('addError', '');
     button.disabled = true;
     try {
-      location.href = (await post('/api/wallet/checkout', { cents: amount })).url;
+      const { url } = await post('/api/wallet/checkout', { cents: amount });
+      track('checkout_started', { cents: amount });
+      location.href = url;
     } catch (e) {
       button.disabled = false;
       showError('addError', e.message);
@@ -314,6 +319,7 @@
     $('cardBtn').disabled = true;
     try {
       const out = await post('/api/wallet/refund', { cents: amount });
+      track('card_refund', { cents: out.sent_cents });
       $('cardForm').reset();
       await load();
       flash(out.problem ? `${money(out.sent_cents)} went back to your card, but Stripe couldn’t send the rest: ${out.problem}`
@@ -333,6 +339,7 @@
     $('bookBtn').disabled = true;
     try {
       await post('/api/wallet/book-refunds', { book_id: form.book.value, reason: form.reason.value });
+      track('book_refund_asked');
       form.reset();
       await load();
       flash('Thanks for telling us. We’ll look at the book, and the answer will show in your history.');

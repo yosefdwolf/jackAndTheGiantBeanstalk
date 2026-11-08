@@ -14,7 +14,11 @@ from contextlib import asynccontextmanager
 _ref = contextvars.ContextVar("ref", default="-")
 _in_book = contextvars.ContextVar("in_book", default=False)
 _cost = contextvars.ContextVar("book_cost", default=None)
+_user = contextvars.ContextVar("user_id", default=None)
 _sink = None  # async fn(book_id, level, step, event, duration_ms, fields) -> None
+_activity_sink = None  # async fn(user_id, book_id, level, step, event, fields) -> None
+# Inside a book only these steps are activity; the rest (each picture's tries and costs) is the book's trail.
+BOOK_MILESTONES = {"book", "request", "wallet", "review"}
 
 log = logging.getLogger("book")
 
@@ -64,6 +68,16 @@ def set_event_sink(fn) -> None:
     _sink = fn
 
 
+def set_activity_sink(fn) -> None:
+    global _activity_sink
+    _activity_sink = fn
+
+
+def set_user(user_id) -> None:
+    """Who this request is for, so activity rows say who did it."""
+    _user.set(user_id)
+
+
 def add_cost(dollars: float) -> None:
     tally = _cost.get()
     if tally is not None:
@@ -80,14 +94,22 @@ def fields(**kv) -> str:
 
 
 async def record(level: str, step: str, event: str, duration_ms: int | None = None, **kv) -> None:
-    """Log a line and, inside a book, save it to book_events. Never raises: logging can't break a book."""
+    """Log a line, save it to book_events inside a book, and to activity when it's something a person did.
+    Never raises: logging can't break a book."""
     log.log(getattr(logging, level), "%s %s %s", event, step, fields(**kv))
-    if _sink and _in_book.get():
+    saved = {k: str(v) for k, v in kv.items() if v not in (None, "")}
+    in_book = _in_book.get()
+    if _sink and in_book:
         try:
-            await _sink(_ref.get(), level, step, event, duration_ms,
-                        {k: str(v) for k, v in kv.items() if v not in (None, "")})
+            await _sink(_ref.get(), level, step, event, duration_ms, saved)
         except Exception:
             log.exception("could not save event %s %s", event, step)
+    if _activity_sink and (not in_book or step in BOOK_MILESTONES):
+        try:
+            book = _ref.get() if in_book else saved.get("book")
+            await _activity_sink(_user.get(), book if book != "-" else None, level, step, event, saved)
+        except Exception:
+            log.exception("could not save activity %s %s", event, step)
 
 
 @asynccontextmanager

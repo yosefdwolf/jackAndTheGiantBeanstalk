@@ -11,6 +11,7 @@ import hashlib
 import io
 import os
 import statistics
+import uuid
 from datetime import datetime, timezone
 
 import openai
@@ -18,7 +19,7 @@ from PIL import Image, ImageOps
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from ..db.models import Book, BookEvent, BookImage, Upload
+from ..db.models import Activity, Book, BookEvent, BookImage, Upload
 from ..db.session import session
 from ..faces import PreparedPhoto, UploadError, from_saved, prepare
 from .cast import CastSheets, MissingSheetError
@@ -90,6 +91,17 @@ async def save_event(book_id, level, step_name, event, duration_ms, fields):
     async with session() as s:
         s.add(BookEvent(book_id=book_id, level=level, step=step_name, event=event,
                         duration_ms=duration_ms, fields=fields or None))
+        await s.commit()
+
+
+async def save_activity(user_id, book_id, level, step_name, event, fields):
+    async with session() as s:
+        if user_id is None and fields.get("user"):
+            user_id = uuid.UUID(fields["user"])
+        if user_id is None and book_id:  # e.g. a book resumed after a restart, outside the request
+            user_id = (await s.execute(select(Book.user_id).where(Book.id == book_id))).scalar_one_or_none()
+        s.add(Activity(user_id=user_id, book_id=book_id, level=level, step=step_name, event=event[:32],
+                       fields=fields or None))
         await s.commit()
 
 

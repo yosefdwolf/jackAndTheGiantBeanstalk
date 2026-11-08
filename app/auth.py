@@ -23,7 +23,7 @@ from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy import select
 
-from .book.log import current_ref, record
+from .book.log import current_ref, record, set_user
 from .db.models import UnlimitedEmail, User
 from .db.session import session
 
@@ -125,7 +125,10 @@ async def current_user(request: Request) -> User | None:
     except (KeyError, ValueError):
         return None
     async with session() as s:
-        return await s.get(User, uid)
+        user = await s.get(User, uid)
+    if user:
+        set_user(user.id)
+    return user
 
 
 async def has_unlimited(user: User) -> bool:
@@ -162,6 +165,7 @@ async def login(request: Request, next_url: str = Query("/", alias="next"), emai
             raise HTTPException(403, "Dev sign-in only works on this computer.")
         email = (email or next(iter(sorted(admin_emails())), "dev@example.com")).lower()
         user = await upsert_user(f"dev:{email}", email, name=email.split("@")[0])
+        set_user(user.id)
         await record("INFO", "sign-in", "dev", email=email)
         response = RedirectResponse(next_url, status_code=303)
         response.set_cookie(COOKIE, session_cookie(user.id), max_age=SESSION_DAYS * 86400, **_cookie_args(request))
@@ -208,6 +212,7 @@ async def callback(request: Request, code: str | None = None, state: str | None 
     if not profile.get("email") or not profile.get("email_verified"):
         await _refuse_sign_in(request, "email_not_verified", "Google didn't confirm an email address")
     user = await upsert_user(profile["sub"], profile["email"], profile.get("name"), profile.get("picture"))
+    set_user(user.id)
     await record("INFO", "sign-in", "done", user=str(user.id), admin=is_admin(user))
     response = RedirectResponse(saved.get("next", "/"), status_code=303)
     response.set_cookie(COOKIE, session_cookie(user.id), max_age=SESSION_DAYS * 86400, **_cookie_args(request))

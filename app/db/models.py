@@ -122,6 +122,34 @@ class BookEvent(Base):
     fields: Mapped[dict | None] = mapped_column(Json)
 
 
+class Activity(Base):
+    """What people did, for the admin's Activity tab: sign-ins, money in and out, books asked for, finished
+    and failed, reviews. Everything logged outside a book, plus a book's own milestones (not each picture)."""
+    __tablename__ = "activity"
+    id: Mapped[int] = mapped_column(Id, primary_key=True, autoincrement=True)
+    at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, index=True)
+    user_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, index=True)
+    book_id: Mapped[str | None] = mapped_column(String(16))
+    level: Mapped[str] = mapped_column(String(8))
+    step: Mapped[str] = mapped_column(String(64))
+    event: Mapped[str] = mapped_column(String(32))
+    fields: Mapped[dict | None] = mapped_column(Json)
+
+
+class PageEvent(Base):
+    """What visitors look at and click, for the admin's Funnel tab (see app/tracking.py). Anonymous: a random
+    visitor ID kept in the browser, no cookies, no IP, never what anyone typed. Kept 90 days."""
+    __tablename__ = "page_events"
+    id: Mapped[int] = mapped_column(Id, primary_key=True, autoincrement=True)
+    at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, index=True)
+    visitor: Mapped[str] = mapped_column(String(24), index=True)
+    session: Mapped[str] = mapped_column(String(24))
+    user_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)
+    name: Mapped[str] = mapped_column(String(32))
+    path: Mapped[str] = mapped_column(String(128))
+    props: Mapped[dict | None] = mapped_column(Json)
+
+
 class RequestError(Base):
     """Failures outside a book (review form, sign-in, page script errors), each with a ref."""
     __tablename__ = "request_errors"

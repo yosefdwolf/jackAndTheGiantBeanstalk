@@ -20,9 +20,9 @@ from pydantic import BaseModel, Field  # noqa: E402
 from sqlalchemy import select  # noqa: E402
 from sqlalchemy.orm import selectinload  # noqa: E402
 
-from . import admin, auth, wallet  # noqa: E402
+from . import admin, auth, tracking, wallet  # noqa: E402
 from .book import jobs  # noqa: E402
-from .book.log import current_ref, new_ref, record, set_event_sink, set_ref, setup_logging, start_book, step  # noqa: E402
+from .book.log import current_ref, new_ref, record, set_activity_sink, set_event_sink, set_ref, setup_logging, start_book, step  # noqa: E402
 from .book.providers import is_mock  # noqa: E402
 from .book.story import PRONOUNS, Story, all_stories, display_name, load_story, story_by_slug  # noqa: E402
 from .db.models import Book, RequestError, Review  # noqa: E402
@@ -40,7 +40,9 @@ setup_logging(os.getenv("LOG_LEVEL", "INFO"))
 async def lifespan(app):
     await create_tables_if_sqlite()
     set_event_sink(jobs.save_event)
+    set_activity_sink(jobs.save_activity)
     await jobs.resume_unfinished()
+    await tracking.forget_old()
     yield
 
 
@@ -49,11 +51,12 @@ app.mount("/static", StaticFiles(directory=STATIC), name="static")
 app.include_router(auth.router)
 app.include_router(admin.router)
 app.include_router(wallet.router)
+app.include_router(tracking.router)
 app.add_middleware(admin.AdminHost)  # admin.jack.graydates.com/x is served from /admin/x
 
 # Browsers kept running an old app.js after deploys, so a click did nothing. The page's script and
 # stylesheet links carry a content hash, and everything is served with no-cache (re-check each time).
-ASSET_FILES = ["app.js", "clothesline.js", "styles.css", "nav.html", *(str(p.relative_to(STATIC)) for p in sorted((STATIC / "themes").rglob("*.*")))]
+ASSET_FILES = ["app.js", "clothesline.js", "track.js", "styles.css", "nav.html", *(str(p.relative_to(STATIC)) for p in sorted((STATIC / "themes").rglob("*.*")))]
 ASSET_VERSION = hashlib.sha1(b"".join((STATIC / f).read_bytes() for f in ASSET_FILES)).hexdigest()[:10]
 NO_CACHE = {"Cache-Control": "no-cache"}
 
@@ -109,7 +112,7 @@ def themed(page: str, story: Story | None = None) -> str:
             html = html.replace("{{" + key.upper() + "}}", escape(site.get(key, "")))
         copy = json.dumps({k: site.get(k, "") for k in ("go", "going", "growing", "binding", "failed", "pdf_name")})
         html = html.replace("{{COPY}}", copy.replace("</", "<\\/"))
-    for asset in ("app.js", "clothesline.js", "styles.css", f"themes/{theme}/theme.css"):
+    for asset in ("app.js", "clothesline.js", "track.js", "styles.css", f"themes/{theme}/theme.css"):
         html = html.replace(f"/static/{asset}\"", f"/static/{asset}?v={ASSET_VERSION}\"")
     return html
 

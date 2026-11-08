@@ -17,6 +17,8 @@
   <h1>Beanstalk admin</h1>
   <nav class="tabs" role="tablist">
     <button role="tab" data-tab="books" aria-selected="true">Books</button>
+    <button role="tab" data-tab="activity">Activity</button>
+    <button role="tab" data-tab="funnel">Funnel</button>
     <button role="tab" data-tab="reviews">Reviews</button>
     <button role="tab" data-tab="refunds">Refunds <span class="count" id="refundBadge" hidden></span></button>
     <button role="tab" data-tab="days">Days</button>
@@ -51,13 +53,65 @@
     </div>
   </section>
 
+  <section id="tab-activity" class="tab" hidden>
+    <form class="filters" id="activityFilters">
+      <label class="grow">Search <input type="search" name="q" placeholder="email or book ref"></label>
+      <label>Show <select name="kind"><option value="">everything</option><option value="money">money</option>
+        <option value="books">books</option><option value="sign-ins">sign-ins</option><option value="reviews">reviews</option>
+        <option value="problems">problems</option></select></label>
+      <label>Last <select name="days"><option value="1">day</option><option value="7" selected>7 days</option>
+        <option value="30">30 days</option><option value="365">year</option></select></label>
+    </form>
+    <div class="money" id="moneyTotals"></div>
+    <div class="table-wrap">
+      <table class="grid" id="activityTable">
+        <thead><tr><th>When</th><th>Who</th><th>What happened</th><th>Book</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="tab-funnel" class="tab" hidden>
+    <form class="filters" id="funnelFilters">
+      <label>Last <select name="days"><option value="1">day</option><option value="7" selected>7 days</option>
+        <option value="30">30 days</option><option value="90">90 days</option></select></label>
+      <p class="soft filter-note">A person is one browser, signed in or not, counted once however often they come back
+        or refresh. A visit ends after 30 minutes away, so coming back later counts again (a refresh never does). Anyone who has signed in as an admin is left out.
+        Kept <span id="keepDays"></span> days.</p>
+    </form>
+    <div class="money" id="funnelStats"></div>
+    <div class="table-wrap days-wrap">
+      <table class="grid small" id="peopleDays">
+        <thead><tr><th>Day (UTC)</th><th class="num">People</th><th class="num">New people</th>
+          <th class="num">Signed in</th><th class="num">Visits</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="panels">
+      <div class="panel"><h2>Making a book</h2><p class="soft">Each step counts people who also did the step before.
+        The biggest drop is marked: that’s the first thing to look at.</p><ol class="funnel" id="bookFunnel"></ol></div>
+      <div class="panel"><h2>Adding money</h2><ol class="funnel" id="walletFunnel"></ol>
+        <h2 class="sub">What stopped people</h2><ul class="plain-list" id="blocked"></ul></div>
+    </div>
+    <div class="panels">
+      <div class="panel"><h2>What gets clicked</h2>
+        <table class="grid small"><thead><tr><th>Button or link</th><th class="num">Clicks</th><th class="num">People</th></tr></thead>
+          <tbody id="clickRows"></tbody></table></div>
+      <div class="panel"><h2>Pages</h2>
+        <table class="grid small"><thead><tr><th>Page</th><th class="num">Views</th><th class="num">People</th></tr></thead>
+          <tbody id="pageRows"></tbody></table>
+        <h2 class="sub">Rage clicks</h2><p class="soft">Three quick clicks in one spot: usually something that looks clickable
+          and isn’t, or is too slow to react.</p><ul class="plain-list" id="rageRows"></ul></div>
+    </div>
+  </section>
+
   <section id="tab-reviews" class="tab" hidden>
     <p class="summary"><b id="reviewCount"></b></p>
     <div class="questions" id="reviewQuestions"></div>
     <h2 class="section-title">What isn’t good</h2>
     <div class="table-wrap">
       <table class="grid" id="reviewTable">
-        <thead><tr><th>When</th><th>Book</th><th>Who</th><th class="num">Like me</th><th class="num">Rings true</th>
+        <thead><tr><th>When</th><th>Book</th><th>Who</th><th class="num">Like me</th><th class="num">Makes sense</th>
           <th class="num">Professional</th><th>What isn’t good</th></tr></thead>
         <tbody></tbody>
       </table>
