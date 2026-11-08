@@ -474,7 +474,27 @@
 
   // Each story's scenes (scene bible): drawn once without the hero, then every book adds its child in.
   let scenesTimer = 0;
-  function scenesBlock(sc) {
+  // "Try this page": one page drawn one way for one test child (the newest finished book), kept to compare.
+  const HOW = { swap: 'swap the stand-in', add: 'add to the scene', baseline: 'no scene (as before)' };
+  function tryButtons(sc, p, tries) {
+    const run = async (how, button) => {
+      if (!window.confirm(`Draw page ${p.page} for a test child (${HOW[how]})? About 4¢, about a minute.`)) return;
+      button.disabled = true;
+      button.textContent = 'Drawing…';
+      try {
+        await api('/trials', { method: 'POST', body: JSON.stringify({ story: sc.key, page: p.page, how }) });
+      } catch (err) { window.alert(err.message); }
+      loadCharacters();
+    };
+    const buttons = (p.kind === 'scene' && p.url ? ['swap', 'baseline'] : ['baseline']).map((how) =>
+      el('button', { class: 'btn plain small', type: 'button', text: `Try: ${HOW[how]}`, onclick: (e) => run(how, e.currentTarget) }));
+    return el('div', { class: 'tries' }, ...buttons,
+      ...tries.map((t) => el('a', { href: t.url, target: '_blank', rel: 'noopener', class: 'try', title: `${HOW[t.how]} · book ${t.book}` },
+        el('img', { src: `${t.url}?w=360`, alt: `Page ${p.page}, ${HOW[t.how]}`, loading: 'lazy' }),
+        el('span', { text: HOW[t.how] }))));
+  }
+
+  function scenesBlock(sc, tries = []) {
     if (!sc) return null;
     const drawAll = el('button', { class: 'btn small', type: 'button', disabled: sc.drawing || !sc.missing,
       text: sc.drawing ? 'Drawing the scenes… (this page updates itself)'
@@ -503,11 +523,12 @@
               e.currentTarget.textContent = 'Drawing… (about a minute)';
               await api(`/scenes/${encodeURIComponent(sc.key)}/${p.page}/draw`, { method: 'POST' }).catch((err) => window.alert(err.message));
               loadCharacters();
-            } }) : null)))));
+            } }) : null,
+          tryButtons(sc, p, tries.filter((t) => t.page === p.page)))))));
   }
 
   async function loadCharacters() {
-    const [stories, sceneList] = await Promise.all([api('/characters'), api('/scenes')]);
+    const [stories, sceneList, tries] = await Promise.all([api('/characters'), api('/scenes'), api('/trials')]);
     const byKey = Object.fromEntries(sceneList.map((s) => [s.key, s]));
     clearTimeout(scenesTimer);
     if (sceneList.some((s) => s.drawing)) scenesTimer = setTimeout(() => { if (readHash().tab === 'characters') loadCharacters(); }, 8000);
@@ -525,7 +546,7 @@
             text: v.name, onclick: (e) => copyPin(v.name, e.currentTarget) }),
             el('span', { class: 'soft', text: `${v.source}${v.cost ? ` · ${fmt.cost(v.cost)}` : ''}` })))))
           : null))),
-      scenesBlock(byKey[st.key]))));
+      scenesBlock(byKey[st.key], tries.filter((t) => t.story === st.key)))));
   }
 
   // --- errors ------------------------------------------------------------------------------------

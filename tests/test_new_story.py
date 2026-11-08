@@ -354,3 +354,18 @@ def test_words_move_off_a_face(client):
     assert choose_zone(page(at_bottom=True), "bottom") == "top"     # a face where the words go: they move up
     assert choose_zone(page(at_bottom=False), "bottom") == "bottom"  # the face is up top: words stay
     assert choose_zone(page(at_bottom=False), "top") == "bottom"
+
+
+def test_trying_a_page_keeps_each_try(client):
+    from tests.test_books import ADMIN, PARENT, post_book, sign_in, wait_for
+    sign_in(client, ADMIN)
+    assert client.post("/admin/api/trials", json={"story": "little_red_riding_hood", "page": 12}).status_code == 400
+    ref = post_book(client, story="little-red-riding-hood").json()["id"]  # a finished book gives the child
+    wait_for(client, ref, timeout=30)
+    for how in ("swap", "baseline"):
+        r = client.post("/admin/api/trials", json={"story": "little_red_riding_hood", "page": 12, "how": how})
+        assert r.status_code == 200 and client.get(r.json()["url"]).status_code == 200
+    tries = client.get("/admin/api/trials?story=little_red_riding_hood").json()
+    assert [t["how"] for t in tries] == ["baseline", "swap"] and all(t["book"] == ref for t in tries)
+    sign_in(client, PARENT)
+    assert client.post("/admin/api/trials", json={"story": "little_red_riding_hood", "page": 12}).status_code == 403

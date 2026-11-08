@@ -18,9 +18,11 @@ from sqlalchemy.orm import selectinload
 
 from . import auth, wallet
 from .book import bible, scenes
+from .book.prompts import PromptBuilder
+from .book.styles import get_style
 from .book.providers import CHOICES, is_mock
 from .book.story import Casting, all_stories
-from .db.models import (Activity, AdminSettings, Book, BookEvent, BookImage, CharacterPicture, RequestError, Review, Scene, SharedPage,
+from .db.models import (Activity, AdminSettings, Book, BookEvent, BookImage, CharacterPicture, PageTrial, RequestError, Review, Scene, SharedPage,
                         StoryCharacter, StoryRow,
                         Transaction, UnlimitedEmail, Upload, User)
 from .db.session import session
@@ -449,6 +451,77 @@ async def redraw_scene(story_key: str, page: int, _=Depends(require_admin)):
     provider, prompts, sheets = await _scene_inputs(story)
     await scenes.scene_for(story, spec, prompts, provider, sheets, redraw=True)
     return {"redrawn": page}
+
+
+# --- trying a page: one page for one test child, to compare ways of drawing before using any for books ---
+
+class TrialIn(BaseModel):
+    story: str
+    page: int
+    how: str = "swap"  # swap | add | baseline
+    book: str | None = None  # whose child; default the newest finished book of the story
+
+
+@router.post("/api/trials")
+async def try_page(body: TrialIn, _=Depends(require_admin)):
+    """Draw one page one way for one child (about 4 cents). Kept, to compare on the Story art tab."""
+    from .book import jobs
+    from .book.providers import PAGE_SIZE, get_provider
+    story = next((s for s in all_stories() if s.key == body.story), None)
+    spec = next((p for p in story.pages if p.number == body.page), None) if story else None
+    if spec is None or spec.type != "illustrated" or body.how not in ("swap", "add", "baseline"):
+        raise HTTPException(400, {"message": "Pick a painted page and one of: swap, add, baseline."})
+    async with session() as s:
+        q = select(Book).where(Book.status == "done", Book.story_key == story.key).order_by(Book.created_at.desc())
+        book = await s.get(Book, body.book) if body.book else (await s.execute(q.limit(1))).scalar_one_or_none()
+        hero = book and (await s.execute(select(BookImage.image).where(
+            BookImage.book_id == book.id, BookImage.kind == "hero_sheet", BookImage.status == "done"))).scalar_one_or_none()
+        scene = (await s.execute(select(Scene).where(
+            Scene.story_key == story.key, Scene.page_number == spec.number).order_by(Scene.id.desc()))).scalars().first()
+    if not hero:
+        raise HTTPException(400, {"message": f"No finished {story.title} book to take a child from yet."})
+    casting = Casting(story, book.gender)
+    prompts = PromptBuilder(get_style(story.style), story, casting)
+    name, model, quality = await provider_for(None)
+    provider = get_provider(name, model, quality)
+    hero_png = jobs.to_png(hero)
+    if body.how == "baseline":
+        sheets = await bible.sheets_for(story, prompts, provider)
+        refs = [("hero.png" if k == "hero" else f"{k}.png", hero_png if k == "hero" else sheets[k]) for k in spec.cast]
+        prompt, scene_id = prompts.page(spec), None
+    else:
+        if scene is None:
+            raise HTTPException(400, {"message": f"Page {spec.number} has no scene yet."})
+        refs = [("hero.png", hero_png), (f"scene-{spec.number}.png", scene.image)]
+        prompt = prompts.swap(spec) if body.how == "swap" else prompts.on_scene(spec)
+        scene_id = scene.id
+    result = await provider.edit(label=f"try page {spec.number} ({body.how})", refs=refs, prompt=prompt, size=PAGE_SIZE)
+    async with session() as s:
+        trial = PageTrial(story_key=story.key, page_number=spec.number, how=body.how, book_id=book.id,
+                          scene_id=scene_id, prompt=prompt, image=jobs.to_webp(result.png), cost=result.cost)
+        s.add(trial)
+        await s.commit()
+        return {"id": trial.id, "url": f"/admin/api/trials/{trial.id}.png"}
+
+
+@router.get("/api/trials")
+async def trials(story: str = "", _=Depends(require_admin)):
+    async with session() as s:
+        rows = (await s.execute(select(PageTrial.id, PageTrial.story_key, PageTrial.page_number, PageTrial.how,
+                                       PageTrial.book_id, PageTrial.cost, PageTrial.created_at)
+                                .where(PageTrial.story_key == story if story else True)
+                                .order_by(PageTrial.id.desc()))).all()
+    return [{"id": r.id, "story": r.story_key, "page": r.page_number, "how": r.how, "book": r.book_id,
+             "cost": float(r.cost or 0), "at": _iso(r.created_at), "url": f"/admin/api/trials/{r.id}.png"} for r in rows]
+
+
+@router.get("/api/trials/{trial_id}.png")
+async def trial_png(trial_id: int, w: int = 900, _=Depends(require_admin)):
+    async with session() as s:
+        data = (await s.execute(select(PageTrial.image).where(PageTrial.id == trial_id))).scalar_one_or_none()
+    if data is None:
+        raise HTTPException(404, "No such try.")
+    return await _thumb(data, w)
 
 
 async def _thumb(data: bytes, w: int) -> Response:

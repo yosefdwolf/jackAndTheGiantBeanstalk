@@ -107,6 +107,25 @@ class PromptBuilder:
             cast,
         ])
 
+    def swap(self, spec: PageSpec) -> str:
+        """Prompt for a book's page from a scene that has a stand-in child in it (image 2): the stand-in is replaced
+        by the hero (image 1), keeping the stand-in's pose, place and size. Being tried on single pages first."""
+        c = self.casting
+        text_area = {"top": "top third", "bottom": "bottom third", "bottom-dark": "bottom quarter"}[spec.text_zone]
+        return "\n".join([
+            f"Image 1 is {c.hero_name}: use {c.fill('{him}')} exactly (same face, hair, skin tone, and outfit: "
+            f"{self.story.hero_outfit}). Image 2 is this page's finished scene, with a stand-in child in it.",
+            f"Draw image 2 again with the stand-in child replaced completely by {c.hero_name} from image 1: "
+            f"{c.fill('{his}')} own face, hair, skin tone and build, taken only from image 1, never from the stand-in. "
+            "Keep the stand-in's pose, place, size and what they are holding. Keep everything else in image 2 exactly "
+            "the same: the place, the other characters, the light, the colours and the composition.",
+            *self._style_lines(),
+            f"Wide picture-book illustration. {NO_TEXT}",
+            f"Scene: {c.fill(spec.scene)}",
+            f"Keep {c.hero_name}'s face out of the {text_area} of the picture: it stays plain, for the story text.",
+            "Only the child changes; nothing else in the picture does.",
+        ])
+
     def on_scene(self, spec: PageSpec) -> str:
         """Prompt for a book's page: the hero (image 1) added into the page's saved scene (image 2)."""
         c = self.casting

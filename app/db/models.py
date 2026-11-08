@@ -142,6 +142,22 @@ class Scene(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
 
+class PageTrial(Base):
+    """One page drawn for one test child from the admin's Story art tab, to compare ways of drawing a page before
+    any of them is used for books. `how`: swap (replace the scene's stand-in child) | add | baseline (no scene)."""
+    __tablename__ = "page_trials"
+    id: Mapped[int] = mapped_column(Id, primary_key=True, autoincrement=True)
+    story_key: Mapped[str] = mapped_column(String(64), index=True)
+    page_number: Mapped[int] = mapped_column(Integer)
+    how: Mapped[str] = mapped_column(String(16))
+    book_id: Mapped[str] = mapped_column(String(16))  # whose child (that book's cartoon)
+    scene_id: Mapped[int | None] = mapped_column(Integer)
+    prompt: Mapped[str] = mapped_column(Text)
+    image: Mapped[bytes] = mapped_column(Bytes)  # WebP
+    cost: Mapped[float | None] = mapped_column(Numeric(10, 4))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
 class Upload(Base):
     """The uploaded photo, kept so a failed or odd book can be compared with what was sent."""
     __tablename__ = "uploads"
