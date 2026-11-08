@@ -354,6 +354,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     if (['running', 'queued', 'interrupted'].includes(book.status)) frame = requestAnimationFrame(paintAll);
   }
 
+  let pollBroke = false;
   async function poll() {
     try {
       const res = await fetch(`/api/books/${watching}`, { cache: 'no-store' });
@@ -367,8 +368,13 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
       paintAll();
       if (data.status !== 'done') showProgress();
       if (['done', 'failed', 'refused'].includes(data.status)) return finish(data);
-    } catch {
-      // A blip in the connection: the book keeps growing on the server, so just ask again.
+    } catch (e) {
+      // A blip in the connection: the book keeps growing on the server, so just ask again. A bug in this
+      // page is reported too, so it can't fail silently.
+      if (!pollBroke && !(e instanceof TypeError && /fetch|network|load/i.test(e.message))) {
+        pollBroke = true;  // once, not every few seconds
+        reportPageError(`progress: ${e && e.stack ? e.stack.split('\n').slice(0, 3).join(' ') : e}`);
+      }
     }
     pollTimer = setTimeout(poll, POLL_MS);
   }
@@ -708,7 +714,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     $('bookLoading').hidden = true;
     $('reader').hidden = true;
     $('review').hidden = true;
-    for (const extra of $('printing').querySelectorAll('p:not(.ref):not(.tally):not(.error)')) extra.remove();
+    for (const extra of $('printing').querySelectorAll('.try-again')) extra.remove();  // only a failed book's buttons
     form.hidden = !password || !(me && me.signed_in);
     $('signin').hidden = !password || !!(me && me.signed_in);
     gate.hidden = !!password;
