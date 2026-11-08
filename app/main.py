@@ -110,7 +110,7 @@ def story_card(story: Story) -> str:
     title, href = escape(story.title), f"/stories/{story.slug}"
     return (f'<li class="story"><div class="stand-books"><a class="book-object" href="{href}" tabindex="-1" aria-hidden="true">'
             f'<img src="{escape(story.library_cover)}" alt="" loading="lazy">'
-            f'<span class="cover-title">{title}<small>starring you</small></span></a></div>'
+            f'<span class="cover-title">{title}</span></a></div>'
             f'<div class="plank"></div>'
             f'<div class="card story-info"><h2>{title}</h2><p>{escape(story.blurb)}</p>'
             f'<p class="meta">{pages} painted pages · ${wallet.BOOK_PRICE_CENTS / 100:.2f}</p>'
