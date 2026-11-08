@@ -136,9 +136,10 @@ async def funnel(days: int = 7, admins: bool = False, _=Depends(require_admin)):
         per_user = (await s.execute(select(Book.user_id, func.count()).where(Book.status == "done",
                                     Book.user_id.is_not(None)).group_by(Book.user_id))).all()
 
-    # Anyone who was ever signed in as an admin is left out (it's your own testing), unless asked for.
-    admin_visitors = set() if admins else {e.visitor for e in events if e.user_id in admin_ids}
-    events = [e for e in events if e.visitor not in admin_visitors]
+    # What was done while signed in as an admin is left out (it's your own testing), unless asked for. Only those
+    # events: the same browser signed in as someone else, or signed out, still counts.
+    if not admins:
+        events = [e for e in events if e.user_id not in admin_ids]
     by_visitor = defaultdict(list)
     for e in events:
         by_visitor[e.visitor].append(e)

@@ -43,16 +43,20 @@ def test_the_funnel_counts_people_through_each_step_in_order(client):
     assert client.get("/admin/api/funnel").status_code == 403
     sign_in(client, ADMIN)
     send(client, "page_view", visitor="dddddddd4")  # the admin's own visit is left out
+    sign_in(client, PARENT)
+    send(client, "page_view", visitor="ffffffff6", path="/wallet")  # this browser, signed in as someone else...
+    sign_in(client, ADMIN)
+    send(client, "page_view", visitor="ffffffff6")  # ...and as the admin: only the admin part is left out
     d = client.get("/admin/api/funnel").json()
     steps = {s["step"]: s["visitors"] for s in d["book_funnel"]}
-    assert steps["Came to the site"] == 2 and steps["Opened a story"] == 2 and steps["Added a photo"] == 1
+    assert steps["Came to the site"] == 3 and steps["Opened a story"] == 2 and steps["Added a photo"] == 1
     assert steps["Got their book"] == 1 and steps["Read to the end"] == 0
     assert d["book_funnel"][2]["of_previous"] == 0.5
-    assert d["visitors"] == 3 and d["new_visitors"] == 3 and d["signed_in"] == 0
-    assert d["days"][0]["people"] == 3 and d["days"][0]["visits"] == 1  # every test event shares one session
+    assert d["visitors"] == 4 and d["new_visitors"] == 4 and d["signed_in"] == 1
+    assert d["days"][0]["people"] == 4 and d["days"][0]["visits"] == 1  # every test event shares one session
     assert {"what": "Not enough money for a book", "times": 1} in d["blocked"]
     assert d["clicks"][0] == {"target": "download", "clicks": 1, "visitors": 1}
-    assert client.get("/admin/api/funnel?admins=true").json()["visitors"] == 4
+    assert client.get("/admin/api/funnel?admins=true").json()["visitors"] == 5
 
 
 def test_review_and_download_count_in_any_order_after_the_book(client):
