@@ -11,6 +11,10 @@
 <!--THEME_CSS-->
 <style>
   .wallet h2 { margin-bottom: 4px; }
+  .explain { display: grid; grid-template-columns: 110px 1fr; gap: 18px; align-items: center; }
+  .explain img { width: 110px; height: 110px; object-fit: contain; }
+  .explain p { margin: 6px 0 14px; }
+  @media (max-width: 480px) { .explain { grid-template-columns: 1fr; justify-items: center; text-align: center; } }
   .purse-card { display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: 18px; }
   .purse-card .purse { width: 120px; height: 120px; object-fit: contain; }
   .purse-card .flash { grid-column: 1 / -1; }
@@ -55,10 +59,15 @@
     <h1>Your wallet</h1>
   </header>
 
-  <section class="card wallet" id="signin" hidden>
-    <h2>Sign in first</h2>
-    <p>Your wallet belongs to your Google account.</p>
-    <a class="btn bean" href="/auth/login?next=/wallet">Sign in with Google</a>
+  <!-- Signed out: what this page is for, and the way in. -->
+  <section class="card wallet explain" id="signin" hidden>
+    <img src="/static/themes/library/art/purse.webp" alt="">
+    <div>
+      <h2>Your balance and account</h2>
+      <p>Each book costs $0.99. This is where you add money, see what’s in your wallet, look back at every book
+        and top-up, and get unspent money back to your card.</p>
+      <a class="btn bean" href="/auth/login?next=/wallet">Sign in with Google</a>
+    </div>
   </section>
 
   <div id="main" hidden>

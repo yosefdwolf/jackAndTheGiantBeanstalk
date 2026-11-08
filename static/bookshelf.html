@@ -35,6 +35,10 @@
   .shelf-books .state { font: 600 13px var(--hand); color: var(--accent-deep); }
   .shelf-books .state.bad { color: var(--alert); }
   .empty p { font-size: 17px; }
+  .explain { display: grid; grid-template-columns: 110px 1fr; gap: 18px; align-items: center; }
+  .explain img { width: 110px; height: 110px; object-fit: contain; }
+  .explain p { font-size: 17px; margin: 6px 0 14px; }
+  @media (max-width: 480px) { .explain { grid-template-columns: 1fr; justify-items: center; text-align: center; } }
   @media (prefers-reduced-motion: reduce) { .shelf-books .book-object { transition: none; } }
 </style>
 </head>
@@ -47,10 +51,14 @@
     <h1>Your bookshelf</h1>
   </header>
 
-  <section class="card" id="signin" hidden>
-    <h2>Sign in first</h2>
-    <p>Your books are kept with your Google account.</p>
-    <a class="btn bean" href="/auth/login?next=/bookshelf">Sign in with Google</a>
+  <!-- Signed out: what this page is for, and the way in. -->
+  <section class="card explain" id="signin" hidden>
+    <img src="/static/themes/library/art/icon-stories.webp" alt="">
+    <div>
+      <h2>Every book you make lives here</h2>
+      <p>Each book waits on this shelf, so you can open it again or download the PDF any time, on any device.</p>
+      <a class="btn bean" href="/auth/login?next=/bookshelf">Sign in with Google</a>
+    </div>
   </section>
 
   <section class="card empty" id="empty" hidden>
