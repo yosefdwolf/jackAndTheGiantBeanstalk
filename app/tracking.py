@@ -116,13 +116,13 @@ def _pct(values, q):
 
 
 @router.get("/admin/api/funnel")
-async def funnel(days: int = 7, _=Depends(require_admin)):
+async def funnel(days: int = 7, admins: bool = False, _=Depends(require_admin)):
     await forget_old()
     since = datetime.now(timezone.utc) - timedelta(days=max(1, min(days, KEEP_DAYS)))
-    admins = auth.admin_emails()
+    admin_emails = auth.admin_emails()
     async with session() as s:
-        admin_ids = set((await s.execute(select(User.id).where(func.lower(User.email).in_(admins)))).scalars()) \
-            if admins else set()
+        admin_ids = set((await s.execute(select(User.id).where(func.lower(User.email).in_(admin_emails)))).scalars()) \
+            if admin_emails else set()
         events = (await s.execute(select(PageEvent).where(PageEvent.at >= since)
                                   .order_by(PageEvent.at, PageEvent.id).limit(200_000))).scalars().all()
         drawn = (await s.execute(select(Book.started_at, Book.finished_at).where(
@@ -130,8 +130,8 @@ async def funnel(days: int = 7, _=Depends(require_admin)):
         per_user = (await s.execute(select(Book.user_id, func.count()).where(Book.status == "done",
                                     Book.user_id.is_not(None)).group_by(Book.user_id))).all()
 
-    # Anyone who was ever signed in as an admin is left out: it's your own testing.
-    admin_visitors = {e.visitor for e in events if e.user_id in admin_ids}
+    # Anyone who was ever signed in as an admin is left out (it's your own testing), unless asked for.
+    admin_visitors = set() if admins else {e.visitor for e in events if e.user_id in admin_ids}
     events = [e for e in events if e.visitor not in admin_visitors]
     by_visitor = defaultdict(list)
     for e in events:
@@ -182,7 +182,7 @@ async def funnel(days: int = 7, _=Depends(require_admin)):
         if ready:
             to_first_book.append((ready.at - evs[0].at).total_seconds() / 60)
     seconds = [(f - s_).total_seconds() for s_, f in drawn if f]
-    makers = [n for uid, n in per_user if uid not in admin_ids]
+    makers = [n for uid, n in per_user if admins or uid not in admin_ids]
 
     return {
         "visitors": len(by_visitor), "sessions": len({e.session for e in events}), "signed_in": signed_in,

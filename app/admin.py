@@ -3,6 +3,7 @@ the model switch, the unlimited list and refund requests. Only ADMIN_EMAILS can 
 
 On the admin host, paths are mapped under /admin (see AdminHost), so the same routes serve both.
 """
+import hashlib
 import io
 import os
 from datetime import datetime, timedelta, timezone
@@ -21,6 +22,10 @@ from .db.models import (Activity, AdminSettings, Book, BookEvent, BookImage, Req
 from .db.session import session
 
 STATIC = Path(__file__).resolve().parent.parent / "static"
+# The admin page's script and stylesheet carry a content hash, so a deploy never leaves a browser running the
+# old admin.js (new tabs showed up empty until a hard refresh).
+ADMIN_VERSION = hashlib.sha1(b"".join((STATIC / "admin" / f).read_bytes() for f in ("admin.js", "admin.css"))
+                             ).hexdigest()[:10]
 SLOW_SECONDS = 60  # an image slower than this is flagged
 QUESTIONS = [("looks_like_me", "Does this look like me?"),
              ("story_rings_true", "Does the story make sense from page to page?"),
@@ -100,6 +105,8 @@ async def page(request: Request):
     host = request.headers.get("host", "")
     site = f"{request.headers.get('x-forwarded-proto', request.url.scheme)}://{host[len('admin.'):]}/" if _admin_host(request) else "/"
     html = (STATIC / "admin" / "index.html").read_text().replace("{{EMAIL}}", user.email).replace("{{SITE}}", site)
+    for asset in ("admin.js", "admin.css"):
+        html = html.replace(f'/static/admin/{asset}"', f'/static/admin/{asset}?v={ADMIN_VERSION}"')
     return HTMLResponse(html, headers={"Cache-Control": "no-cache"})
 
 

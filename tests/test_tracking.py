@@ -52,3 +52,10 @@ def test_the_funnel_counts_people_through_each_step_in_order(client):
     assert d["days"][0]["people"] == 3 and d["days"][0]["visits"] == 1  # every test event shares one session
     assert {"what": "Not enough money for a book", "times": 1} in d["blocked"]
     assert d["clicks"][0] == {"target": "download", "clicks": 1, "visitors": 1}
+    assert client.get("/admin/api/funnel?admins=true").json()["visitors"] == 4
+
+
+def test_the_admin_page_asks_for_the_latest_script(client):
+    sign_in(client, ADMIN)
+    html = client.get("/admin").text
+    assert "/static/admin/admin.js?v=" in html and "/static/admin/admin.css?v=" in html

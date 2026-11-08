@@ -369,7 +369,7 @@
       el('span', { class: 'soft', text: !i ? 'people' : s.of_previous == null ? 'nobody reached the step before' : `${pct(s.of_previous)} of the step before` }))));
   }
   async function loadFunnel() {
-    const d = await api('/funnel?days=' + funnelFilters.days.value);
+    const d = await api(`/funnel?days=${funnelFilters.days.value}&admins=${funnelFilters.admins.checked}`);
     $('keepDays').textContent = d.keep_days;
     const ft = d.minutes_to_first_book, dr = d.drawing_seconds, sb = d.second_book;
     $('funnelStats').replaceChildren(...[
