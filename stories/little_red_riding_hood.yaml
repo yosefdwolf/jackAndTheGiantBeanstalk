@@ -1,0 +1,343 @@
+# Same 20-page template as Jack: page N puts its text in the same place (text_zone) in both stories.
+# Placeholders, filled per book: {hero} (the reader's own name in the story text; Little Red in image
+# prompts), {he} {his} {him} and capitalized {He} {His}.
+
+title: Little Red Riding Hood
+draft: true   # only admins see it until this line is removed
+style: animated3d
+theme: red   # the website's look: static/themes/red/ if it exists, otherwise the library's
+blurb: Grandmother's cottage is just through the woods. Stay on the path, and don't talk to strangers.
+cover_page: 3   # walking into the wood: the bookshelf cover, cropped upright around the hero
+
+site:
+  heading: [Little Red, Riding, Hood]
+  go: Set off through the woods
+  going: Packing the basket…
+  growing: Walking to Grandmother’s
+  # While the book is drawn, the progress card's title changes every few seconds to one of these little jobs
+  # from the story, just something fun to read while waiting.
+  musing: [Picking the flowers, Washing the red hood, Packing the basket, Baking bread for Grandmother,
+           Warming the soup, Following the path, Fluffing Grandmother’s pillows, Polishing Grandmother’s spectacles,
+           Tiptoeing past the wolf, Sharpening the woodcutter’s axe, Spooning out the honey,
+           Knocking on Grandmother’s door]
+  binding: Tying the ribbon on your book…
+  failed: Oh no, the path got lost
+  hero_progress: Sewing your red cape…
+  about_placeholder: Loves picking wildflowers
+  review_placeholder: The wolf on page 12 looks strange…
+  pdf_name: LittleRedRidingHood.pdf
+
+world: >-
+  a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with
+  thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook
+  colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
+
+# The form's two buttons. Each sets he/she in the story text (the hero is Little Red either way).
+pronouns:
+  question: Are you a boy or a girl?
+  boy: Boy
+  girl: Girl
+
+hero:
+  names: {boy: Little Red, girl: Little Red}
+  outfit: >-
+    a bright red hooded cape over a cream linen shirt, a brown laced vest, brown trousers or a brown
+    skirt, and worn brown leather boots; the red cape is always on
+
+characters:
+  mother:
+    name: "{hero}'s mother"
+    description: >-
+      a kind, busy woman in her thirties with rosy cheeks, brown hair in a loose bun, a cream blouse
+      with rolled sleeves, a green skirt and a flour-dusted apron
+  grandmother:
+    name: Grandmother
+    description: >-
+      a small, round, cheerful grandmother with white hair in a bun, round spectacles, a lace nightcap,
+      a long pale-blue nightgown and a knitted shawl; looks a little sick but bright-eyed
+  wolf:
+    name: the wolf
+    description: >-
+      a big, lean grey wolf who walks on all fours, with yellow eyes, a long snout, a sly toothy grin
+      and a bushy tail; sneaky and frightening in a storybook way, never gory
+  woodcutter:
+    name: the woodcutter
+    description: >-
+      a tall, broad, friendly woodcutter with a short brown beard, a red-and-black checked shirt,
+      brown trousers, braces, sturdy boots and a long axe over his shoulder
+
+pages:
+  - type: illustrated
+    progress: "Sewing a little red cape…"
+    text: "{hero}'s grandmother had sewn {him} a bright red cape with a hood. {He} wore it every day, so everyone called {him} Little Red Riding Hood."
+    cast: [hero, mother]
+    scene: >-
+      The doorstep of a thatched cottage on a sunny morning. {hero} twirls in the red hooded cape, the
+      cape flaring out, shown full face and laughing. {hero}'s mother leans in the doorway, smiling.
+      Hollyhocks by the door, a picket fence, the dark edge of the forest far behind.
+    mood: Happy and bright. Warm morning sunshine.
+    composition: >-
+      Characters in the upper two-thirds. The lower third is the plain stone path and grass in soft
+      shadow, low in detail, for text added later.
+    text_zone: bottom
+
+  - type: illustrated
+    progress: "Packing bread and honey…"
+    text: "“Grandmother is sick,” said {his} mother. “Take her this basket, and stay on the path.”"
+    cast: [hero, mother]
+    scene: >-
+      Inside the cottage kitchen. {hero}'s mother kneels to hand {hero} a wicker basket covered with a
+      checked cloth; a loaf of bread, a jar of honey and a little pot of soup peek out. She holds up
+      one finger in warning. {hero}, in the red cape, takes the basket and nods seriously.
+    mood: Warm and cosy, but the warning matters. Soft window light.
+    composition: >-
+      Characters in the lower two-thirds. The top third is a plain, softly lit plaster wall and
+      wooden beams, for text added later.
+    text_zone: top
+
+  - type: illustrated
+    progress: "Following the path into the woods…"
+    text: "The path went deep into the dark woods."
+    cast: [hero]
+    scene: >-
+      A narrow dirt path leads into a deep forest of tall, old trees with twisted roots. {hero}, small
+      in the frame, walks along it carrying the basket, the red cape the brightest thing in the picture.
+      Shafts of light fall between the trunks; deeper in, the trees grow darker.
+    mood: Quiet, a little spooky, full of wonder. Cool green-blue shade with a few warm beams of light.
+    composition: >-
+      Keep the bottom quarter as plain, dark forest floor and moss with no detail, for text added later.
+    text_zone: bottom-dark
+
+  - type: illustrated
+    progress: "Meeting someone with a big smile…"
+    text: "Out from behind an oak stepped a wolf. “Good morning,” he said, with a very wide smile."
+    cast: [hero, wolf]
+    scene: >-
+      On the forest path. The wolf has stepped out from behind a huge oak trunk and bows politely, with
+      a too-wide, toothy smile. {hero} stops, holding the basket close, surprised but curious, in
+      three-quarter view.
+    mood: Uneasy and charming at once. Dappled light; the wolf half in shadow.
+    composition: >-
+      Characters in the lower two-thirds. The top third is plain, soft, hazy light through the high
+      leaves, for text added later.
+    text_zone: top
+
+  - type: illustrated
+    progress: "Telling the wolf far too much…"
+    text: "“Where are you going?” asked the wolf. “To Grandmother’s cottage, at the end of the path,” said {hero}."
+    cast: [hero, wolf]
+    scene: >-
+      The wolf sits beside the path, ears up, listening very closely. {hero} points down the path,
+      chatting happily and shown full face, with no idea of the danger. In the far distance, a tiny
+      cottage chimney with smoke.
+    mood: Friendly on the surface, sly underneath. Dappled forest light.
+    composition: >-
+      Characters in the upper two-thirds. The lower third is the plain dirt path and fallen leaves,
+      low in detail, for text added later.
+    text_zone: bottom
+
+  - type: illustrated
+    progress: "Spotting the prettiest flowers…"
+    text: "“Why not pick her some flowers?” said the wolf. “There are lovely ones just over there.”"
+    cast: [hero, wolf]
+    scene: >-
+      The wolf points a paw off the path towards a sunny clearing full of bright wildflowers. {hero}
+      looks towards the flowers, delighted and tempted, one foot already stepping off the path.
+    mood: Tempting and sunny, with the wolf's sly look as the only warning.
+    composition: >-
+      Characters in the upper two-thirds. The lower third is plain, shadowed grass at the path's edge,
+      low in detail, for text added later.
+    text_zone: bottom
+
+  - type: illustrated
+    progress: "Wandering off the path…"
+    text: "So {hero} wandered off the path, picking flowers, while the wolf raced ahead."
+    cast: [hero, wolf]
+    scene: >-
+      A sunlit meadow of poppies, daisies and bluebells. {hero} kneels among the flowers, gathering a
+      big bunch, happy and unaware. Far behind, small, the wolf runs off down the path towards the
+      cottage.
+    mood: Bright and carefree, with a small worrying detail in the distance. Warm midday light.
+    composition: >-
+      Characters in the lower two-thirds. The top third is plain, soft summer sky with no birds or
+      detail, for text added later.
+    text_zone: top
+
+  - type: illustrated
+    progress: "Knocking at Grandmother’s door…"
+    text: "Knock, knock. “It’s me, Little Red Riding Hood,” said the wolf, in a squeaky little voice."
+    cast: [wolf]
+    scene: >-
+      Grandmother's small cottage at the end of the path, ivy on the walls, a round wooden door. The
+      wolf stands on his hind legs at the door, knocking with one paw and holding the other paw to his
+      mouth, putting on a silly squeaky voice.
+    mood: Sneaky and a little funny. Afternoon light, long shadows.
+    composition: >-
+      The wolf and door in the upper two-thirds. The lower third is the plain stone doorstep and
+      grass, low in detail, for text added later.
+    text_zone: bottom
+
+  - type: illustrated
+    progress: "Hiding Grandmother in the wardrobe…"
+    text: "Grandmother peeked out, saw the wolf, and hid in the wardrobe as fast as she could."
+    cast: [grandmother, wolf]
+    scene: >-
+      Inside Grandmother's bedroom. Grandmother, in her nightgown and nightcap, is squeezing into a
+      tall wooden wardrobe, pulling the door shut behind her, eyes wide. Through the window behind,
+      the wolf's shadow looms at the front door.
+    mood: Tense but a bit comic. Soft indoor light, the window bright.
+    composition: >-
+      Characters in the upper two-thirds. The lower third is the plain wooden floor and a rag rug, low
+      in detail, for text added later.
+    text_zone: bottom
+
+  - type: illustrated
+    progress: "Trying on Grandmother’s nightcap…"
+    text: "The wolf put on Grandmother’s nightcap and spectacles, and climbed into her bed."
+    cast: [wolf]
+    scene: >-
+      Grandmother's bedroom. The wolf, wearing Grandmother's lace nightcap and round spectacles
+      perched on his long snout, pulls the patchwork quilt up to his chin in her bed. The wardrobe
+      door is closed; one eye peeks through the crack.
+    mood: Silly and sinister at once. Curtains half drawn, dim golden light.
+    composition: >-
+      The bed in the upper two-thirds. The lower third is the plain wooden floor at the foot of the
+      bed, low in detail, for text added later.
+    text_zone: bottom
+
+  - type: illustrated
+    progress: "Arriving with a big bunch of flowers…"
+    text: "{hero} arrived with a big bunch of flowers. The door was open, and everything was strangely quiet."
+    cast: [hero]
+    scene: >-
+      Grandmother's cottage doorway, the round door slightly open. {hero} stands on the step with the
+      basket on one arm and a big bunch of wildflowers in the other hand, shown full face, smiling
+      but puzzled, peering in.
+    mood: Calm but odd. Late afternoon golden light.
+    composition: >-
+      {hero} in the upper two-thirds. The lower third is the plain stone doorstep and grass, low in
+      detail, for text added later.
+    text_zone: bottom
+
+  - type: illustrated
+    progress: "Noticing Grandmother’s big ears…"
+    text: "“Grandmother, what big ears you have!” “All the better to hear you with, my dear.”"
+    cast: [hero, wolf]
+    scene: >-
+      Beside the bed. The wolf, in nightcap and spectacles, lies under the quilt with his big furry
+      ears poking out of the cap. {hero} stands at the bedside holding the flowers, head tilted,
+      puzzled.
+    mood: Funny and creepy. Dim, cosy bedroom light.
+    composition: >-
+      Characters in the lower two-thirds. The top third is the plain bedroom wall and a beam, softly
+      lit, for text added later.
+    text_zone: top
+
+  - type: illustrated
+    progress: "Noticing Grandmother’s big eyes…"
+    text: "“Grandmother, what big eyes you have!” “All the better to see you with, my dear.”"
+    cast: [hero, wolf]
+    scene: >-
+      Closer in. The wolf peers over his spectacles with huge yellow eyes. {hero} leans back a little,
+      shown full face, eyes wide, starting to worry.
+    mood: Growing suspense. Dim light, the wolf's eyes catching the light.
+    composition: >-
+      Characters in the upper two-thirds. The lower third is the plain patchwork quilt in soft shadow,
+      low in detail, for text added later.
+    text_zone: bottom
+
+  - type: illustrated
+    progress: "Noticing Grandmother’s very big teeth…"
+    text: "“Grandmother, what big teeth you have!” “All the better to EAT you with!”"
+    cast: [hero, wolf]
+    scene: >-
+      The wolf leaps up out of the bed, the nightcap flying off, jaws wide with big storybook teeth
+      (not gory). {hero} jumps back, flowers flying, shown full face with a shocked expression.
+    mood: The scariest moment, but storybook-scary. Sudden, dramatic light.
+    composition: >-
+      Characters in the lower two-thirds. The top third is the plain bedroom wall and beams, for text
+      added later.
+    text_zone: top
+
+  - type: illustrated
+    progress: "Running for help…"
+    text: "{hero} dodged, ran out of the door and shouted for help as loud as {he} could."
+    cast: [hero, wolf]
+    scene: >-
+      Outside the cottage. {hero} runs out through the open door towards the viewer, red cape
+      streaming, shouting, shown full face. The wolf bursts out of the doorway behind, still in
+      Grandmother's nightgown.
+    mood: Fast and exciting. Bright afternoon light.
+    composition: >-
+      Characters in the lower two-thirds. The top third is plain sky and treetops with no detail, for
+      text added later.
+    text_zone: top
+
+  - type: illustrated
+    progress: "Calling the woodcutter…"
+    text: "A woodcutter working nearby heard {him} and came running with his axe."
+    cast: [hero, woodcutter, wolf]
+    scene: >-
+      At the forest edge. The woodcutter strides in from the trees, axe raised, looking brave and
+      determined. {hero} runs to him and points back at the wolf, who skids to a stop, startled.
+    mood: Relief arriving. Warm light breaking through the trees.
+    composition: >-
+      Characters in the upper two-thirds. The lower third is the plain grassy ground, low in detail,
+      for text added later.
+    text_zone: bottom
+
+  - type: illustrated
+    progress: "Chasing the wolf away…"
+    text: "The woodcutter chased the wolf deep into the forest, and he was never seen again."
+    cast: [woodcutter, wolf, hero]
+    scene: >-
+      The wolf flees into the dark forest with his tail between his legs, Grandmother's nightgown
+      snagging on a bush. The woodcutter chases after him waving the axe. {hero} watches from the
+      cottage gate, hands on {his} cape, relieved.
+    mood: Triumphant and a bit funny. Golden late-afternoon light.
+    composition: >-
+      Characters in the lower two-thirds. The top third is plain sky over the treetops, for text added
+      later.
+    text_zone: top
+
+  - type: illustrated
+    progress: "Opening the wardrobe…"
+    text: "A tiny voice called from the wardrobe. “Is it safe to come out now?”"
+    cast: [hero, grandmother]
+    scene: >-
+      Grandmother's bedroom, a little messy after the chase. {hero} opens the tall wardrobe and
+      Grandmother peeks out from between the hanging clothes, spectacles askew, smiling with relief.
+    mood: Relieved and sweet. Soft warm light.
+    composition: >-
+      Characters in the upper two-thirds. The lower third is the plain wooden floor, low in detail,
+      for text added later.
+    text_zone: bottom
+
+  - type: illustrated
+    progress: "Sharing bread, honey and soup…"
+    text: "They shared the bread, the honey and the soup, and Grandmother felt better already."
+    cast: [hero, grandmother, woodcutter]
+    scene: >-
+      Grandmother's little table by the window. Grandmother, wrapped in her shawl, {hero} in the red
+      cape and the woodcutter sit together with bowls of soup, bread and honey. The wildflowers stand
+      in a jug in the middle. Everyone is smiling.
+    mood: Cosy and happy. Warm golden evening light.
+    composition: >-
+      Characters in the lower two-thirds. The top third is the plain wall and window light, for text
+      added later.
+    text_zone: top
+
+  - type: illustrated
+    progress: "Staying on the path, all the way home…"
+    text: "And from that day on, {hero} always stayed on the path."
+    cast: [hero, mother]
+    scene: >-
+      Sunset at {hero}'s own cottage. {hero} walks up the path with the empty basket, and {his} mother
+      runs out to hug {him}. The forest behind is calm and golden now.
+    mood: Safe, warm and happy. The brightest, cosiest page in the book.
+    composition: >-
+      Characters in the upper two-thirds. The lower third is the plain path and grass in soft evening
+      shadow, low in detail, for text added later.
+    text_zone: bottom
+
+  - type: about_me

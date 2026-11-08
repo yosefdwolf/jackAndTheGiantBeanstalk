@@ -21,7 +21,7 @@ from sqlalchemy import select  # noqa: E402
 from sqlalchemy.orm import selectinload  # noqa: E402
 
 from . import admin, auth, tracking, wallet  # noqa: E402
-from .book import jobs  # noqa: E402
+from .book import bible, jobs  # noqa: E402
 from .book.log import current_ref, new_ref, record, set_activity_sink, set_event_sink, set_ref, setup_logging, start_book, step  # noqa: E402
 from .book.providers import is_mock  # noqa: E402
 from .book.story import PRONOUNS, Story, all_stories, display_name, load_story, story_by_slug  # noqa: E402
@@ -43,6 +43,7 @@ async def lifespan(app):
     set_activity_sink(jobs.save_activity)
     await jobs.resume_unfinished()
     await tracking.forget_old()
+    await bible.sync_stories()  # the story files into the stories / characters tables, kept pictures imported
     yield
 
 
@@ -97,6 +98,8 @@ def themed(page: str, story: Story | None = None) -> str:
     """A page from static/, dressed in a story's theme (static/themes/<theme>/), or the library's look
     for pages that belong to every story (the library itself, the wallet, privacy)."""
     theme = story.theme if story else "library"
+    if not (STATIC / "themes" / theme / "theme.css").exists():  # a story without its own look borrows the library's
+        theme = "library"
     html = (STATIC / page).read_text()
     html = html.replace("<!--THEME_CSS-->", f'<link rel="stylesheet" href="/static/themes/{theme}/theme.css">')
     html = html.replace("<!--SCENE-->", (STATIC / "themes" / theme / "scene.html").read_text())
@@ -108,39 +111,62 @@ def themed(page: str, story: Story | None = None) -> str:
         parts = [escape(p) for p in site.get("heading") or [story.title]]
         heading = f'{parts[0]} <span class="and">{parts[1]}</span> {parts[2]}' if len(parts) == 3 else " ".join(parts)
         html = html.replace("{{HEADING}}", heading)
+        # The boy/girl question and its buttons, from the story file's pronouns section.
+        for key in ("question", "boy", "girl"):
+            html = html.replace("{{PRONOUN_" + key.upper() + "}}", escape(story.pronouns.get(key, "")))
         for key in ("go", "growing", "about_placeholder", "review_placeholder"):
             html = html.replace("{{" + key.upper() + "}}", escape(site.get(key, "")))
-        copy = json.dumps({k: site.get(k, "") for k in ("go", "going", "growing", "binding", "failed", "pdf_name")})
+        copy = json.dumps({**{k: site.get(k, "") for k in ("go", "going", "growing", "binding", "failed", "hero_progress",
+                                                            "pdf_name")},
+                           "musing": site.get("musing") or []})
         html = html.replace("{{COPY}}", copy.replace("</", "<\\/"))
     for asset in ("app.js", "clothesline.js", "track.js", "styles.css", f"themes/{theme}/theme.css"):
         html = html.replace(f"/static/{asset}\"", f"/static/{asset}?v={ASSET_VERSION}\"")
     return html
 
 
-def story_card(story: Story) -> str:
-    """One story on the library's shelf: its book standing up, then what it is and the button."""
+def story_card(story: Story, wrapped: bool = False) -> str:
+    """One story on the library's shelf: its book standing up, then what it is and the button. A draft story is
+    a wrapped present marked "Coming soon" for everyone but admins (wrapped=True)."""
     pages = sum(1 for p in story.pages if p.type == "illustrated")
     title, href = escape(story.title), f"/stories/{story.slug}"
+    if wrapped:
+        return (f'<li class="story soon"><div class="stand-books"><span class="book-object wrapped" role="img" '
+                f'aria-label="{title}, still wrapped"><span class="tag">{title}</span></span></div>'
+                f'<div class="plank"></div>'
+                f'<div class="card story-info"><h2>{title}</h2><p>{escape(story.blurb)}</p>'
+                f'<p class="meta">Coming soon</p></div></li>')
+    cover = story.library_cover
+    draft = ' <span class="draft-tag">Draft: only admins see this</span>' if story.draft else ""
+    if not cover and (STATIC / "themes" / story.theme / "art" / "cover.webp").exists():  # the theme's cover, if any
+        cover = f"/static/themes/{story.theme}/art/cover.webp"
     return (f'<li class="story"><div class="stand-books"><a class="book-object" href="{href}" tabindex="-1" aria-hidden="true">'
-            f'<img src="{escape(story.library_cover)}" alt="" loading="lazy">'
-            f'<span class="cover-title">{title}</span></a></div>'
+            + (f'<img src="{escape(cover)}" alt="" loading="lazy">' if cover else '')
+            + f'<span class="cover-title">{title}</span></a></div>'
             f'<div class="plank"></div>'
-            f'<div class="card story-info"><h2>{title}</h2><p>{escape(story.blurb)}</p>'
+            f'<div class="card story-info"><h2>{title}{draft}</h2><p>{escape(story.blurb)}</p>'
             f'<p class="meta">{pages} painted pages · ${wallet.BOOK_PRICE_CENTS / 100:.2f}</p>'
             f'<a class="btn bean" href="{href}">Make this book</a></div></li>')
 
 
+async def sees_drafts(request: Request) -> bool:
+    """Draft stories (`draft: true` in the story file) are for admins only, to try before customers can buy."""
+    return auth.is_admin(await auth.current_user(request))
+
+
 @app.get("/")
-def library():
+async def library(request: Request):
     """The front door: every story we can make."""
-    html = themed("library.html").replace("<!--STORIES-->", "".join(story_card(s) for s in all_stories()))
+    drafts = await sees_drafts(request)
+    cards = "".join(story_card(s, wrapped=s.draft and not drafts) for s in all_stories())
+    html = themed("library.html").replace("<!--STORIES-->", cards)
     return HTMLResponse(html, headers=NO_CACHE)
 
 
 @app.get("/stories/{slug}")
-def story_page(slug: str):
+async def story_page(request: Request, slug: str):
     story = story_by_slug(slug)
-    if story is None:
+    if story is None or (story.draft and not await sees_drafts(request)):
         raise HTTPException(404, "No such story.")
     return HTMLResponse(themed("index.html", story), headers=NO_CACHE)
 
@@ -308,10 +334,11 @@ async def create_book_route(
         await refuse(402, "no_money", wallet.no_money_message())
     if len(data) > MAX_UPLOAD_BYTES:
         await refuse(413, "photo_too_large", "That photo is too large (max 25 MB).")
-    if chosen is None:
+    if chosen is None or (chosen.draft and not auth.is_admin(user)):
         await refuse(400, "unknown_story", "We don't have that story.")
     if gender not in PRONOUNS:
-        await refuse(400, "unknown_gender", "Choose Jack or Jane.")
+        await refuse(400, "unknown_gender", f"Choose {chosen.pronouns.get('boy', 'boy')} or "
+                                            f"{chosen.pronouns.get('girl', 'girl')}.")
     if not name.strip():
         await refuse(400, "no_name", "Please enter your name.")
     if any(len(v) > MAX_FIELD for v in (name, age, favourites, about)):

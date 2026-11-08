@@ -2,6 +2,7 @@
 
 Free and offline: a fresh SQLite database per test, mock images, a stubbed face check.
 """
+import json
 import asyncio
 import io
 import time
@@ -550,3 +551,12 @@ def test_a_book_made_before_pages_were_added_still_opens(client):
     book = client.get(f"/api/books/{ref}").json()["book"]
     assert [p["kind"] for p in book["pages"]] == ["illustrated"] * 3 + ["about_me"]
     assert len(PdfReader(io.BytesIO(client.get(f"/api/books/{ref}/pdf").content)).pages) == 6
+
+
+def test_a_book_of_another_story_is_drawn_from_that_story(client):
+    sign_in(client, ADMIN)  # Little Red is still a draft: admins only
+    ref = post_book(client, story="little-red-riding-hood").json()["id"]
+    data = wait_for(client, ref)
+    assert data["status"] == "done"
+    assert "Little Red Riding Hood" in json.dumps(data) and "beanstalk" not in json.dumps(data).lower()
+    assert run(rows(Book, id=ref))[0].story_key == "little_red_riding_hood"

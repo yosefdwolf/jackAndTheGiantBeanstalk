@@ -6,7 +6,7 @@ anything else that fails in `request_errors`. `book_events` is the step-by-step 
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import (JSON, BigInteger, DateTime, ForeignKey, Integer, LargeBinary, Numeric,
+from sqlalchemy import (JSON, BigInteger, Boolean, DateTime, ForeignKey, Integer, LargeBinary, Numeric,
                         SmallInteger, String, Text, UniqueConstraint, Uuid)
 from sqlalchemy.dialects.postgresql import BYTEA, JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
@@ -50,6 +50,8 @@ class Book(Base):
     status: Mapped[str] = mapped_column(String(16), default="queued", index=True)
     refused_reason: Mapped[str | None] = mapped_column(String(64))
     story_key: Mapped[str] = mapped_column(String(64))
+    # Set when the book is made (and for older books by the story sync on startup).
+    story_id: Mapped[int | None] = mapped_column(ForeignKey("stories.id", name="fk_books_story_id"), index=True)
     style_key: Mapped[str] = mapped_column(String(64))
     prompt_version: Mapped[str] = mapped_column(String(16))
     gender: Mapped[str] = mapped_column(String(8))
@@ -68,6 +70,48 @@ class Book(Base):
 
     upload: Mapped["Upload | None"] = relationship(back_populates="book", uselist=False)
     images: Mapped[list["BookImage"]] = relationship(back_populates="book", order_by="BookImage.id")
+
+
+class StoryRow(Base):
+    """One story file (stories/<key>.yaml), mirrored here on every startup by app/book/bible.py sync_stories.
+    The file is the master copy; a story whose file is gone stays, inactive, so old books still open."""
+    __tablename__ = "stories"
+    id: Mapped[int] = mapped_column(Id, primary_key=True, autoincrement=True)
+    key: Mapped[str] = mapped_column(String(64), unique=True)
+    title: Mapped[str] = mapped_column(Text)
+    file_hash: Mapped[str] = mapped_column(String(16))  # changes whenever the file does
+    active: Mapped[bool] = mapped_column(Boolean, default=True)  # its file is in stories/ and fits the template
+    synced_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class StoryCharacter(Base):
+    """A story's character, as its story file describes them. `pin` is the file's `picture:` line, if any;
+    `picture_id` is the picture books use right now."""
+    __tablename__ = "characters"
+    __table_args__ = (UniqueConstraint("story_id", "key"),)
+    id: Mapped[int] = mapped_column(Id, primary_key=True, autoincrement=True)
+    story_id: Mapped[int] = mapped_column(ForeignKey("stories.id"), index=True)
+    key: Mapped[str] = mapped_column(String(64))  # wolf
+    name: Mapped[str] = mapped_column(Text)       # the wolf
+    description: Mapped[str] = mapped_column(Text)
+    pin: Mapped[str | None] = mapped_column(String(160))  # wolf-2, or other_story/wolf-2
+    picture_id: Mapped[int | None] = mapped_column(ForeignKey("character_pictures.id", use_alter=True,
+                                                              name="fk_characters_picture_id"))
+
+
+class CharacterPicture(Base):
+    """Every version of a character's reference picture. Nothing is ever replaced: a changed description draws
+    a new version, and a story file can pin any version by its name."""
+    __tablename__ = "character_pictures"
+    __table_args__ = (UniqueConstraint("character_id", "name"),)
+    id: Mapped[int] = mapped_column(Id, primary_key=True, autoincrement=True)
+    character_id: Mapped[int] = mapped_column(ForeignKey("characters.id"), index=True)
+    name: Mapped[str] = mapped_column(String(80))  # "<character>-<version>", e.g. wolf-2
+    image: Mapped[bytes] = mapped_column(Bytes)    # PNG, sent to the image model with each page
+    prompt: Mapped[str] = mapped_column(Text)      # what it was drawn from
+    source: Mapped[str] = mapped_column(String(16))  # drawn | imported (from assets/characters/)
+    cost: Mapped[float | None] = mapped_column(Numeric(10, 4))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
 
 class Upload(Base):

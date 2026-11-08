@@ -111,14 +111,12 @@ def test_style_is_swappable():
 
 # --- character sheets -----------------------------------------------------------------------------
 
-def test_sheets_are_sent_in_cast_order(tmp_path):
-    for key in ("mother", "milky_white"):
-        (tmp_path / f"{key}.png").write_bytes(png())
-    refs = CastSheets(b"hero", sheets_dir=tmp_path).refs((HERO, "mother", "milky_white"))
+def test_sheets_are_sent_in_cast_order():
+    refs = CastSheets(b"hero", {"mother": png(), "milky_white": png()}).refs((HERO, "mother", "milky_white"))
     assert [name for name, _ in refs] == ["hero.png", "mother.png", "milky_white.png"]
     assert refs[0][1] == b"hero"
 
 
-def test_missing_sheet_fails_loudly_without_mock(tmp_path):
+def test_missing_sheet_fails_loudly():
     with pytest.raises(MissingSheetError):
-        CastSheets(b"hero", sheets_dir=tmp_path).get("mother")
+        CastSheets(b"hero", {}).get("mother")

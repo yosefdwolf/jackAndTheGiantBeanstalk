@@ -12,7 +12,7 @@ type or image provider is one new class.
 |---|---|---|
 | Story | `stories/jack_and_the_beanstalk.yaml` | The storyboard. Per page: text, cast, scene, mood, composition, where the text goes, and the line the progress card shows while it's drawn. Also everything on the site that belongs to the story (`site:`: the title, the button, the progress words, placeholders, the PDF name), its library blurb and cover, and which page becomes each book's cover on the bookshelf. |
 | Style | `app/book/styles.py` | `ArtStyle` abstract class. `Animated3DStyle` is the book's style; its wording is sent unchanged in every call. |
-| Cast | `app/book/cast.py` | Reference sheets. The child's is drawn from the upload. The mother's, Milky-White's and the old man's are drawn once and kept in `assets/characters/`. |
+| Cast | `app/book/cast.py` | Reference sheets. The child's is drawn from the upload. The mother's, Milky-White's and the old man's are drawn once and kept in `assets/characters/<story>/`. |
 | Prompts | `app/book/prompts.py` | Builds every prompt: reference images, style, world, scene, mood, composition, then "only these characters appear." |
 | Pages | `app/book/pages.py` | `Page` abstract class. `IllustratedPage` and `AboutMePage` are registered by type name. |
 | Providers | `app/book/providers.py` | `ImageProvider` abstract class. OpenAI (`gpt-image-2.5-flare`) and a free mock. |
@@ -97,7 +97,8 @@ Open http://localhost:8000.
 
 **Tests** (free, offline): `pip install -r requirements-dev.txt && python -m pytest`
 
-**Supporting character sheets** (once, then commit them): `python -m scripts.make_character_sheets`
+**Adding a story:** add one file to `stories/`; see [stories/README.md](stories/README.md). Its characters' pictures are
+drawn by the first book and kept in the database.
 
 ## Deploy (Railway)
 The `Procfile` sets the start command and `.python-version` pins Python 3.12. Under **Variables**, set:

@@ -20,6 +20,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
 (() => {
   const $ = (id) => document.getElementById(id);
   const track = window.track || (() => {});  // static/track.js; a blocker may have stopped it loading
+  const reduceMotion = () => window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   const form = $('form'), drop = $('drop'), preview = $('preview'), go = $('go'), error = $('error');
   const MAX_SIDE = 1600;
   const COPY = JSON.parse($('storyCopy').textContent);  // this story's own words, from its story file
@@ -30,7 +31,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
 
   let photo = null;      // Blob that will be uploaded
   let password = '';
-  let hero = 'Jack';
+  let hero = '';  // the reader's own name, as the story says it
 
   const store = {
     get(k) { try { return localStorage.getItem(k); } catch { return null; } },
@@ -250,7 +251,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
   ['dragleave', 'drop'].forEach((t) => drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.remove('over'); }));
   drop.addEventListener('drop', (e) => setFile(e.dataTransfer.files[0]));
 
-  // --- planting the beans: send the book to be drawn ------------------------------------------------
+  // --- send the book to be drawn ------------------------------------------------------------------
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -259,7 +260,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     showError('');
     go.disabled = true;
     go.textContent = COPY.going;
-    hero = form.name.value.trim() || (new FormData(form).get('gender') === 'girl' ? 'Jane' : 'Jack');  // their own name, as in the story
+    hero = form.name.value.trim();  // their own name, as in the story
 
     const body = new FormData(form);
     body.append('photo', photo, 'photo.jpg');
@@ -329,7 +330,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
       .sort((a, b) => Date.parse(b.started_at) - Date.parse(a.started_at))[0];
     let name;
     if (book.status === 'failed') name = 'Stopped';
-    else if (heroImg && heroImg.status !== 'done') name = 'Drawing your cartoon';
+    else if (heroImg && heroImg.status !== 'done') name = COPY.hero_progress || 'Drawing your cartoon';
     else if (pagesDone < pages.length) name = `Painting the pages · ${pagesDone} of ${pages.length}`;
     else name = COPY.binding;
     $('stageName').textContent = name;
@@ -379,6 +380,27 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     $('printing').hidden = false;
   }
 
+  // While the book is drawn, the title changes every few seconds to a little job from the story file
+  // ("Watering the magic beans…", "Polishing the golden eggs…"), never the same one twice in a row.
+  const MUSE_MS = 3200;
+  let museTimer = null, lastMuse = '';
+  function muse() {
+    const words = COPY.musing.filter((w) => w !== lastMuse);
+    if (!words.length) return;
+    lastMuse = words[Math.floor(Math.random() * words.length)];
+    const title = $('printingTitle');
+    title.textContent = `${lastMuse}…`;
+    if (!reduceMotion()) title.animate([{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }],
+      { duration: 350, easing: 'ease-out' });
+  }
+  function startMusing() {
+    stopMusing();
+    if (!COPY.musing || !COPY.musing.length) return;
+    muse();
+    museTimer = setInterval(muse, MUSE_MS);
+  }
+  function stopMusing() { clearInterval(museTimer); museTimer = null; }
+
   let watchingFresh = false;
   function watch(id, fresh = false) {
     watching = id;
@@ -391,6 +413,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     $('readerRef').textContent = id;
     $('bookError').hidden = true;
     $('printingTitle').textContent = COPY.growing;
+    startMusing();
     gate.hidden = true;
     form.hidden = true;
     $('signin').hidden = true;
@@ -404,6 +427,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
   }
 
   function finish(data) {
+    stopMusing();
     cancelAnimationFrame(frame);
     clearTimeout(pollTimer);
     store.drop(BOOK_KEY);
@@ -675,6 +699,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
   });
 
   function startOver() {
+    stopMusing();
     clearTimeout(pollTimer);
     cancelAnimationFrame(frame);
     history.replaceState(null, '', location.pathname);

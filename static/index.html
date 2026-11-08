@@ -77,9 +77,9 @@
           </label>
 
           <fieldset class="who">
-            <legend class="box-label">Jack or Jane?</legend>
-            <label><input type="radio" name="gender" value="boy" checked><span>Jack</span></label>
-            <label><input type="radio" name="gender" value="girl"><span>Jane</span></label>
+            <legend class="box-label">{{PRONOUN_QUESTION}}</legend>
+            <label><input type="radio" name="gender" value="boy" checked><span>{{PRONOUN_BOY}}</span></label>
+            <label><input type="radio" name="gender" value="girl"><span>{{PRONOUN_GIRL}}</span></label>
           </fieldset>
 
           <p class="hint">Just you, facing the camera, in good light. Close up works best.
@@ -109,7 +109,7 @@
 
   <section id="printing" class="card printing" hidden aria-live="polite">
     <div class="printing-head">
-      <h2 id="printingTitle">{{GROWING}}</h2>
+      <h2 id="printingTitle" aria-live="off">{{GROWING}}</h2>
       <p class="tally"><span id="tally">0 of 4</span> pictures · <span id="elapsed">0s</span></p>
     </div>
     <!-- The whole book at a glance: which stage it's in, and a line from the story while it's drawn. -->

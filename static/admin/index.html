@@ -19,6 +19,7 @@
     <button role="tab" data-tab="books" aria-selected="true">Books</button>
     <button role="tab" data-tab="activity">Activity</button>
     <button role="tab" data-tab="funnel">Funnel</button>
+    <button role="tab" data-tab="characters">Characters</button>
     <button role="tab" data-tab="reviews">Reviews</button>
     <button role="tab" data-tab="refunds">Refunds <span class="count" id="refundBadge" hidden></span></button>
     <button role="tab" data-tab="days">Days</button>
@@ -112,6 +113,13 @@
         <tbody></tbody>
       </table>
     </div>
+  </section>
+
+  <section id="tab-characters" class="tab" hidden>
+    <p class="summary soft">Each story’s characters, as every book draws them. A picture is drawn from the story file’s
+      description by the first book that needs it, and kept; nothing is ever replaced. To always use one version, put
+      <span class="mono">picture: wolf-2</span> under that character in the story file (click a name to copy it).</p>
+    <div id="characterStories"></div>
   </section>
 
   <section id="tab-reviews" class="tab" hidden>

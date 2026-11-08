@@ -2,6 +2,7 @@
    The art is painted in the book's own style by scripts/make_theme_art.py. */
 :root {
   --sky: #8fd0f5;
+  --bar-tip: url("/static/themes/jack/art/beans.webp");  /* a magic bean rides each progress bar */
   --leaf: #3f9a2e;
   --leaf-deep: #2c7a1f;
   --on-leaf: #ffffff;

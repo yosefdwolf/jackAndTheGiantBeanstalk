@@ -1,8 +1,11 @@
 """The story file (stories/*.yaml) loaded into typed objects, plus per-book name and pronoun filling."""
+import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 
 import yaml
+
+log = logging.getLogger("book")
 
 ROOT = Path(__file__).resolve().parents[2]
 STORIES = ROOT / "stories"
@@ -20,6 +23,7 @@ class Character:
     key: str
     name: str
     description: str
+    picture: str = ""  # optional: a saved picture's name (wolf-2, or other_story/wolf-2) to always use
 
 
 @dataclass(frozen=True)
@@ -50,6 +54,8 @@ class Story:
     library_cover: str = ""  # the library's cover picture (a /static/ path)
     cover_page: int = 0      # each book's bookshelf cover: this page, cropped upright around the hero
     site: dict = field(default_factory=dict)  # the story page's own words (button, titles, placeholders)
+    pronouns: dict = field(default_factory=dict)  # the form's boy/girl question and its two buttons' labels
+    draft: bool = False  # only admins see it, to try it before customers can buy it
 
     @property
     def slug(self) -> str:
@@ -59,10 +65,19 @@ class Story:
 
 TEXT_ZONES = {"bottom", "top", "bottom-dark"}
 
+# The one template every story follows: 20 painted pages, then the About Me page. Page N keeps its words in
+# the same place in every story (so the layout is shared), which is this list. A story file that doesn't fit
+# isn't shown in the library; check_story says why.
+TEMPLATE_ZONES = ("bottom", "top", "bottom-dark", "top", "bottom", "bottom", "top", "bottom", "bottom", "bottom",
+                  "bottom", "top", "bottom", "top", "top", "bottom", "top", "bottom", "top", "bottom")
+SITE_WORDS = ("heading", "go", "going", "growing", "binding", "failed", "hero_progress", "about_placeholder",
+              "review_placeholder", "pdf_name", "musing")
+
 
 def load_story(path: Path = DEFAULT_STORY) -> Story:
     raw = yaml.safe_load(Path(path).read_text())
-    characters = {k: Character(k, v["name"], v["description"]) for k, v in raw.get("characters", {}).items()}
+    characters = {k: Character(k, v["name"], v["description"], str(v.get("picture") or ""))
+                  for k, v in raw.get("characters", {}).items()}
     pages = []
     for i, p in enumerate(raw["pages"], 1):
         spec = PageSpec(number=i, type=p["type"], text=p.get("text", ""), cast=tuple(p.get("cast", ())),
@@ -79,12 +94,64 @@ def load_story(path: Path = DEFAULT_STORY) -> Story:
                  hero_names=raw["hero"]["names"], hero_outfit=raw["hero"]["outfit"],
                  characters=characters, pages=tuple(pages), key=Path(path).stem,
                  blurb=" ".join(raw.get("blurb", "").split()), library_cover=raw.get("library_cover", ""),
-                 cover_page=int(raw.get("cover_page", 0)), site=raw.get("site", {}))
+                 cover_page=int(raw.get("cover_page", 0)), site=raw.get("site", {}),
+                 pronouns=raw.get("pronouns", {}), draft=bool(raw.get("draft", False)))
+
+
+def check_story(story: Story) -> list[str]:
+    """Everything that keeps a story file from fitting the template, in words. Empty means it's ready."""
+    from .styles import STYLES
+    problems = []
+    if story.style not in STYLES:
+        problems.append(f"style {story.style!r} isn't one of {sorted(STYLES)}")
+    if not (story.hero_names.get("boy") and story.hero_names.get("girl")):
+        problems.append("hero: names needs both boy and girl")
+    problems += [f"pronouns: {k} is missing" for k in ("question", "boy", "girl") if not story.pronouns.get(k)]
+    if not story.blurb:
+        problems.append("blurb (the library's description) is missing")
+    problems += [f"site: {k} is missing" for k in SITE_WORDS if not story.site.get(k)]
+    painted = [p for p in story.pages if p.type == "illustrated"]
+    if len(painted) != len(TEMPLATE_ZONES) or [p.type for p in story.pages][-1:] != ["about_me"]:
+        problems.append(f"needs {len(TEMPLATE_ZONES)} illustrated pages then an about_me page "
+                        f"(has {len(painted)} illustrated, {len(story.pages)} in all)")
+    for p, zone in zip(painted, TEMPLATE_ZONES):
+        if p.text_zone != zone:
+            problems.append(f"page {p.number}: text_zone must be {zone} (the template), not {p.text_zone}")
+        problems += [f"page {p.number}: {k} is missing" for k in ("text", "scene", "mood", "composition", "progress")
+                     if not getattr(p, k)]
+        if not p.cast:
+            problems.append(f"page {p.number}: cast is empty")
+    cover = next((p for p in painted if p.number == story.cover_page), None)
+    if cover is None or HERO not in cover.cast:
+        problems.append("cover_page must be a painted page with the hero in it")
+    return problems
 
 
 def all_stories() -> list[Story]:
-    """Every story in the library, in title order."""
-    return sorted((load_story(p) for p in STORIES.glob("*.yaml")), key=lambda s: s.title)
+    """Every story in the library (each file in stories/ that fits the template), in title order. A broken
+    file is left out and logged, so it can never take the library down."""
+    stories = []
+    for path in STORIES.glob("*.yaml"):
+        try:
+            story = load_story(path)
+            problems = check_story(story)
+        except Exception as e:  # unreadable YAML, a missing key...
+            problems = [f"{type(e).__name__}: {e}"]
+        if problems:
+            log.warning("story %s left out of the library: %s", path.name, "; ".join(problems))
+            continue
+        stories.append(story)
+    return sorted(stories, key=lambda s: s.title)
+
+
+def story_file(story: Story) -> Path:
+    return STORIES / f"{story.key}.yaml"
+
+
+def story_for(key: str | None) -> Story:
+    """A book's story, by the key saved with it; Jack for books from before there were others."""
+    path = STORIES / f"{key}.yaml" if key else DEFAULT_STORY
+    return load_story(path if path.exists() else DEFAULT_STORY)
 
 
 def story_by_slug(slug: str) -> Story | None:

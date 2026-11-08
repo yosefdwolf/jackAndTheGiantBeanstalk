@@ -178,3 +178,18 @@ input[type="radio"], input[type="checkbox"] { min-height: 0; padding: 0; width: 
 .grid.small td, .grid.small th { padding: 6px 8px; }
 .days-wrap { max-width: 640px; }
 #tab-funnel .section-title { margin-top: 22px; }
+
+/* characters */
+.cast-story { margin-bottom: 26px; }
+.cast-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 16px; }
+.cast-card h3 { font: 700 18px var(--display); margin: 0; }
+.cast-main { width: 100%; aspect-ratio: 1; object-fit: contain; background: #f4efe6; border-radius: 12px; }
+.cast-main.empty { display: grid; place-items: center; color: var(--soft); border: 2px dashed var(--edge); }
+.why { font-size: 13px; margin: 0; color: var(--soft); }
+.why.pinned { color: var(--leaf); font-weight: 600; }
+.why.pinned-but-missing, .why.description-changed { color: var(--alert); font-weight: 600; }
+.versions { display: flex; flex-wrap: wrap; gap: 8px; }
+.versions figure { margin: 0; width: 104px; display: grid; gap: 2px; text-align: center; font-size: 11px; }
+.versions img { width: 104px; height: 104px; object-fit: contain; background: #f4efe6; border-radius: 8px; border: 2px solid transparent; }
+.versions figure.current img { border-color: var(--leaf); }
+.versions .btn.small { padding: 2px 6px; font-size: 12px; }

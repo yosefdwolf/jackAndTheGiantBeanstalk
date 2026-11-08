@@ -16,8 +16,11 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import selectinload
 
 from . import auth, wallet
+from .book import bible
 from .book.providers import CHOICES, is_mock
-from .db.models import (Activity, AdminSettings, Book, BookEvent, BookImage, RequestError, Review,
+from .book.story import Casting, all_stories
+from .db.models import (Activity, AdminSettings, Book, BookEvent, BookImage, CharacterPicture, RequestError, Review,
+                        StoryCharacter, StoryRow,
                         Transaction, UnlimitedEmail, Upload, User)
 from .db.session import session
 
@@ -298,6 +301,49 @@ async def activity(kind: str = "", q: str = "", days: int = 7, limit: int = 300,
             "money": {"added": money.get("deposit", 0), "spent": -money.get("book", 0),
                       "refunded_to_cards": -money.get("refund", 0), "books_refunded": money.get("book_refund", 0),
                       "in_wallets": held}}
+
+
+# --- the character bible --------------------------------------------------------------------------
+
+@router.get("/api/characters")
+async def characters(_=Depends(require_admin)):
+    """Every story's characters, each with every saved version and the one books use right now."""
+    out = []
+    for story in all_stories():
+        prompts = bible.prompts_for(story)
+        cast = []
+        for key, c in story.characters.items():
+            chosen = await bible.choose(story, key, prompts)
+            async with session() as s:
+                versions = (await s.execute(
+                    select(CharacterPicture.id, CharacterPicture.name, CharacterPicture.source, CharacterPicture.cost,
+                           CharacterPicture.created_at)
+                    .join(StoryCharacter, CharacterPicture.character_id == StoryCharacter.id).join(StoryRow)
+                    .where(StoryRow.key == story.key, StoryCharacter.key == key).order_by(CharacterPicture.id))).all()
+            cast.append({"key": key, "name": Casting(story).fill(c.name), "description": c.description,
+                         "picture": c.picture, "why": chosen.why,
+                         "in_use": chosen.picture.name if chosen.picture else None,
+                         "in_use_url": f"/admin/api/characters/{chosen.picture.id}.png" if chosen.picture else None,
+                         "versions": [{"id": v.id, "name": v.name, "source": v.source, "cost": float(v.cost or 0),
+                                       "at": _iso(v.created_at), "url": f"/admin/api/characters/{v.id}.png"}
+                                      for v in versions]})
+        out.append({"key": story.key, "title": story.title, "characters": cast})
+    return out
+
+
+@router.get("/api/characters/{picture_id}.png")
+async def character_png(picture_id: int, w: int = 360, _=Depends(require_admin)):
+    from PIL import Image
+    async with session() as s:
+        data = (await s.execute(select(CharacterPicture.image).where(CharacterPicture.id == picture_id))
+                ).scalar_one_or_none()
+    if data is None:
+        raise HTTPException(404, "No such picture.")
+    img = Image.open(io.BytesIO(data)).convert("RGB")
+    img.thumbnail((min(w, 1600), min(w, 1600)))
+    buf = io.BytesIO()
+    img.save(buf, "WEBP", quality=85)
+    return Response(buf.getvalue(), media_type="image/webp", headers={"Cache-Control": "private, max-age=86400"})
 
 
 # --- errors outside books -------------------------------------------------------------------------

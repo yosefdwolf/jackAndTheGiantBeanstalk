@@ -1,10 +1,10 @@
-"""Draw the supporting characters' reference sheets ONCE and save them to assets/characters/.
+"""Draw a story's supporting characters' reference sheets ONCE and save them to assets/characters/<story>/.
 
-    python -m scripts.make_character_sheets            # only sheets that don't exist yet
-    python -m scripts.make_character_sheets mother     # redo just these keys
+    python -m scripts.make_character_sheets little_red_riding_hood          # only sheets that don't exist yet
+    python -m scripts.make_character_sheets little_red_riding_hood wolf     # redo just these keys
 
 They are the same in every book, so commit them. Costs about $0.04 per sheet. You can also save a sheet
-you made in the OpenAI Playground to assets/characters/<key>.png instead.
+you made in the OpenAI Playground to assets/characters/<story>/<key>.png instead.
 """
 import asyncio
 import sys
@@ -16,17 +16,20 @@ load_dotenv()
 from app.book.cast import SHEETS_DIR  # noqa: E402
 from app.book.prompts import PromptBuilder  # noqa: E402
 from app.book.providers import SHEET_SIZE, get_provider  # noqa: E402
-from app.book.story import Casting, load_story  # noqa: E402
+from app.book.story import Casting, story_for  # noqa: E402
 from app.book.styles import get_style  # noqa: E402
 
 
-async def main(keys: list[str]) -> None:
-    story = load_story()
+async def main(story_key: str, keys: list[str]) -> None:
+    story = story_for(story_key)
+    if story.key != story_key:
+        raise SystemExit(f"No story file stories/{story_key}.yaml")
     prompts = PromptBuilder(get_style(story.style), story, Casting(story))
     provider = get_provider()
-    SHEETS_DIR.mkdir(parents=True, exist_ok=True)
+    folder = SHEETS_DIR / story.key
+    folder.mkdir(parents=True, exist_ok=True)
     for key, character in story.characters.items():
-        path = SHEETS_DIR / f"{key}.png"
+        path = folder / f"{key}.png"
         if (keys and key not in keys) or (not keys and path.exists()):
             continue
         print(f"drawing {key} …")
@@ -36,4 +39,6 @@ async def main(keys: list[str]) -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(main(sys.argv[1:]))
+    if len(sys.argv) < 2:
+        raise SystemExit(__doc__)
+    asyncio.run(main(sys.argv[1], sys.argv[2:]))

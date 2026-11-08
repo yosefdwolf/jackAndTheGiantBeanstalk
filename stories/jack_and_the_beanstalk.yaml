@@ -18,6 +18,11 @@ site:
   go: Plant the magic beans              # the button that starts a book
   going: Planting the beans…             # the button while the book is being sent
   growing: Growing your book             # the progress card's title
+  # While the book is drawn, the progress card's title changes every few seconds to one of these little jobs
+  # from the story, just something fun to read while waiting.
+  musing: [Watering the magic beans, Milking Milky-White, Polishing the golden eggs, Tuning the golden harp,
+           Tiptoeing past the giant, Counting the gold coins, Climbing above the clouds, Feeding the golden hen,
+           Sharpening the axe, Hiding in the oven, Patching the old trousers, Sweeping the cottage floor]
   binding: Binding your book…            # once every picture is drawn
   failed: Oh no, the beans didn’t grow   # when a book can't be finished
   hero_progress: Planting the beans…     # while your cartoon is drawn
@@ -30,11 +35,17 @@ world: >-
   exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours;
   nothing new, clean or polished.
 
+# The form's two buttons. Each sets he/she in the story text and the hero's name in the pictures.
+pronouns:
+  question: Jack or Jane?
+  boy: Jack
+  girl: Jane
+
 hero:
   names: {boy: Jack, girl: Jane}
   outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots
 
-# Sheets live in the repo (assets/characters/<key>.png) and are the same in every book.
+# Sheets live in the repo (assets/characters/<story>/<key>.png) and are the same in every book.
 characters:
   mother:
     name: "{hero}'s mother"

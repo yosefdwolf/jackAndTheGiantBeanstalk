@@ -22,13 +22,14 @@ from sqlalchemy.orm import selectinload
 from ..db.models import Activity, Book, BookEvent, BookImage, Upload
 from ..db.session import session
 from ..faces import PreparedPhoto, UploadError, from_saved, prepare
+from . import bible
 from .cast import CastSheets, MissingSheetError
 from .log import record, start_book, step
 from .pages import BookContext, ChildInfo, RenderedPage, make_page
 from .pdf import build_pdf
 from .prompts import PromptBuilder
 from .providers import SHEET_SIZE, MockImageProvider, get_provider
-from .story import DEFAULT_STORY, Casting, display_name, load_story
+from .story import DEFAULT_STORY, Casting, display_name, story_file, story_for
 from .styles import get_style
 
 HERO = ("hero_sheet", 0)
@@ -63,10 +64,9 @@ def to_jpeg(data: bytes) -> bytes:
     return buf.getvalue()
 
 
-def prompt_version() -> str:
+def prompt_version(story) -> str:
     """Changes whenever the story file (and so the prompts) change, to compare results across edits."""
-    story = load_story()
-    return hashlib.sha1(DEFAULT_STORY.read_bytes() + get_style(story.style).description.encode()).hexdigest()[:8]
+    return hashlib.sha1(story_file(story).read_bytes() + get_style(story.style).description.encode()).hexdigest()[:8]
 
 
 def friendly_error(e: BaseException) -> tuple[str, str]:
@@ -110,10 +110,11 @@ async def save_activity(user_id, book_id, level, step_name, event, fields):
 async def create_book(ref: str, *, gender: str, child_name: str, details: list, provider: str,
                       model: str | None, quality: str | None, user_id=None, story_key: str = DEFAULT_STORY.stem) -> None:
     """The row exists from the first moment of the request, so every ref can be looked up."""
-    story = load_story()
+    story = story_for(story_key)
+    story_id = await bible.ensure_story(story) if story.key == story_key else None  # None: an unknown story, refused
     async with session() as s:
-        s.add(Book(id=ref, user_id=user_id, story_key=story_key, style_key=story.style,
-                   prompt_version=prompt_version(), gender=gender[:8], child_name=child_name, details=details,
+        s.add(Book(id=ref, user_id=user_id, story_key=story_key, story_id=story_id, style_key=story.style,
+                   prompt_version=prompt_version(story), gender=gender[:8], child_name=child_name, details=details,
                    provider=provider, model=model, quality=quality, page_size=None))
         await s.commit()
 
@@ -143,9 +144,9 @@ async def keep_refused_photo(ref: str, data: bytes, mime: str) -> None:
 
 async def accept(ref: str, photo: PreparedPhoto, mime: str) -> None:
     """Save the photo and one waiting row per image, then start drawing in the background."""
-    story = load_story()
     img = Image.open(io.BytesIO(photo.full_png))
     async with session() as s:
+        story = story_for((await s.get(Book, ref)).story_key)
         s.add(Upload(book_id=ref, image=to_webp(photo.full_png), mime=mime, width=img.width, height=img.height,
                      face_box=photo.face_box))
         s.add(BookImage(book_id=ref, kind="hero_sheet", page_number=0))
@@ -228,16 +229,12 @@ async def _load(ref):
                                 .options(selectinload(Book.upload), selectinload(Book.images)))).scalar_one()
 
 
-def _context(book, hero_png, provider):
-    story = load_story()
+def _context(book, hero_png, provider, sheets=None):
+    story = story_for(book.story_key)
     casting = Casting(story, book.gender, display_name(book.child_name) or None)  # the story text says their name
     prompts = PromptBuilder(get_style(story.style), story, Casting(story, book.gender))  # prompts say "Jack"
-    fallback = None
-    if isinstance(provider, MockImageProvider):  # mock books work before the real sheets exist
-        def fallback(key):
-            return MockImageProvider._draw(f"{key} sheet", SHEET_SIZE, None, 0)
     child = ChildInfo(display_name(book.child_name), [tuple(d) for d in book.details])
-    return story, BookContext(casting, prompts, provider, CastSheets(hero_png, fallback=fallback), child)
+    return story, BookContext(casting, prompts, provider, CastSheets(hero_png, sheets), child)
 
 
 async def run_book(ref: str) -> None:
@@ -271,6 +268,12 @@ async def _run(ref: str) -> None:
         except UploadError:
             photo = from_saved(upload.image, None)
 
+    # The story's characters come from the character bible; any not drawn yet are drawn alongside the
+    # child's cartoon, so a brand-new story costs no extra waiting.
+    story, ctx = _context(book, b"", provider)
+    cast_task = asyncio.create_task(bible.sheets_for(story, ctx.prompts, provider))
+    cast_task.add_done_callback(lambda t: t.cancelled() or t.exception())  # if the cartoon fails first, no warning
+
     hero = rows[HERO]
     if hero.status == "done":
         hero_png = to_png(hero.image)
@@ -282,12 +285,11 @@ async def _run(ref: str) -> None:
                 await s.commit()
         else:
             description = upload.face_description
-        story, ctx = _context(book, b"", provider)
         prompt = ctx.prompts.hero_sheet(description)
         hero_png = await _draw(ref, HERO, provider, prompt, ["photo"],
                                lambda: provider.edit("hero sheet", [("photo.png", photo.full_png)], prompt, SHEET_SIZE))
 
-    story, ctx = _context(book, hero_png, provider)
+    story, ctx = _context(book, hero_png, provider, await cast_task)
     pages = [make_page(spec) for spec in story.pages]
     # Only pages this book has rows for: books made before pages were added keep their own pages.
     todo = [p for p in pages if p.needs_image and ("page", p.spec.number) in rows
@@ -347,7 +349,7 @@ async def status(ref: str) -> dict | None:
         book = (await s.execute(select(Book).where(Book.id == ref).options(selectinload(Book.images)))).scalar_one_or_none()
     if book is None:
         return None
-    story = load_story()
+    story = story_for(book.story_key)
     casting = Casting(story, book.gender, display_name(book.child_name) or None)
     texts = {spec.number: casting.fill(spec.text) for spec in story.pages}
     lines = {spec.number: spec.progress for spec in story.pages}  # the witty line while it's drawn

@@ -44,7 +44,7 @@
   function showTab(name) {
     tabs.forEach((t) => t.setAttribute('aria-selected', String(t.dataset.tab === name)));
     document.querySelectorAll('.tab').forEach((s) => { s.hidden = s.id !== `tab-${name}`; });
-    ({ books: loadBooks, activity: loadActivity, funnel: loadFunnel, reviews: loadReviews, refunds: loadRefunds, days: loadDays, errors: loadErrors, settings: loadSettings })[name]();
+    ({ books: loadBooks, activity: loadActivity, funnel: loadFunnel, characters: loadCharacters, reviews: loadReviews, refunds: loadRefunds, days: loadDays, errors: loadErrors, settings: loadSettings })[name]();
   }
   tabs.forEach((t) => t.addEventListener('click', () => { setHash({ tab: t.dataset.tab, book: '' }); }));
 
@@ -128,7 +128,7 @@
     $('drawerTitle').replaceChildren(`Book `, el('span', { class: 'mono', text: b.id }), ' ', pill(b.status));
     const facts = [
       ['Made', new Date(b.created_at).toLocaleString()], ['Who', b.email || 'not signed in'],
-      ['Child', `${b.child_name || '—'} (${b.gender === 'girl' ? 'Jane' : 'Jack'})`],
+      ['Child', `${b.child_name || '—'} (${b.gender})`],
       ['Drawn by', [b.provider, b.model, b.quality].filter(Boolean).join(' · ')],
       ['Total time', fmt.secs(b.seconds)], ['Cost', fmt.cost(b.cost)],
       ['Prompt version', b.prompt_version], ['Story · style', `${b.story} · ${b.style}`],
@@ -406,6 +406,37 @@
       el('td', { class: 'num', text: p.views }), el('td', { class: 'num', text: p.visitors })]));
   }
   funnelFilters.addEventListener('input', loadFunnel);
+
+  // --- characters ----------------------------------------------------------------------------------
+  const WHY = {
+    pinned: 'pinned in the story file', 'pinned but missing': 'pinned picture not found: using the description',
+    repo: 'a picture kept in the repo', 'matches the description': 'drawn from the current description',
+    'not drawn yet': 'not drawn yet: the first book draws it', 'description changed': 'description changed: the next book draws a new version',
+  };
+  function copyPin(name, button) {
+    const text = `picture: ${name}`;
+    (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject()).then(
+      () => { button.textContent = 'copied!'; setTimeout(() => { button.textContent = name; }, 1200); },
+      () => window.prompt('Copy this into the story file:', text));
+  }
+  async function loadCharacters() {
+    const stories = await api('/characters');
+    $('characterStories').replaceChildren(...stories.map((st) => el('section', { class: 'cast-story' },
+      el('h2', { class: 'section-title', text: st.title }),
+      el('div', { class: 'cast-grid' }, ...st.characters.map((c) => el('article', { class: 'panel cast-card' },
+        c.in_use_url ? el('img', { class: 'cast-main', src: c.in_use_url, alt: c.name, loading: 'lazy' })
+          : el('div', { class: 'cast-main empty', text: 'No picture yet' }),
+        el('h3', { text: c.name }),
+        el('p', { class: `why ${c.why.replace(/ /g, '-')}`, text: `${c.in_use ? `${c.in_use}: ` : ''}${WHY[c.why] || c.why}` }),
+        el('details', {}, el('summary', { text: 'description' }), el('p', { class: 'soft', text: c.description })),
+        c.versions.length ? el('div', { class: 'versions' }, ...c.versions.map((v) => el('figure', {
+          class: v.name === c.in_use ? 'current' : null },
+          el('img', { src: `${v.url}?w=160`, alt: v.name, loading: 'lazy' }),
+          el('figcaption', {}, el('button', { class: 'btn plain small', type: 'button', title: 'Copy picture: ' + v.name,
+            text: v.name, onclick: (e) => copyPin(v.name, e.currentTarget) }),
+            el('span', { class: 'soft', text: `${v.source}${v.cost ? ` · ${fmt.cost(v.cost)}` : ''}` })))))
+          : null))))));
+  }
 
   // --- errors ------------------------------------------------------------------------------------
   const errorFilters = $('errorFilters');
