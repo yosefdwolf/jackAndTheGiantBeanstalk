@@ -93,28 +93,14 @@ async def save_event(book_id, level, step_name, event, duration_ms, fields):
 # --- creating a book ------------------------------------------------------------------------------
 
 async def create_book(ref: str, *, gender: str, child_name: str, details: list, provider: str,
-                      model: str | None, quality: str | None, user_id=None) -> None:
+                      model: str | None, quality: str | None, user_id=None, story_key: str = DEFAULT_STORY.stem) -> None:
     """The row exists from the first moment of the request, so every ref can be looked up."""
     story = load_story()
     async with session() as s:
-        s.add(Book(id=ref, user_id=user_id, story_key=DEFAULT_STORY.stem, style_key=story.style,
+        s.add(Book(id=ref, user_id=user_id, story_key=story_key, style_key=story.style,
                    prompt_version=prompt_version(), gender=gender[:8], child_name=child_name, details=details,
                    provider=provider, model=model, quality=quality, page_size=None))
         await s.commit()
-
-
-COUNTS_TOWARD_LIMIT = ("done", "queued", "running", "interrupted")
-
-
-async def books_today(user_id, exclude: str | None = None) -> int:
-    """Books that use up the daily allowance (UTC day): finished ones, and ones still being drawn (so
-    two can't be started at once). A failed book doesn't count; its owner can retry the missing
-    pictures, and it counts once it's done. Refused requests never count."""
-    midnight = utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-    async with session() as s:
-        statuses = (await s.execute(select(Book.id, Book.status).where(Book.user_id == user_id,
-                                                                      Book.created_at >= midnight))).all()
-    return sum(1 for ref, status in statuses if ref != exclude and status in COUNTS_TOWARD_LIMIT)
 
 
 async def refuse(ref: str, reason: str, message: str) -> None:

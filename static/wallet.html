@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Your wallet · {{TITLE}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Grandstander:wght@600;800&family=Shantell+Sans:wght@400;600&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/styles.css">
+<!--THEME_CSS-->
+<style>
+  .wallet h2 { margin-bottom: 4px; }
+  .wallet .balance { font-family: var(--display); font-size: 56px; line-height: 1; color: var(--leaf-deep); margin: 8px 0 6px; }
+  .wallet p { font-size: 17px; }
+  .amounts { display: flex; flex-wrap: wrap; gap: 12px; margin: 14px 0 6px; }
+  .amounts .btn { min-width: 92px; }
+  .row { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin: 12px 0 6px; }
+  .test-card { font-size: 15px; color: var(--ink-soft); }
+  .test-card code { font-size: 15px; background: #fff; border: 1px solid var(--card-edge); border-radius: 6px; padding: 1px 6px; }
+  .flash { background: #e9f6df; border: 2px solid #b9dca3; border-radius: 12px; padding: 10px 14px; margin-top: 12px; }
+  .wallet .field { display: grid; justify-items: start; gap: 6px; margin: 10px 0; font-size: 17px; }
+  /* A dollar box: the $ sits inside the field, and only a plain amount can be typed. */
+  .dollars { position: relative; display: inline-block; }
+  .dollars span { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--ink-soft); font-size: 18px; pointer-events: none; }
+  .dollars input { width: 9em; padding-left: 28px !important; font-variant-numeric: tabular-nums; }
+  .wallet input, .wallet select, .wallet textarea {
+    font: 17px var(--text); padding: 10px 12px; min-height: 48px; box-sizing: border-box; border: 2px solid var(--card-edge);
+    border-radius: 10px; background: #fff; color: var(--ink); max-width: 100%; }
+  .wallet input:focus-visible, .wallet select:focus-visible, .wallet textarea:focus-visible { outline: 3px solid var(--accent-deep); outline-offset: 1px; }
+  .wallet select { min-width: 16em; }
+  .wallet textarea { min-height: 84px; width: 100%; resize: vertical; }
+  .history tr.asked td { color: var(--ink-soft); }
+  .history { width: 100%; border-collapse: collapse; font-size: 16px; margin-top: 8px; }
+  .history th { text-align: left; font-weight: 600; color: var(--ink-soft); border-bottom: 2px solid var(--card-edge); padding: 6px 8px; }
+  .history td { border-bottom: 1px solid var(--card-edge); padding: 8px; vertical-align: top; }
+  .history .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .plus { color: var(--leaf-deep); } .minus { color: var(--ink); }
+  .history small { display: block; color: var(--ink-soft); }
+  .table-wrap { overflow-x: auto; }
+  .back { display: inline-block; margin-top: 8px; }
+  @media (max-width: 520px) { .history .when-time { display: none; } .wallet .balance { font-size: 46px; } }
+</style>
+</head>
+<body>
+<!--SCENE-->
+<main class="stand">
+  <!--NAV-->
+  <header class="masthead">
+    <p class="hand kicker">a picture book starring you</p>
+    <h1>Your wallet</h1>
+  </header>
+
+  <section class="card wallet" id="signin" hidden>
+    <h2>Sign in first</h2>
+    <p>Your wallet belongs to your Google account.</p>
+    <a class="btn bean" href="/auth/login?next=/wallet">Sign in with Google</a>
+  </section>
+
+  <div id="main" hidden>
+    <section class="card wallet">
+      <h2>Balance</h2>
+      <p class="balance" id="balance">$0.00</p>
+      <p class="hand note" id="balanceNote"></p>
+      <p class="flash" id="flash" role="status" hidden></p>
+    </section>
+
+    <section class="card wallet" id="addCard">
+      <h2>Add money</h2>
+      <p>Each book costs <b id="price">$0.99</b>. You’ll pay on Stripe’s page and come straight back.</p>
+      <div class="amounts" id="amounts"></div>
+      <form class="row" id="customForm" novalidate>
+        <label class="field">Or another amount
+          <span class="dollars"><span>$</span><input name="amount" inputmode="decimal" autocomplete="off" placeholder="0.00"
+            aria-describedby="customHint"></span></label>
+        <button class="btn bean" type="submit" id="customBtn">Add</button>
+      </form>
+      <p class="hint" id="customHint"></p>
+      <p class="test-card">This is a class project in Stripe’s test mode, so no real money moves. Pay with the test card
+        <code>4242 4242 4242 4242</code>, any future date and any 3 digits.</p>
+      <p class="error" id="addError" role="alert" hidden></p>
+    </section>
+
+    <section class="card wallet">
+      <h2>Money back to your card</h2>
+      <p>Money you haven’t spent goes straight back to your card. You can get up to <b id="maxRefund">$0.00</b> back.</p>
+      <form class="row" id="cardForm" novalidate>
+        <label class="field">How much
+          <span class="dollars"><span>$</span><input name="amount" inputmode="decimal" autocomplete="off" placeholder="0.00"></span></label>
+        <button class="btn bean" type="submit" id="cardBtn">Send it back</button>
+      </form>
+      <p class="error" id="cardError" role="alert" hidden></p>
+    </section>
+
+    <section class="card wallet" id="bookCard">
+      <h2>A book came out wrong?</h2>
+      <p>Tell us what went wrong. We’ll look at the book, and if we agree, its price goes back into your wallet.</p>
+      <form id="bookForm" novalidate>
+        <label class="field">Which book
+          <select name="book"></select></label>
+        <label class="field">What went wrong?
+          <textarea name="reason" maxlength="1000"></textarea></label>
+        <button class="btn bean" type="submit" id="bookBtn">Send it to be looked at</button>
+        <p class="hint">The answer will show in your history below.</p>
+        <p class="error" id="bookError" role="alert" hidden></p>
+      </form>
+    </section>
+
+    <section class="card wallet">
+      <h2>History</h2>
+      <p class="hint" id="emptyHistory" hidden>Nothing yet. Money you add and books you make will show up here.</p>
+      <div class="table-wrap">
+        <table class="history" id="history" hidden>
+          <thead><tr><th>When</th><th>What</th><th class="num">Amount</th><th class="num">Balance</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <a class="btn plain back" href="/">Back to the library</a>
+  </div>
+</main>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const money = (c) => `${c < 0 ? '−' : ''}$${(Math.abs(c) / 100).toFixed(2)}`;
+  const when = (iso) => new Date(iso);
+  const params = new URLSearchParams(location.search);
+  let data = null;
+
+  function el(tag, cls, text) {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function detail(body, fallback) {
+    const d = body && body.detail;
+    if (!d || typeof d !== 'object' || Array.isArray(d)) return typeof d === 'string' ? d : fallback;
+    return d.ref ? `${d.message} (reference ${d.ref})` : d.message;
+  }
+  function showError(id, message) {
+    $(id).textContent = message;
+    $(id).hidden = !message;
+  }
+  async function post(url, body) {
+    const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(detail(out, 'Something went wrong. Try again in a moment.'));
+    return out;
+  }
+
+  // Dollar boxes: only digits and one dot, at most two places after it, never a minus sign.
+  // Tidied to 0.00 when you leave the box.
+  function tidyWhileTyping(input) {
+    let v = input.value.replace(/[^\d.]/g, '');
+    const dot = v.indexOf('.');
+    if (dot !== -1) v = v.slice(0, dot + 1) + v.slice(dot + 1).replace(/\./g, '').slice(0, 2);
+    v = v.replace(/^0+(?=\d)/, '');
+    if (v.startsWith('.')) v = '0' + v;
+    if (v !== input.value) input.value = v;
+  }
+  const cents = (input) => Math.round(parseFloat(input.value || '0') * 100) || 0;
+  for (const input of document.querySelectorAll('.dollars input')) {
+    input.addEventListener('input', () => { tidyWhileTyping(input); check(); });
+    input.addEventListener('blur', () => { if (input.value) input.value = (cents(input) / 100).toFixed(2); });
+  }
+
+  // Each send button stays gray until its form is filled in correctly. A problem is only shown once
+  // something has been typed, so an empty form doesn't greet you with an error.
+  function check() {
+    if (!data) return;
+    const add = cents($('customForm').amount);
+    const addOk = add >= data.min_top_up && add <= data.max_top_up;
+    $('customBtn').disabled = !addOk;
+    showError('addError', $('customForm').amount.value && !addOk
+      ? `Type an amount from ${money(data.min_top_up)} to ${money(data.max_top_up)}.` : '');
+
+    const back = cents($('cardForm').amount);
+    const backOk = back > 0 && back <= data.refundable_cents;
+    $('cardBtn').disabled = !backOk;
+    $('cardBtn').textContent = backOk ? `Send ${money(back)} back` : 'Send it back';
+    showError('cardError', $('cardForm').amount.value && back > data.refundable_cents
+      ? `You can get up to ${money(data.refundable_cents)} back.` : '');
+
+    const book = $('bookForm');
+    $('bookBtn').disabled = !(book.book.value && book.reason.value.trim());
+  }
+  $('bookForm').addEventListener('input', check);
+
+  async function load() {
+    const paid = params.get('paid');
+    const res = await fetch(`/api/wallet${paid ? `?paid=${encodeURIComponent(paid)}` : ''}`, { cache: 'no-store' });
+    if (res.status === 401) { $('signin').hidden = false; return; }
+    data = await res.json();
+    if (paid) {
+      history.replaceState(null, '', '/wallet');
+      params.delete('paid');
+      const dep = data.transactions.find((t) => t.kind === 'deposit');
+      flash(dep ? `Thank you! ${money(dep.cents)} was added to your wallet.`
+        : 'Stripe hasn’t confirmed the payment yet. Reload in a moment.');
+    }
+    paint();
+  }
+  function flash(text) {
+    $('flash').textContent = text;
+    $('flash').hidden = false;
+  }
+
+  function paint() {
+    $('main').hidden = false;
+    $('balance').textContent = money(data.balance_cents);
+    $('price').textContent = money(data.price_cents);
+    const books = Math.floor(data.balance_cents / data.price_cents);
+    $('balanceNote').textContent = data.free ? 'Your books are free (you’re on the unlimited list).'
+      : `Enough for ${books} book${books === 1 ? '' : 's'}.`;
+
+    $('amounts').replaceChildren(...data.top_ups.map((c) => {
+      const b = el('button', 'btn bean', money(c));
+      b.type = 'button';
+      b.addEventListener('click', () => addMoney(c, b));
+      return b;
+    }));
+    $('customHint').textContent = `Anything from ${money(data.min_top_up)} to ${money(data.max_top_up)}.`;
+
+    $('maxRefund').textContent = money(data.refundable_cents);
+
+    const sel = document.querySelector('#bookForm [name=book]');
+    sel.replaceChildren(...data.books_to_ask_about.map((b) => {
+      const o = el('option', null, `${b.name || 'Your book'} · ${when(b.at).toLocaleDateString([], { month: 'short', day: 'numeric' })} · ${b.id}`);
+      o.value = b.id;
+      return o;
+    }));
+    $('bookCard').hidden = data.books_to_ask_about.length === 0;
+    check();
+
+    // History: every credit and debit, plus book refunds asked for that haven't moved money (still
+    // waiting, or turned down). An approved one is already there as "Book refunded to your wallet".
+    const rows = [
+      ...data.transactions.map((t) => ({ at: t.at, t })),
+      ...data.refund_requests.filter((r) => r.status !== 'approved').map((r) => ({ at: r.at, r })),
+    ].sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
+    $('emptyHistory').hidden = rows.length > 0;
+    $('history').hidden = rows.length === 0;
+    let running = data.balance_cents;
+    $('history').tBodies[0].replaceChildren(...rows.map(({ at, t, r }) => {
+      const tr = el('tr');
+      const d = when(at);
+      const whenCell = el('td', null, d.toLocaleDateString());
+      whenCell.append(el('small', 'when-time', d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })));
+      if (r) {
+        tr.className = 'asked';
+        const what = el('td', null, 'Asked about a book');
+        what.append(el('small', null, `book ${r.book_id}`),
+          el('small', null, r.status === 'pending' ? 'Waiting for an answer.' : 'Not refunded.'));
+        if (r.admin_note) what.append(el('small', null, `“${r.admin_note}”`));
+        tr.append(whenCell, what, el('td', 'num', money(r.cents)), el('td', 'num', '—'));
+        return tr;
+      }
+      const what = el('td', null, t.label);
+      if (t.book_id) what.append(el('small', null, `book ${t.book_id}`));
+      if (t.note && t.kind !== 'deposit') what.append(el('small', null, `“${t.note}”`));
+      tr.append(whenCell, what, el('td', `num ${t.cents > 0 ? 'plus' : 'minus'}`, `${t.cents > 0 ? '+' : ''}${money(t.cents)}`),
+        el('td', 'num', money(running)));
+      running -= t.cents;
+      return tr;
+    }));
+  }
+
+  async function addMoney(amount, button) {
+    showError('addError', '');
+    button.disabled = true;
+    try {
+      location.href = (await post('/api/wallet/checkout', { cents: amount })).url;
+    } catch (e) {
+      button.disabled = false;
+      showError('addError', e.message);
+    }
+  }
+
+  $('customForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    if ($('customBtn').disabled) return;
+    addMoney(cents($('customForm').amount), $('customBtn'));
+  });
+
+  $('cardForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if ($('cardBtn').disabled) return;
+    const amount = cents($('cardForm').amount);
+    $('cardBtn').disabled = true;
+    try {
+      const out = await post('/api/wallet/refund', { cents: amount });
+      $('cardForm').reset();
+      await load();
+      flash(out.problem ? `${money(out.sent_cents)} went back to your card, but Stripe couldn’t send the rest: ${out.problem}`
+        : `${money(out.sent_cents)} is on its way back to your card. Card refunds can take a few days to show.`);
+      $('flash').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } catch (ex) {
+      check();
+      showError('cardError', ex.message);
+    }
+  });
+
+  $('bookForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = $('bookForm');
+    if ($('bookBtn').disabled) return;
+    showError('bookError', '');
+    $('bookBtn').disabled = true;
+    try {
+      await post('/api/wallet/book-refunds', { book_id: form.book.value, reason: form.reason.value });
+      form.reset();
+      await load();
+      flash('Thanks for telling us. We’ll look at the book, and the answer will show in your history.');
+      check();
+    } catch (ex) {
+      check();
+      showError('bookError', ex.message);
+    }
+  });
+
+  load();
+})();
+</script>
+</body>
+</html>

@@ -18,11 +18,12 @@
   <nav class="tabs" role="tablist">
     <button role="tab" data-tab="books" aria-selected="true">Books</button>
     <button role="tab" data-tab="reviews">Reviews</button>
+    <button role="tab" data-tab="refunds">Refunds <span class="count" id="refundBadge" hidden></span></button>
     <button role="tab" data-tab="days">Days</button>
     <button role="tab" data-tab="errors">Errors</button>
     <button role="tab" data-tab="settings">Settings</button>
   </nav>
-  <p class="who"><a href="{{SITE}}">← back to the book site</a> · {{EMAIL}} · <a href="/auth/logout">sign out</a></p>
+  <p class="who"><a href="{{SITE}}">← back to the book site</a> · <a href="{{SITE}}wallet">my wallet</a> · {{EMAIL}} · <a href="/auth/logout">sign out</a></p>
 </header>
 
 <main>
@@ -72,6 +73,22 @@
     </div>
   </section>
 
+  <section id="tab-refunds" class="tab" hidden>
+    <form class="filters" id="refundFilters">
+      <label>Status <select name="status"><option value="pending">pending</option><option value="">all</option>
+        <option>approved</option><option>denied</option></select></label>
+    </form>
+    <p class="summary soft">Someone says a book came out wrong. Look at the book; approving puts its price back in
+      their wallet. (Unspent money goes back to cards straight away and never shows up here.)</p>
+    <div class="table-wrap">
+      <table class="grid" id="refundTable">
+        <thead><tr><th>When</th><th>Who</th><th>Book</th><th class="num">Amount</th><th class="num">Their balance</th>
+          <th>What went wrong</th><th>Status</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
   <section id="tab-days" class="tab" hidden>
     <div class="table-wrap">
       <table class="grid" id="dayTable">
@@ -109,7 +126,7 @@
       </form>
       <form class="panel" id="unlimitedForm">
         <h2>Unlimited books</h2>
-        <p class="soft">Everyone else can make one finished book a day (UTC).</p>
+        <p class="soft">Free books for these people. Everyone else pays from their wallet.</p>
         <ul class="emails" id="emails"></ul>
         <div class="row"><input type="email" name="email" placeholder="friend@gmail.com" required>
           <button class="btn" type="submit">Add</button></div>

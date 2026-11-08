@@ -5,7 +5,8 @@ from pathlib import Path
 import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_STORY = ROOT / "stories" / "jack_and_the_beanstalk.yaml"
+STORIES = ROOT / "stories"
+DEFAULT_STORY = STORIES / "jack_and_the_beanstalk.yaml"
 HERO = "hero"  # cast key for the uploaded child
 
 PRONOUNS = {
@@ -43,6 +44,14 @@ class Story:
     hero_outfit: str
     characters: dict[str, Character]
     pages: tuple[PageSpec, ...] = field(default_factory=tuple)
+    key: str = ""      # the file's name: stories/<key>.yaml
+    blurb: str = ""    # the library card's one or two sentences
+    cover: str = ""    # the library card's picture
+
+    @property
+    def slug(self) -> str:
+        """Its address on the site: /stories/<slug>."""
+        return self.key.replace("_", "-")
 
 
 TEXT_ZONES = {"bottom", "top", "bottom-dark"}
@@ -64,7 +73,17 @@ def load_story(path: Path = DEFAULT_STORY) -> Story:
         pages.append(spec)
     return Story(title=raw["title"], style=raw["style"], world=raw["world"], theme=raw.get("theme", "default"),
                  hero_names=raw["hero"]["names"], hero_outfit=raw["hero"]["outfit"],
-                 characters=characters, pages=tuple(pages))
+                 characters=characters, pages=tuple(pages), key=Path(path).stem,
+                 blurb=" ".join(raw.get("blurb", "").split()), cover=raw.get("cover", ""))
+
+
+def all_stories() -> list[Story]:
+    """Every story in the library, in title order."""
+    return sorted((load_story(p) for p in STORIES.glob("*.yaml")), key=lambda s: s.title)
+
+
+def story_by_slug(slug: str) -> Story | None:
+    return next((s for s in all_stories() if s.slug == slug), None)
 
 
 @dataclass(frozen=True)

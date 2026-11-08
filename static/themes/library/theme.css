@@ -1,0 +1,41 @@
+/* The library: the pages every story shares (the front door, the wallet, privacy). A warm morning
+   reading room, drawn in CSS, so no single story's scenery is on it. Same palette and type as the books. */
+:root {
+  --sky: #fbefd6;
+  --leaf: #3f9a2e;
+  --leaf-deep: #2c7a1f;
+  --on-leaf: #ffffff;
+  --accent: #f5b62a;
+  --accent-deep: #c98a06;
+  --berry: #e2546b;
+  --card: #fffbf2;
+  --card-edge: #f1dfb8;
+  --ink: #2b2219;
+  --ink-soft: #6f5d4a;
+  --alert: #c0392b;
+  --display: "Grandstander", "Comic Sans MS", cursive;
+  --hand: "Shantell Sans", "Comic Sans MS", cursive;
+  --text: "Literata", Georgia, serif;
+  color-scheme: light;
+}
+
+body { background: var(--sky); }
+
+/* Sunlight from the top, a soft wall of book spines along the bottom. */
+.scene { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden;
+  background:
+    radial-gradient(1200px 600px at 50% -10%, #fff8e6 0%, rgba(255, 248, 230, 0) 70%),
+    radial-gradient(500px 400px at 12% 30%, rgba(245, 182, 42, .18), rgba(245, 182, 42, 0) 70%),
+    radial-gradient(520px 420px at 88% 55%, rgba(63, 154, 46, .14), rgba(63, 154, 46, 0) 70%),
+    var(--sky); }
+.scene .shelf-wall { position: absolute; left: 0; right: 0; bottom: 0; height: 120px;
+  background:
+    linear-gradient(#8a5a33, #6e4526) bottom / 100% 14px no-repeat,
+    repeating-linear-gradient(90deg,
+      #3f9a2e 0 22px, #2c7a1f 22px 26px, #e2546b 26px 44px, #b93e53 44px 48px, #f5b62a 48px 72px,
+      #c98a06 72px 76px, #4a7fc1 76px 94px, #36629a 94px 98px, #8e5fb0 98px 114px, #6d4790 114px 118px,
+      #e98d3a 118px 140px, #c06c22 140px 144px) bottom 14px left 0 / 100% 92px no-repeat;
+  opacity: .5; }
+
+/* Light paper behind the title, so the title is ink-green rather than the books' white-on-sky. */
+.masthead h1 { color: var(--leaf-deep); -webkit-text-stroke: 0; text-shadow: 0 3px 0 #fff, 0 6px 0 var(--card-edge); }

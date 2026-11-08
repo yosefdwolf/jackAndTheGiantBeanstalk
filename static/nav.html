@@ -1,0 +1,23 @@
+<nav class="sitenav" aria-label="Site">
+  <a href="/">Library</a>
+  <a href="/bookshelf">Bookshelf</a>
+  <a href="/wallet" id="navWallet">My wallet</a>
+  <a href="/admin" id="navAdmin" hidden>Admin</a>
+  <a href="/auth/login?next=/" id="navSign">Sign in</a>
+</nav>
+<script>
+(() => {
+  // The same links on every page; the current one is marked, and the rest fill in once we know who's here.
+  for (const a of document.querySelectorAll('.sitenav a')) {
+    if (a.getAttribute('href') === location.pathname) a.setAttribute('aria-current', 'page');
+  }
+  fetch('/api/me', { cache: 'no-store' }).then((r) => r.json()).then((me) => {
+    const sign = document.getElementById('navSign');
+    if (!me.signed_in) { sign.href = `/auth/login?next=${encodeURIComponent(location.pathname)}`; return; }
+    sign.textContent = 'Sign out';
+    sign.href = '/auth/logout';
+    document.getElementById('navAdmin').hidden = !me.admin;
+    if (!me.unlimited) document.getElementById('navWallet').textContent = `My wallet · $${(me.balance_cents / 100).toFixed(2)}`;
+  }).catch(() => {});
+})();
+</script>

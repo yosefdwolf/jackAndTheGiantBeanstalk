@@ -21,6 +21,15 @@ p { margin: 0; }
 .stand { max-width: 640px; margin: 0 auto; padding: 28px 16px 80px; display: grid; gap: 22px; }
 
 /* Title, lettered over the sky */
+/* Stays at the top of the screen while the page scrolls under it. */
+.sitenav { position: sticky; top: 8px; z-index: 20; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; padding: 6px;
+  box-shadow: 0 4px 14px rgba(43, 34, 25, .12);
+  background: rgba(255, 251, 242, .96); border: 2px solid var(--card-edge); border-radius: 16px; }
+.sitenav a { font: 600 16px var(--hand); color: var(--leaf-deep); text-decoration: none; padding: 10px 14px;
+  min-height: 44px; display: inline-flex; align-items: center; border-radius: 12px; }
+.sitenav a:hover { background: #fff; }
+.sitenav a[aria-current="page"] { background: var(--leaf); color: var(--on-leaf); }
+.sitenav a:focus-visible { outline: 3px solid var(--accent-deep); outline-offset: 2px; }
 .masthead { text-align: center; padding: 18px 8px 4px; }
 .kicker { font-size: 18px; font-weight: 600; color: var(--leaf-deep);
   text-shadow: 0 0 6px #fff, 0 0 2px #fff; }
@@ -161,6 +170,20 @@ p { margin: 0; }
    had 21 stacked pages. */
 .flipbook::before { content: ""; position: absolute; inset: 0; border-radius: 6px 14px 14px 6px;
   box-shadow: 0 14px 30px rgba(30, 50, 20, .28); pointer-events: none; }
+/* A gray outline of the book while an existing book's pages load. */
+.book-loading { display: grid; gap: 14px; justify-items: center; }
+.book-loading p { font-size: 18px; color: #fff; text-shadow: 0 1px 4px rgba(0, 0, 0, .35); }
+.skeleton-book { position: relative; width: min(100%, 620px); aspect-ratio: 3 / 2; border-radius: 6px 14px 14px 6px;
+  background: #e7e3dc; border: 3px solid #d2ccc2; border-left: 12px solid #c9c2b6; overflow: hidden;
+  box-shadow: 0 14px 30px rgba(30, 50, 20, .18); display: grid; align-content: end; gap: 10px; padding: 8% 10%; }
+.skeleton-book span { height: 14px; border-radius: 7px; background: #d6d0c6; }
+.skeleton-book span:nth-child(2) { width: 82%; }
+.skeleton-book span:nth-child(3) { width: 56%; }
+.skeleton-book::after { content: ""; position: absolute; inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, .55) 50%, transparent 70%);
+  transform: translateX(-100%); animation: shimmer 1.6s ease-in-out infinite; }
+@keyframes shimmer { to { transform: translateX(100%); } }
+@media (prefers-reduced-motion: reduce) { .skeleton-book::after { animation: none; opacity: 0; } }
 .leaf { position: absolute; inset: 0; transform-origin: left center; transform-style: preserve-3d; visibility: visible;
   transition: transform .9s cubic-bezier(.45, .05, .2, 1), visibility 0s 0s; border-radius: 6px 14px 14px 6px; }
 /* A turned page swings away to the left, then hides so it doesn't hang off the book. */
@@ -249,10 +272,10 @@ dialog#camera::backdrop { background: rgba(20, 40, 60, .55); }
 
 /* The bookshelf: each book a little cover you can open again */
 .shelf-books { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 16px; }
-.shelf-books button { all: unset; box-sizing: border-box; display: grid; gap: 6px; width: 100%; cursor: pointer; text-align: center;
+.shelf-books a { all: unset; box-sizing: border-box; display: grid; gap: 6px; width: 100%; cursor: pointer; text-align: center;
   padding: 10px 8px 12px; border-radius: 18px; background: #fff; border: 2.5px solid var(--card-edge); transition: transform .15s; }
-.shelf-books button:hover { transform: translateY(-3px) rotate(-1deg); border-color: var(--accent); }
-.shelf-books button:focus-visible { outline: 3px solid var(--accent-deep); outline-offset: 3px; }
+.shelf-books a:hover { transform: translateY(-3px) rotate(-1deg); border-color: var(--accent); }
+.shelf-books a:focus-visible { outline: 3px solid var(--accent-deep); outline-offset: 3px; }
 .shelf-books img, .shelf-books .no-cover { width: 76%; aspect-ratio: 1; margin: 0 auto; border-radius: 50%; object-fit: cover;
   border: 4px solid var(--card); box-shadow: 0 4px 10px rgba(0,0,0,.12); background: var(--card-edge); }
 .shelf-books .no-cover { display: grid; place-items: center; font: 600 13px var(--hand); color: var(--ink-soft); }
@@ -260,7 +283,7 @@ dialog#camera::backdrop { background: rgba(20, 40, 60, .55); }
 .shelf-books small { font: 400 13px var(--hand); color: var(--ink-soft); }
 .shelf-books .state { font: 600 13px var(--hand); color: var(--accent-deep); }
 .shelf-books .state.bad { color: var(--alert); }
-@media (prefers-reduced-motion: reduce) { .shelf-books button { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .shelf-books a { transition: none; } }
 .try-again { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 16px; }
 .review .btn { justify-self: center; margin-top: 4px; }
 #reviewNote { text-align: center; margin-top: 6px; }

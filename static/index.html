@@ -13,10 +13,11 @@
 <link rel="stylesheet" href="/static/styles.css">
 <!--THEME_CSS-->
 </head>
-<body>
+<body data-story="{{STORY}}">
 <!--SCENE-->
 
 <main class="stand">
+  <!--NAV-->
   <header class="masthead">
     <p class="hand kicker">a picture book starring you<span class="mock" id="mockBadge" hidden> · pretend printing, no cost</span></p>
     <h1>Jack <span class="and">and the</span> Beanstalk</h1>
@@ -40,7 +41,7 @@
   <section id="signin" class="card signin" hidden>
     <h2>Now, who’s reading?</h2>
     <p class="hand note">Sign in so we can keep your books safe for you.</p>
-    <a class="btn google" id="signinBtn" href="/auth/login?next=/">
+    <a class="btn google" id="signinBtn" href="/auth/login?next=/stories/{{STORY}}">
       <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
       <span>Sign in with Google</span></a>
     <p class="error" id="signinError" role="alert" hidden></p>
@@ -111,6 +112,12 @@
     <p class="ref">Reference <span id="ref"></span></p>
   </section>
 
+  <!-- Opening a book that already exists: a gray outline of the book until its pages are ready. -->
+  <section id="bookLoading" class="book-loading" hidden aria-live="polite">
+    <div class="skeleton-book" aria-hidden="true"><span></span><span></span><span></span></div>
+    <p class="hand">Opening your book…</p>
+  </section>
+
   <section id="reader" class="reader" hidden>
     <div class="flipbook" id="flipbook" tabindex="0" aria-roledescription="flip book" aria-label="Your picture book"></div>
     <div class="reader-controls">
@@ -127,21 +134,15 @@
     <p class="ref">Reference <span id="readerRef"></span></p>
   </section>
 
-  <!-- Every book this person has made, so a new tab or another day still finds them. -->
-  <section id="shelf" class="card shelf" hidden>
-    <h2>Your bookshelf</h2>
-    <ul class="shelf-books" id="shelfBooks"></ul>
-  </section>
-
   <!-- Each person rates their own book (one review per person). -->
   <section id="review" class="card review" hidden>
     <!-- Open if they haven't reviewed yet; closed (with a note) if they have. -->
-    <h2 class="review-head"><button class="review-toggle" id="reviewToggle" type="button" aria-expanded="true" aria-controls="reviewBody">
+    <h2 class="review-head"><button class="review-toggle" id="reviewToggle" type="button" aria-expanded="false" aria-controls="reviewBody">
       <span>Tell us what you think</span>
       <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
     </button></h2>
     <p class="hint" id="reviewAlready" hidden></p>
-    <div id="reviewBody">
+    <div id="reviewBody" hidden>
     <p class="hand note">Four quick questions. Have a look through the whole book first:
       flip the pages above, or <a id="reviewPdf" target="_blank" rel="noopener">open the PDF</a>.</p>
     <form id="reviewForm" novalidate>

@@ -20,6 +20,7 @@
 <body>
 <!--SCENE-->
 <main class="stand">
+  <!--NAV-->
   <header class="masthead">
     <p class="hand kicker">a picture book starring you</p>
   </header>
@@ -32,14 +33,15 @@
     <ul>
       <li>Your Google account’s name, email address and profile picture, from signing in.</li>
       <li>The book we make: its pictures and pages.</li>
+      <li>Your wallet: money you add, what each book cost, and any refunds you ask for. Card details go straight to Stripe; we never see or keep them.</li>
       <li>A step-by-step log of how each book was made (timings, errors and costs). The log never holds the photo or your name and details.</li>
     </ul>
 
     <h3>Why</h3>
-    <p>To make your book, keep it for you, limit how many books one person can make in a day, and find out what went wrong when a book fails.</p>
+    <p>To make your book, keep it for you, keep track of your wallet, and find out what went wrong when a book fails.</p>
 
     <h3>Who else sees it</h3>
-    <p>The pictures are drawn by OpenAI’s image service, so the photo and the book’s pictures are sent to OpenAI to be drawn. OpenAI says it doesn’t train its models on data sent through its API. Nothing is sold, shared for advertising, or given to anyone else.</p>
+    <p>The pictures are drawn by OpenAI’s image service, so the photo and the book’s pictures are sent to OpenAI to be drawn. OpenAI says it doesn’t train its models on data sent through its API. Payments are handled by Stripe, which sees your card and email address when you add money. Nothing is sold, shared for advertising, or given to anyone else.</p>
 
     <h3>How long</h3>
     <p>This is a class project. Books and photos are kept while the project runs.</p>
@@ -47,7 +49,7 @@
     <h3>Questions</h3>
     <p>Email <a href="mailto:{{CONTACT}}">{{CONTACT}}</a>.</p>
 
-    <a class="btn plain back" href="/">Back to the book</a>
+    <a class="btn plain back" href="/">Back to the library</a>
   </article>
 </main>
 </body>

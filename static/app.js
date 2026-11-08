@@ -64,14 +64,14 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
   const meReady = fetch('/api/me', { cache: 'no-store' }).then((r) => r.json()).then((m) => { me = m; paintAccount(); updateReady(); })
     .catch(() => {});
 
+  const money = (c) => `$${(c / 100).toFixed(2)}`;
+
   function paintAccount() {
     const a = $('account');
     if (!me || !me.signed_in) { a.hidden = true; return; }
-    const left = me.unlimited ? 'unlimited books' : me.left === 0 ? 'today’s book is made'
-      : me.left === 1 ? '1 book left today' : `${me.left} books left today`;
-    a.replaceChildren(`Hi ${me.name || me.email}! `, Object.assign(document.createElement('span'), { className: 'left', textContent: left }),
-      ...(me.admin ? [' · ', Object.assign(document.createElement('a'), { href: '/admin', textContent: 'admin' })] : []),
-      ' · ', Object.assign(document.createElement('a'), { href: '/auth/logout', textContent: 'sign out' }));
+    const left = me.unlimited ? 'free books' : `${money(me.balance_cents)} in your wallet`;
+    a.replaceChildren(`Hi ${me.name || me.email}! `,
+      Object.assign(document.createElement('a'), { className: 'left', href: '/wallet', textContent: left }));
     a.hidden = false;
   }
 
@@ -91,9 +91,9 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
       gate.hidden = true;
       if (!me || !me.signed_in) return askToSignIn();
       $('signin').hidden = true;
+      if (!$('reader').hidden || !$('printing').hidden || !$('bookLoading').hidden) return;  // a book is already open
       form.hidden = false;
       form.classList.add('reveal');
-      loadShelf();
     };
     if (animate) { gate.classList.add('opening'); setTimeout(show, 520); } else show();
   }
@@ -184,9 +184,10 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
 
   function updateReady() {
     const hasName = form.name.value.trim().length > 0;
-    if (me && me.left === 0) {  // today's book is made: the bookshelf below still has it
+    if (me && me.left === 0) {  // not enough in the wallet for a book
       go.disabled = true;
-      $('goNote').textContent = 'You’ve made your book for today. Come back tomorrow for another!';
+      $('goNote').replaceChildren(`A book costs ${money(me.price_cents)}. `,
+        Object.assign(document.createElement('a'), { href: '/wallet', textContent: 'Add money to your wallet' }));
       return;
     }
     go.disabled = !(photo && hasName);
@@ -256,6 +257,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
 
     const body = new FormData(form);
     body.append('photo', photo, 'photo.jpg');
+    body.append('story', document.body.dataset.story || '');
     try {
       const res = await fetch('/api/books', { method: 'POST', body, headers: { 'X-App-Password': password } });
       const data = await res.json().catch(() => ({}));
@@ -266,8 +268,12 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
         showError(`${d.message}${d.ref ? ` (reference ${d.ref})` : ''}`);
         return error.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
-      if (me && me.left != null) { me.left = Math.max(0, me.left - 1); paintAccount(); }
-      watch(data.id);
+      if (me && me.left != null) {
+        me.left = Math.max(0, me.left - 1);
+        me.balance_cents -= me.price_cents;
+        paintAccount();
+      }
+      watch(data.id, true);
     } catch {
       showError('We couldn’t reach the book. Check your connection and try again.');
     } finally {
@@ -380,10 +386,11 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
       const data = await res.json();
       clockOffset = Date.parse(data.server_time) - Date.now();
       book = data;
-      if (data.hero) hero = data.hero;  // their own name, also for books opened from the bookshelf
+      if (data.hero) hero = data.hero;  // their own name, also for books opened from the bookshelf page
       for (const img of data.images) if (!rows.has(key(img))) rows.set(key(img), makeRow(img));
       cancelAnimationFrame(frame);
       paintAll();
+      if (data.status !== 'done') showProgress();
       if (['done', 'failed', 'refused'].includes(data.status)) return finish(data);
     } catch {
       // A blip in the connection: the book keeps growing on the server, so just ask again.
@@ -391,7 +398,14 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     pollTimer = setTimeout(poll, POLL_MS);
   }
 
-  function watch(id) {
+  // A book just started shows its progress bars. One opened again (from the bookshelf or a reload)
+  // shows a gray outline of the book instead, and only switches to the bars if it's still being drawn.
+  function showProgress() {
+    $('bookLoading').hidden = true;
+    $('printing').hidden = false;
+  }
+
+  function watch(id, fresh = false) {
     watching = id;
     store.set(BOOK_KEY, id);
     if (location.hash !== `#book=${id}`) history.replaceState(null, '', `#book=${id}`);
@@ -406,9 +420,9 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     $('signin').hidden = true;
     $('reader').hidden = true;
     $('review').hidden = true;
-    $('shelf').hidden = true;
-    $('printing').hidden = false;
-    $('printing').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    $('printing').hidden = !fresh;
+    $('bookLoading').hidden = fresh;
+    (fresh ? $('printing') : $('bookLoading')).scrollIntoView({ behavior: 'smooth', block: 'start' });
     clearTimeout(pollTimer);
     poll();
   }
@@ -421,7 +435,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     fetch('/api/me', { cache: 'no-store' }).then((r) => r.json()).then((m) => { me = m; paintAccount(); updateReady(); })
       .catch(() => {});
     if (data.status === 'done' && data.book) {
-      openReader(data).then(loadShelf);
+      openReader(data);
       showReview(data.id);
     } else {
       $('printingTitle').textContent = 'Oh no, the beans didn’t grow';
@@ -440,7 +454,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
           const res = await fetch(`/api/books/${data.id}/retry`, { method: 'POST', headers: { 'X-App-Password': password } });
           if (!res.ok) throw errorDetail(await res.json().catch(() => ({})), res);
           again.remove();
-          watch(data.id);
+          watch(data.id, true);
         } catch (d) {
           retryBtn.disabled = false;
           $('bookError').textContent = `${d.message || 'That didn’t work.'}${d.ref ? ` (reference ${d.ref})` : ''}`;
@@ -513,6 +527,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     $('printingTitle').textContent = 'Binding your book…';
     await preload(bookEl);
     $('printing').hidden = true;
+    $('bookLoading').hidden = true;
     Object.assign($('download'), { href: data.pdf_url, download: PDF_NAME });
     $('reader').hidden = false;
     $('reader').classList.add('reveal');
@@ -573,36 +588,6 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     swipeX = null;
   });
 
-  // --- the bookshelf: every book this person made -------------------------------------------------
-
-  const SHELF_STATE = { running: 'still growing…', queued: 'still growing…', interrupted: 'still growing…',
-    failed: 'some pictures missing' };
-
-  async function loadShelf() {
-    if (!me || !me.signed_in) { $('shelf').hidden = true; return; }
-    let books = [];
-    try {
-      const res = await fetch('/api/my-books', { cache: 'no-store' });
-      if (res.ok) books = (await res.json()).books;
-    } catch { /* the shelf is a bonus; the page works without it */ }
-    $('shelfBooks').replaceChildren(...books.map((b) => {
-      const btn = el('button');
-      btn.type = 'button';
-      btn.setAttribute('aria-label', `Open ${b.child_name}’s book from ${new Date(b.created_at).toLocaleDateString()}`);
-      let cover;
-      if (b.cover_url) { cover = el('img'); cover.src = `${b.cover_url}?w=240`; cover.alt = ''; cover.loading = 'lazy'; }
-      else cover = el('span', 'no-cover', 'no picture yet');
-      btn.append(cover, el('b', null, b.child_name || b.hero),
-        el('small', null, new Date(b.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' })));
-      if (SHELF_STATE[b.status]) btn.append(el('span', 'state' + (b.status === 'failed' ? ' bad' : ''), SHELF_STATE[b.status]));
-      btn.addEventListener('click', () => watch(b.id));
-      const li = el('li');
-      li.append(btn);
-      return li;
-    }));
-    $('shelf').hidden = books.length === 0 || !$('printing').hidden;
-  }
-
   // --- what did you think? (each person rates their own book) ---------------------------------------
 
   // A crowd study links here as /?pid=PARTICIPANT_ID. Kept across the Google sign-in, and saved with
@@ -635,7 +620,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
 
   async function showReview(id) {
     $('review').hidden = false;
-    setReviewOpen(true);
+    setReviewOpen(false);  // starts closed, under the book; opening it shows the questions
     $('reviewPdf').href = `/api/books/${id}/pdf?inline=1`;
     $('reviewThanks').hidden = true;
     $('reviewError').hidden = true;
@@ -652,12 +637,11 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
         }
         reviewForm.not_good.value = review.not_good;
         $('reviewBtn').textContent = 'Update my answers';
-        // Already reviewed: start closed. One review per person, so sending again replaces it.
+        // One review per person, so sending again replaces it.
         $('reviewAlready').textContent = (review.book_id === id ? 'You’ve already left a review. '
           : `You already left a review for an earlier book (reference ${review.book_id}). `)
           + 'Open this to change it: sending again replaces your earlier answers.';
         $('reviewAlready').hidden = false;
-        setReviewOpen(false);
       } else {
         $('reviewBtn').textContent = 'Send my answers';
       }
@@ -711,6 +695,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     history.replaceState(null, '', location.pathname);
     store.drop(BOOK_KEY);
     $('printing').hidden = true;
+    $('bookLoading').hidden = true;
     $('reader').hidden = true;
     $('review').hidden = true;
     for (const extra of $('printing').querySelectorAll('p:not(.ref):not(.tally):not(.error)')) extra.remove();
@@ -722,7 +707,6 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     drop.classList.remove('has-photo');
     $('polaroidCaption').textContent = 'tap or drop a photo';
     updateReady();
-    loadShelf();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
   $('again').addEventListener('click', startOver);

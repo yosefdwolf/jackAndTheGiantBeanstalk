@@ -143,3 +143,8 @@ input[type="radio"], input[type="checkbox"] { min-height: 0; padding: 0; width: 
 .clamp.open { display: block; height: auto; -webkit-line-clamp: unset; }
 .more { all: unset; cursor: pointer; color: var(--blue); font-size: 12px; font-weight: 600; margin-top: 2px; }
 .more:focus-visible { outline: 2px solid var(--gold); }
+
+.tabs .count { display: inline-block; min-width: 20px; padding: 0 6px; margin-left: 4px; border-radius: 99px;
+  background: var(--alert); color: #fff; font-size: 12px; line-height: 20px; text-align: center; }
+.s-pending { background: var(--gold-soft); color: #7a5300; } .s-approved { background: #dff0d6; color: var(--leaf); }
+.decide input { width: 100%; min-width: 180px; margin-bottom: 6px; }

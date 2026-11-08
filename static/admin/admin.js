@@ -44,7 +44,7 @@
   function showTab(name) {
     tabs.forEach((t) => t.setAttribute('aria-selected', String(t.dataset.tab === name)));
     document.querySelectorAll('.tab').forEach((s) => { s.hidden = s.id !== `tab-${name}`; });
-    ({ books: loadBooks, reviews: loadReviews, days: loadDays, errors: loadErrors, settings: loadSettings })[name]();
+    ({ books: loadBooks, reviews: loadReviews, refunds: loadRefunds, days: loadDays, errors: loadErrors, settings: loadSettings })[name]();
   }
   tabs.forEach((t) => t.addEventListener('click', () => { setHash({ tab: t.dataset.tab, book: '' }); }));
 
@@ -232,6 +232,53 @@
     requestAnimationFrame(() => { toggle.hidden = body.scrollHeight <= body.clientHeight + 1; });
     return cell;
   }
+
+  // --- refunds -----------------------------------------------------------------------------------
+  const refundFilters = $('refundFilters');
+  const dollars = (c) => `$${(c / 100).toFixed(2)}`;
+
+  async function loadRefunds() {
+    const d = await api(`/refunds?status=${encodeURIComponent(refundFilters.status.value)}`);
+    $('refundTable').tBodies[0].replaceChildren(...(d.items.length ? d.items.map((r) => el('tr', {},
+      el('td', { class: 'when', text: fmt.when(r.at) }),
+      el('td', { text: r.email }),
+      el('td', {}, el('a', { class: 'mono', href: `#tab=books&book=${r.book_id}`, text: r.book_id })),
+      el('td', { class: 'num', text: dollars(r.cents) }),
+      el('td', { class: 'num', text: dollars(r.balance_cents) }),
+      commentCell(r.reason),
+      el('td', {}, pill(r.status), r.admin_note && el('div', { class: 'kv', text: r.admin_note })),
+      el('td', { class: 'decide' }, r.status === 'pending' ? decideControls(r) : null)))
+      : [el('tr', { class: 'empty' }, el('td', { colspan: 8, text: 'No refund requests here.' }))]));
+    refreshBadge();
+  }
+
+  function decideControls(r) {
+    const note = el('input', { type: 'text', placeholder: 'note they’ll see (optional)', maxlength: 500 });
+    const problem = el('p', { class: 'warn', hidden: true });
+    const decide = async (approve, button) => {
+      button.disabled = true;
+      try {
+        await api(`/refunds/${r.id}`, { method: 'POST', body: JSON.stringify({ approve, note: note.value }) });
+        loadRefunds();
+      } catch (e) {
+        problem.textContent = e.message;
+        problem.hidden = false;
+        button.disabled = false;
+      }
+    };
+    return el('div', {}, note, el('div', { class: 'row' },
+      el('button', { class: 'btn small', type: 'button', text: 'Approve', onclick: (e) => decide(true, e.target) }),
+      el('button', { class: 'btn plain small', type: 'button', text: 'Deny', onclick: (e) => decide(false, e.target) })), problem);
+  }
+
+  async function refreshBadge() {
+    const d = await api('/refunds?status=pending').catch(() => null);
+    const n = d ? d.items.length : 0;
+    $('refundBadge').textContent = n;
+    $('refundBadge').hidden = n === 0;
+  }
+  refundFilters.addEventListener('change', loadRefunds);
+  refreshBadge();
 
   // --- days --------------------------------------------------------------------------------------
   async function loadDays() {

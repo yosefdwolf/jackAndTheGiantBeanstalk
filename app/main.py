@@ -1,4 +1,5 @@
 import hashlib
+from html import escape
 import hmac
 import io
 import os
@@ -18,11 +19,11 @@ from pydantic import BaseModel, Field  # noqa: E402
 from sqlalchemy import select  # noqa: E402
 from sqlalchemy.orm import selectinload  # noqa: E402
 
-from . import admin, auth  # noqa: E402
+from . import admin, auth, wallet  # noqa: E402
 from .book import jobs  # noqa: E402
 from .book.log import current_ref, new_ref, record, set_event_sink, set_ref, setup_logging, start_book, step  # noqa: E402
 from .book.providers import is_mock  # noqa: E402
-from .book.story import PRONOUNS, load_story  # noqa: E402
+from .book.story import PRONOUNS, Story, all_stories, load_story, story_by_slug  # noqa: E402
 from .db.models import Book, RequestError, Review  # noqa: E402
 from .db.session import create_tables_if_sqlite, session  # noqa: E402
 from .faces import UploadError, prepare  # noqa: E402
@@ -30,7 +31,6 @@ from .faces import UploadError, prepare  # noqa: E402
 STATIC = Path(__file__).resolve().parent.parent / "static"
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024  # phone photos can be large; they are downscaled on arrival
 MAX_FIELD = 300
-DAILY_LIMIT = int(os.getenv("DAILY_BOOK_LIMIT", "1"))  # finished books per person per UTC day
 
 setup_logging(os.getenv("LOG_LEVEL", "INFO"))
 
@@ -47,11 +47,12 @@ app = FastAPI(title="Jack and the Beanstalk", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
 app.include_router(auth.router)
 app.include_router(admin.router)
+app.include_router(wallet.router)
 app.add_middleware(admin.AdminHost)  # admin.jack.graydates.com/x is served from /admin/x
 
 # Browsers kept running an old app.js after deploys, so a click did nothing. The page's script and
 # stylesheet links carry a content hash, and everything is served with no-cache (re-check each time).
-ASSET_FILES = ["app.js", "styles.css", *(str(p.relative_to(STATIC)) for p in sorted((STATIC / "themes").rglob("*.*")))]
+ASSET_FILES = ["app.js", "styles.css", "nav.html", *(str(p.relative_to(STATIC)) for p in sorted((STATIC / "themes").rglob("*.*")))]
 ASSET_VERSION = hashlib.sha1(b"".join((STATIC / f).read_bytes() for f in ASSET_FILES)).hexdigest()[:10]
 NO_CACHE = {"Cache-Control": "no-cache"}
 
@@ -85,21 +86,58 @@ async def refs_and_errors(request: Request, call_next):
     return response
 
 
-def themed(page: str) -> str:
-    """A page from static/, dressed in the story's theme (static/themes/<theme>/)."""
-    story = load_story()
+LIBRARY_TITLE = "Picture books starring you"
+
+
+def themed(page: str, story: Story | None = None) -> str:
+    """A page from static/, dressed in a story's theme (static/themes/<theme>/), or the library's look
+    for pages that belong to every story (the library itself, the wallet, privacy)."""
+    theme = story.theme if story else "library"
     html = (STATIC / page).read_text()
-    html = html.replace("<!--THEME_CSS-->", f'<link rel="stylesheet" href="/static/themes/{story.theme}/theme.css">')
-    html = html.replace("<!--SCENE-->", (STATIC / "themes" / story.theme / "scene.html").read_text())
-    html = html.replace("{{TITLE}}", story.title)
-    for asset in ("app.js", "styles.css", f"themes/{story.theme}/theme.css"):
+    html = html.replace("<!--THEME_CSS-->", f'<link rel="stylesheet" href="/static/themes/{theme}/theme.css">')
+    html = html.replace("<!--SCENE-->", (STATIC / "themes" / theme / "scene.html").read_text())
+    html = html.replace("<!--NAV-->", (STATIC / "nav.html").read_text())
+    html = html.replace("{{TITLE}}", escape(story.title if story else LIBRARY_TITLE))
+    html = html.replace("{{STORY}}", story.slug if story else "")
+    for asset in ("app.js", "styles.css", f"themes/{theme}/theme.css"):
         html = html.replace(f"/static/{asset}\"", f"/static/{asset}?v={ASSET_VERSION}\"")
     return html
 
 
+def story_card(story: Story) -> str:
+    pages = len(story.pages)
+    return (f'<li class="story-card"><a href="/stories/{story.slug}">'
+            f'<img src="{escape(story.cover)}" alt="" loading="lazy">'
+            f'<span class="story-info"><b>{escape(story.title)}</b>'
+            f'<span class="blurb">{escape(story.blurb)}</span>'
+            f'<span class="meta">{pages} pages · ${wallet.BOOK_PRICE_CENTS / 100:.2f}</span>'
+            f'<span class="btn bean">Make this book</span></span></a></li>')
+
+
 @app.get("/")
-def index():
-    return HTMLResponse(themed("index.html"), headers=NO_CACHE)
+def library():
+    """The front door: every story we can make."""
+    html = themed("library.html").replace("<!--STORIES-->", "".join(story_card(s) for s in all_stories()))
+    return HTMLResponse(html, headers=NO_CACHE)
+
+
+@app.get("/stories/{slug}")
+def story_page(slug: str):
+    story = story_by_slug(slug)
+    if story is None:
+        raise HTTPException(404, "No such story.")
+    return HTMLResponse(themed("index.html", story), headers=NO_CACHE)
+
+
+@app.get("/bookshelf")
+def bookshelf_page():
+    """Every book the signed-in person has made, from every story."""
+    return HTMLResponse(themed("bookshelf.html"), headers=NO_CACHE)
+
+
+@app.get("/wallet")
+def wallet_page():
+    return HTMLResponse(themed("wallet.html"), headers=NO_CACHE)
 
 
 @app.get("/privacy")
@@ -135,14 +173,15 @@ def options():
 
 @app.get("/api/me")
 async def me(request: Request):
-    """Who is signed in, and how many books they have left today."""
+    """Who is signed in, what's in their wallet, and how many books that pays for."""
     user = await auth.current_user(request)
-    info = {"signed_in": user is not None, "sign_in_url": "/auth/login?next=/", "limit": DAILY_LIMIT}
+    info = {"signed_in": user is not None, "sign_in_url": "/auth/login?next=/", "price_cents": wallet.BOOK_PRICE_CENTS}
     if user:
-        unlimited = await auth.has_unlimited(user)
-        used = await jobs.books_today(user.id)
-        info.update(email=user.email, name=user.name, admin=auth.is_admin(user), unlimited=unlimited,
-                    used_today=used, left=None if unlimited else max(0, DAILY_LIMIT - used))
+        free = await wallet.is_free(user)
+        async with session() as s:
+            available = await wallet.balance(s, user.id)
+        info.update(email=user.email, name=user.name, admin=auth.is_admin(user), unlimited=free,
+                    balance_cents=available, left=None if free else max(0, available // wallet.BOOK_PRICE_CENTS))
     return info
 
 
@@ -155,20 +194,16 @@ async def my_books(request: Request):
     async with session() as s:
         books = (await s.execute(select(Book).where(Book.user_id == user.id, Book.status != "refused")
                                  .options(selectinload(Book.images)).order_by(Book.created_at.desc()))).scalars().all()
-    story = load_story()
+    stories = {s.key: s for s in all_stories()}
     out = []
     for b in books:
+        story = stories.get(b.story_key) or load_story()
         hero = next((i for i in b.images if i.kind == "hero_sheet" and i.status == "done"), None)
         out.append({"id": b.id, "status": b.status, "title": story.title, "child_name": b.child_name,
                     "hero": story.hero_names.get(b.gender, ""), "created_at": jobs._iso(b.created_at),
+                    "url": f"/stories/{story.slug}#book={b.id}",
                     "cover_url": f"/api/books/{b.id}/images/hero_sheet-0" if hero else None})
     return {"books": out}
-
-
-def limit_message() -> str:
-    if DAILY_LIMIT == 1:
-        return "You've made your book for today. Come back tomorrow for another!"
-    return f"You've made {DAILY_LIMIT} books today, the most for one day. Come back tomorrow for more!"
 
 
 def password_problem(given: str | None) -> tuple[int, str, str] | None:
@@ -222,14 +257,16 @@ async def create_book_route(
     age: str = Form(""),
     favourites: str = Form(""),
     about: str = Form(""),
+    story: str = Form(""),
 ):
     ref = start_book(current_ref())
+    chosen = story_by_slug(story) if story else load_story()
     details = [[label, value.strip()[:MAX_FIELD]] for label, value in
                (("Age", age), ("Favourite things", favourites), ("More about me", about)) if value.strip()]
     user = await auth.current_user(request)
     provider, model, quality = await admin.provider_for(user)
     # The row exists before any check, so even a refused request can be looked up by its ref.
-    await jobs.create_book(ref, gender=gender, child_name=name.strip()[:MAX_FIELD], details=details,
+    await jobs.create_book(ref, story_key=chosen.key if chosen else story[:64], gender=gender, child_name=name.strip()[:MAX_FIELD], details=details,
                            provider=provider, model=model, quality=quality, user_id=user.id if user else None)
     # Never log the password, the photo, or the name and details typed in.
     await record("INFO", "request", "received", ip=request.client.host if request.client else None,
@@ -248,10 +285,12 @@ async def create_book_route(
         await refuse(*problem)
     if user is None:
         await refuse(401, "not_signed_in", "Please sign in with Google first.")
-    if not await auth.has_unlimited(user) and await jobs.books_today(user.id, exclude=ref) >= DAILY_LIMIT:
-        await refuse(429, "daily_limit", limit_message())
+    if not await wallet.can_afford_a_book(user):
+        await refuse(402, "no_money", wallet.no_money_message())
     if len(data) > MAX_UPLOAD_BYTES:
         await refuse(413, "photo_too_large", "That photo is too large (max 25 MB).")
+    if chosen is None:
+        await refuse(400, "unknown_story", "We don't have that story.")
     if gender not in PRONOUNS:
         await refuse(400, "unknown_gender", "Choose Jack or Jane.")
     if not name.strip():
@@ -263,6 +302,8 @@ async def create_book_route(
             prepared = prepare(data)
     except UploadError as e:
         await refuse(422, "face_check", str(e))
+    if not await wallet.charge_for_book(user, ref):  # paid only once every check has passed
+        await refuse(402, "no_money", wallet.no_money_message())
 
     await jobs.accept(ref, prepared, photo.content_type or "image/unknown")
     return {"id": ref, "status_url": f"/api/books/{ref}"}
@@ -319,7 +360,7 @@ async def book_pdf(request: Request, ref: str, inline: bool = False):
 
 @app.post("/api/books/{ref}/retry", status_code=202)
 async def retry_book(request: Request, ref: str, x_app_password: str | None = Header(None)):
-    """The book's owner asks to redraw the pictures that failed. Doesn't count as another book."""
+    """The book's owner asks to redraw the pictures that failed. Free: the book was already paid for."""
     if problem := password_problem(x_app_password):
         status_code, reason, message = problem
         raise HTTPException(status_code, {"message": message, "ref": current_ref(), "reason": reason})
@@ -328,9 +369,6 @@ async def retry_book(request: Request, ref: str, x_app_password: str | None = He
         book = await s.get(Book, ref)
     if user is None or book is None or book.user_id != user.id:
         raise HTTPException(404, {"message": "No book of yours with that reference.", "ref": current_ref()})
-    if not await auth.has_unlimited(user) and await jobs.books_today(user.id, exclude=ref) >= DAILY_LIMIT:
-        # Retrying a failed book finishes it, so it can't make a second finished book in one day.
-        raise HTTPException(429, {"message": limit_message(), "ref": current_ref(), "reason": "daily_limit"})
     if book.refused_reason or not await jobs.retry(ref):
         raise HTTPException(409, {"message": "That book can't be tried again.", "ref": ref})
     return {"id": ref, "status_url": f"/api/books/{ref}"}

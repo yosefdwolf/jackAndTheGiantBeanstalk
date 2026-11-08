@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#fbefd6">
+<title>Your bookshelf · {{TITLE}}</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 30C16 20 10 18 10 12s4-9 6-10c2 1 6 4 6 10s-6 8-6 18z' fill='%233d8a2a'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Grandstander:wght@600;800&family=Shantell+Sans:wght@400;600&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/styles.css">
+<!--THEME_CSS-->
+<style>
+  .shelf-books .story { font: 400 13px var(--hand); color: var(--ink-soft); }
+  .empty p { font-size: 17px; }
+</style>
+</head>
+<body class="library">
+<!--SCENE-->
+<main class="stand">
+<!--NAV-->
+  <header class="masthead">
+    <p class="hand kicker">picture books starring you</p>
+    <h1>Your bookshelf</h1>
+  </header>
+
+  <section class="card" id="signin" hidden>
+    <h2>Sign in first</h2>
+    <p>Your books are kept with your Google account.</p>
+    <a class="btn bean" href="/auth/login?next=/bookshelf">Sign in with Google</a>
+  </section>
+
+  <section class="card empty" id="empty" hidden>
+    <h2>No books yet</h2>
+    <p>Every book you make will wait for you here, to open again or download.</p>
+    <a class="btn bean" href="/">Pick a story</a>
+  </section>
+
+  <section class="card" id="shelf" hidden>
+    <p class="hint">Every book you’ve made, newest first. Tap one to open it.</p>
+    <ul class="shelf-books" id="shelfBooks"></ul>
+  </section>
+</main>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const STATE = { running: 'still growing…', queued: 'still growing…', interrupted: 'still growing…',
+    failed: 'some pictures missing' };
+  function el(tag, cls, text) {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  fetch('/api/my-books', { cache: 'no-store' }).then(async (res) => {
+    if (res.status === 401) { $('signin').hidden = false; return; }
+    const { books } = await res.json();
+    if (!books.length) { $('empty').hidden = false; return; }
+    $('shelfBooks').replaceChildren(...books.map((b) => {
+      const a = el('a');
+      a.href = b.url;
+      a.setAttribute('aria-label', `Open ${b.child_name || b.hero}’s ${b.title} from ${new Date(b.created_at).toLocaleDateString()}`);
+      let cover;
+      if (b.cover_url) { cover = el('img'); cover.src = `${b.cover_url}?w=240`; cover.alt = ''; cover.loading = 'lazy'; }
+      else cover = el('span', 'no-cover', 'no picture yet');
+      a.append(cover, el('b', null, b.child_name || b.hero), el('span', 'story', b.title),
+        el('small', null, new Date(b.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' })));
+      if (STATE[b.status]) a.append(el('span', 'state' + (b.status === 'failed' ? ' bad' : ''), STATE[b.status]));
+      const li = el('li');
+      li.append(a);
+      return li;
+    }));
+    $('shelf').hidden = false;
+  }).catch(() => { $('empty').hidden = false; });
+})();
+</script>
+</body>
+</html>

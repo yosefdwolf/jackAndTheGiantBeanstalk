@@ -1,5 +1,5 @@
 """The admin site (admin.jack.graydates.com, or /admin locally): every book, its log trail, errors,
-the model switch and the unlimited list. Only ADMIN_EMAILS can open it.
+the model switch, the unlimited list and refund requests. Only ADMIN_EMAILS can open it.
 
 On the admin host, paths are mapped under /admin (see AdminHost), so the same routes serve both.
 """
@@ -14,7 +14,7 @@ from pydantic import BaseModel
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import selectinload
 
-from . import auth
+from . import auth, wallet
 from .book.providers import CHOICES, is_mock
 from .db.models import AdminSettings, Book, BookEvent, BookImage, RequestError, Review, UnlimitedEmail, Upload, User
 from .db.session import session
@@ -353,3 +353,22 @@ async def remove_unlimited(email: str, _=Depends(require_admin)):
             await s.delete(row)
             await s.commit()
     return await unlimited()
+
+
+# --- refunds: people ask in their wallet, the admin decides here ----------------------------------
+
+@router.get("/api/refunds")
+async def refunds(status: str = "", _=Depends(require_admin)):
+    items = await wallet.admin_requests(status)
+    return {"items": items, "pending": sum(1 for i in items if i["status"] == "pending") if not status else None}
+
+
+class DecisionIn(BaseModel):
+    approve: bool
+    note: str | None = None
+
+
+@router.post("/api/refunds/{request_id}")
+async def decide_refund(request_id: int, body: DecisionIn, user=Depends(require_admin)):
+    r = await wallet.decide(request_id, body.approve, user, body.note)
+    return {"status": r.status, "admin_note": r.admin_note}

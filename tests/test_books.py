@@ -19,7 +19,7 @@ import app.main
 from app import auth
 from app.book import jobs, providers
 from app.db import session as db
-from app.db.models import Book, BookEvent, BookImage, RequestError
+from app.db.models import Book, BookEvent, BookImage, RequestError, Transaction
 from app.faces import PreparedPhoto
 
 PASSWORD = "test-password"
@@ -58,14 +58,13 @@ def client(tmp_path, monkeypatch):
     fake = PreparedPhoto(full_png=png(), face_png=png())
     monkeypatch.setattr(app.main, "prepare", lambda data: fake)
     monkeypatch.setattr(jobs, "prepare", lambda data: fake)
-    monkeypatch.setattr(app.main, "DAILY_LIMIT", 50)  # most tests make several books; limit tests set 1
     monkeypatch.setenv("SESSION_SECRET", "test-secret")
     monkeypatch.setenv("ADMIN_EMAILS", ADMIN)
     for name in ("GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "DEV_LOGIN", "COOKIE_DOMAIN"):
         monkeypatch.delenv(name, raising=False)
     db.reset(f"sqlite+aiosqlite:///{tmp_path / 'test.db'}")
     with TestClient(app.main.app) as c:
-        sign_in(c, PARENT)
+        fund(sign_in(c, PARENT).id, 5000)  # most tests make several books; wallet tests start from zero
         yield c
     db.reset()
 
@@ -79,6 +78,15 @@ def sign_in(client, email):
     user = run(auth.upsert_user(f"sub-{email}", email))
     client.cookies.set(auth.COOKIE, auth.session_cookie(user.id))
     return user
+
+
+def fund(user_id, cents):
+    """Money in the wallet, as if a Stripe top-up had gone through."""
+    async def add():
+        async with db.session() as s:
+            s.add(Transaction(user_id=user_id, amount_cents=cents, kind="deposit", note="test"))
+            await s.commit()
+    run(add())
 
 
 def post_book(client, password=PASSWORD, **form):
@@ -275,14 +283,14 @@ def test_page_errors_get_a_ref_and_a_row(client):
 # --- the page -------------------------------------------------------------------------------------
 
 def test_page_links_versioned_assets_and_is_not_cached(client):
-    r = client.get("/")
+    r = client.get("/stories/jack-and-the-beanstalk")
     assert r.headers["cache-control"] == "no-cache"
     assert f"/static/app.js?v={app.main.ASSET_VERSION}" in r.text
     assert client.get("/static/app.js").headers["cache-control"] == "no-cache"
 
 
 def test_form_without_script_lands_on_a_message(client):
-    assert 'method="post" action="/no-script"' in client.get("/").text
+    assert 'method="post" action="/no-script"' in client.get("/stories/jack-and-the-beanstalk").text
     r = client.post("/no-script", data={"password": "x"})
     assert r.status_code == 400 and "reload" in r.text
 
@@ -322,9 +330,39 @@ def test_unreadable_photo_preview_is_refused_with_a_ref(client):
 
 
 def test_page_wears_the_story_theme(client):
-    html = client.get("/").text
+    html = client.get("/stories/jack-and-the-beanstalk").text
     assert "/static/themes/jack/theme.css?v=" in html
     assert 'class="scene"' in html and "<!--SCENE-->" not in html
+    assert 'data-story="jack-and-the-beanstalk"' in html
+
+
+def test_front_page_is_the_library_of_every_story(client):
+    html = client.get("/").text
+    assert "/static/themes/library/theme.css?v=" in html and "/static/themes/jack/theme.css" not in html
+    assert 'href="/stories/jack-and-the-beanstalk"' in html and "Jack and the Beanstalk" in html
+    assert "<!--STORIES-->" not in html and 'class="sitenav"' in html
+
+
+def test_bookshelf_page_loads(client):
+    html = client.get("/bookshelf").text
+    assert "/static/themes/library/theme.css?v=" in html and 'href="/bookshelf"' in html
+
+
+def test_unknown_story_is_404(client):
+    assert client.get("/stories/nope").status_code == 404
+
+
+def test_book_remembers_its_story_and_shelf_links_to_it(client):
+    ref = post_book(client, story="jack-and-the-beanstalk").json()["id"]
+    wait_for(client, ref)
+    assert run(rows(Book, id=ref))[0].story_key == "jack_and_the_beanstalk"
+    shelf = client.get("/api/my-books").json()["books"]
+    assert shelf[0]["url"] == f"/stories/jack-and-the-beanstalk#book={ref}"
+
+
+def test_a_made_up_story_is_refused(client):
+    r = post_book(client, story="snow-white")
+    assert r.status_code == 400 and r.json()["detail"]["reason"] == "unknown_story"
 
 
 def test_finished_book_has_flipbook_pages(client):

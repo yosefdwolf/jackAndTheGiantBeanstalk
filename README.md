@@ -25,6 +25,13 @@ example, the cow on page 3, after she's been sold).
 
 Prompts were developed by hand in the OpenAI Playground first, then moved into the story file.
 
+**The library:** the front page (`/`) lists every story in `stories/`, each with its `blurb` and
+`cover` from the story file. Each story has its own page at
+`/stories/<name>` (e.g. `/stories/jack-and-the-beanstalk`), dressed in that story's theme. The pages
+every story shares (the library, the bookshelf at `/bookshelf` with every book you've made, the wallet,
+privacy) use the general `static/themes/library/` look.
+Every page has the same link bar (`static/nav.html`), which stays at the top while scrolling.
+
 ## Database
 Postgres on Railway; SQLite locally and in tests. Every request gets a ref, and every ref has a row.
 Look a ref up in `books` (or `request_errors`), then read `book_events` in order: a `start` with no
@@ -34,12 +41,26 @@ each deploy before the app starts.
 A book request returns at once. The pictures are drawn in the background, each with its own progress
 bar on the page, and saved as they finish, so a dropped connection or a restart doesn't lose a paid book.
 
-## Sign-in and limits
+## Sign-in and the wallet
 Making a book needs both the magic word (`APP_PASSWORD`, so only the class can use it) and a Google
-sign-in (so each person's books are kept together). Everyone can make one finished book per UTC day
-(`DAILY_BOOK_LIMIT`). A book being drawn counts, so two can't run at once. A failed book doesn't count:
-its owner can retry just the missing pictures, and it counts once it's finished. Refused requests never count.
-Admins (`ADMIN_EMAILS`) and the emails on the admin site's unlimited list have no limit.
+sign-in (so each person's books are kept together).
+
+Each book costs $0.99 (`BOOK_PRICE_CENTS`), paid from the person's wallet at `/wallet`. They add $1,
+$5, $10, $20 or any amount up to $100 on Stripe's checkout page (test mode only: `STRIPE_SECRET_KEY` must start with `sk_test_`).
+A payment is credited once, after the server asks Stripe whether it was paid, so no webhook is needed.
+The book is charged only once every check has passed, so a refused photo costs nothing, and retrying
+a failed book's missing pictures is free. Every credit and debit is a row in `transactions`, which is
+the history the wallet page shows.
+
+Two kinds of money back:
+- **Unspent money to the card, straight away.** No review: it was never used. Stripe refunds it
+  across their top-ups, newest first.
+- **A book that came out wrong, reviewed.** The person says what went wrong; the admin looks at the
+  book in the Refunds tab, and approving puts its price back in their wallet (not the card).
+  Reviewed, since otherwise anyone could get every book free. Each request emails the admins
+  (`SMTP_*`, e.g. Gmail with an app password; without it the email is only logged).
+
+Admins (`ADMIN_EMAILS`) and the emails on the admin site's unlimited list make books for free.
 
 ## Reviews (real user feedback)
 When a book finishes, its owner sees four questions under the flip book: Does this look like me? Does

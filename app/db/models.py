@@ -164,3 +164,49 @@ class Setting(Base):
     key: Mapped[str] = mapped_column(String(64), primary_key=True)
     value: Mapped[dict | None] = mapped_column(Json)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now)
+
+
+# --- the wallet: money in cents, every change a row in `transactions` -------------------------------
+
+class Payment(Base):
+    """A Stripe Checkout session someone opened to add money. Credited once, when Stripe says it's paid."""
+    __tablename__ = "payments"
+    id: Mapped[str] = mapped_column(String(255), primary_key=True)  # Stripe's checkout session id
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True)
+    amount_cents: Mapped[int] = mapped_column(Integer)
+    status: Mapped[str] = mapped_column(String(16), default="open")  # open | paid | expired
+    payment_intent: Mapped[str | None] = mapped_column(String(255))
+    refunded_cents: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class Transaction(Base):
+    """One credit (+) or debit (-). The balance is the sum; each row says what caused it."""
+    __tablename__ = "transactions"
+    id: Mapped[int] = mapped_column(Id, primary_key=True, autoincrement=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True)
+    amount_cents: Mapped[int] = mapped_column(Integer)
+    kind: Mapped[str] = mapped_column(String(16))  # deposit | book | refund | book_refund
+    book_id: Mapped[str | None] = mapped_column(ForeignKey("books.id"))
+    payment_id: Mapped[str | None] = mapped_column(ForeignKey("payments.id"), unique=True)
+    refund_request_id: Mapped[int | None] = mapped_column(ForeignKey("refund_requests.id"))
+    stripe_refund_id: Mapped[str | None] = mapped_column(String(255))
+    note: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, index=True)
+
+
+class RefundRequest(Base):
+    """Someone says a book came out wrong. The admin decides; approved puts its price back in their wallet.
+    (Unspent money goes back to the card straight away and needs no request.)"""
+    __tablename__ = "refund_requests"
+    id: Mapped[int] = mapped_column(Id, primary_key=True, autoincrement=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True)
+    book_id: Mapped[str] = mapped_column(ForeignKey("books.id"), index=True)
+    amount_cents: Mapped[int] = mapped_column(Integer)
+    reason: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(16), default="pending", index=True)  # pending | approved | denied
+    admin_note: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, index=True)
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    decided_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"))
