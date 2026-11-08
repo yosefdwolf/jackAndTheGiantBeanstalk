@@ -11,7 +11,8 @@ theme: jack   # the website's look: static/themes/jack/
 blurb: >-
   You trade the family cow for five magic beans, climb the beanstalk that grows overnight, and sneak
   past a giant to bring home his gold, his golden hen and his singing harp.
-cover: /static/themes/jack/art/cover.webp   # the library's cover painting (the site sets the title on it)
+library_cover: /static/themes/jack/art/cover.webp   # the library's cover (the site sets the title on it)
+cover_page: 5   # each book's cover on the bookshelf is this page, cropped upright around the hero
 
 world: >-
   a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly
@@ -134,7 +135,7 @@ pages:
     mood: >-
       Brave and dizzying, a little exciting. Brighter, clearer morning light the higher {he} goes.
     composition: >-
-      {hero} and the stalk in the upper two-thirds. The lower third is soft white mist and cloud,
+      {hero} near the middle of the picture, side to side, with {his} face clearly visible; {hero} and the stalk in the upper two-thirds. The lower third is soft white mist and cloud,
       plain and low in detail, for text added later.
     text_zone: bottom
 

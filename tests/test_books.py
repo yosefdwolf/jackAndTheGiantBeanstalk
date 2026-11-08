@@ -189,7 +189,8 @@ def test_story_uses_their_name_with_the_chosen_pronouns(client):
     """Jack/Jane only picks he or she; the story says the name they typed."""
     ref = post_book(client, gender="girl", name="Ella").json()["id"]
     data = wait_for(client, ref)
-    assert data["images"][1]["text"].startswith("Ella and her mother")
+    page_1 = next(i for i in data["images"] if i["kind"] == "page" and i["page"] == 1)
+    assert page_1["text"].startswith("Ella and her mother")
     assert data["book"]["pages"][0]["text"].startswith("Ella and her mother") and data["book"]["hero"] == "Jane"
     # the image prompts still say the story's hero, never what was typed
     prompts = [i.prompt for i in run(rows(BookImage, book_id=ref))]
@@ -358,6 +359,23 @@ def test_book_remembers_its_story_and_shelf_links_to_it(client):
     assert run(rows(Book, id=ref))[0].story_key == "jack_and_the_beanstalk"
     shelf = client.get("/api/my-books").json()["books"]
     assert shelf[0]["url"] == f"/stories/jack-and-the-beanstalk#book={ref}"
+
+
+def test_shelf_cover_is_the_first_climb_cropped_upright(client):
+    ref = post_book(client).json()["id"]
+    wait_for(client, ref)
+    book = client.get("/api/my-books").json()["books"][0]
+    assert book["cover_url"] == f"/api/books/{ref}/cover" and book["cover_is_art"]
+    r = client.get(book["cover_url"])
+    w, h = Image.open(io.BytesIO(r.content)).size
+    assert r.headers["content-type"] == "image/webp" and abs(w / h - 2 / 3) < 0.01
+
+
+def test_someone_elses_cover_is_hidden(client):
+    ref = post_book(client).json()["id"]
+    wait_for(client, ref)
+    sign_in(client, "someone@example.com")
+    assert client.get(f"/api/books/{ref}/cover").status_code == 404
 
 
 def test_a_made_up_story_is_refused(client):

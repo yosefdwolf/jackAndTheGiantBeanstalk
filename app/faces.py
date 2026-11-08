@@ -100,6 +100,18 @@ def _find_faces(gray):
     return faces
 
 
+def drawn_face_x(img: Image.Image) -> float | None:
+    """Where the hero's face is across a drawn page (0 to 1), or None if unsure. The photo finder also
+    "finds" faces in leaves and clouds, so only a face with eyes found inside it counts; the biggest wins."""
+    gray = cv2.cvtColor(np.array(img.convert("RGB")), cv2.COLOR_RGB2GRAY)
+    best = None
+    for (x, y, w, h) in _find_faces(gray):
+        eyes = EYES.detectMultiScale(gray[y:y + h * 2 // 3, x:x + w], 1.1, 3, minSize=(w // 10, w // 10))
+        if len(eyes) and (best is None or w > best[2]):
+            best = (x, y, w, h)
+    return None if best is None else (best[0] + best[2] / 2) / img.width
+
+
 def from_saved(full: bytes, face_box: list[int] | None) -> PreparedPhoto:
     """Rebuild the photo the book was accepted with, from the saved copy, without detecting again
     (the saved copy is recompressed, and a second check on it failed books that had passed)."""

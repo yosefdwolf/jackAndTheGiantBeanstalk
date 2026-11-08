@@ -46,13 +46,6 @@ JACK = [
     ("icon-key", "1024x1024", True, "A cute golden storybook key with a little leaf on its bow, rounded and chunky. Nothing else."),
     ("icon-book", "1024x1024", True,
      "A cute open storybook icon with a tiny beanstalk sprouting from its pages, rounded and chunky. Nothing else."),
-    # The library's cover for this story. The title is set by the website on top, never painted.
-    ("cover", "1024x1536", False,
-     "The front cover painting of a children's picture book of Jack and the Beanstalk. A huge, curling green "
-     "beanstalk climbs from a cosy thatched cottage in a green meadow up into fluffy clouds, where a grey "
-     "fairy-tale castle sits. A small boy in a brown vest climbs the beanstalk, seen from behind and far away, "
-     "so his face isn't shown. Bright, magical morning light, golden glints of magic on the leaves. Leave the "
-     "top quarter as soft, plain sky for a title to be added later."),
 ]
 
 # The shared pages belong to every story: a cosy library that holds a hint of each one.

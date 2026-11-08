@@ -27,6 +27,8 @@
     color: var(--ink-soft); background: var(--card); border: 0; width: auto; aspect-ratio: auto; border-radius: 0; }
   .shelf-books .book-object .band { position: absolute; z-index: 2; left: 10%; right: 4%; bottom: 7%; padding: 4px 6px; border-radius: 8px;
     background: rgba(255, 251, 242, .92); font: 800 13px/1.1 var(--display); color: var(--leaf-deep); }
+  /* The cover is the book's first-climb page: the face is high, so the title sits low, on the mist. */
+  .shelf-books .book-object.art img { object-position: center top; }
   .shelf-books .plank { margin: -2px 0 6px; }
   .shelf-books b { font: 800 17px/1.2 var(--display); color: var(--leaf-deep); }
   .shelf-books .story, .shelf-books small { font: 400 13px var(--hand); color: var(--ink-soft); }
@@ -82,7 +84,7 @@
       const a = el('a', 'shelf-item');
       a.href = b.url;
       a.setAttribute('aria-label', `Open ${b.child_name || b.hero}’s ${b.title} from ${new Date(b.created_at).toLocaleDateString()}`);
-      const cover = el('span', 'book-object');
+      const cover = el('span', b.cover_is_art ? 'book-object art' : 'book-object');
       if (b.cover_url) {
         const img = el('img');
         img.src = `${b.cover_url}?w=360`; img.alt = ''; img.loading = 'lazy';

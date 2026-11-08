@@ -46,7 +46,8 @@ class Story:
     pages: tuple[PageSpec, ...] = field(default_factory=tuple)
     key: str = ""      # the file's name: stories/<key>.yaml
     blurb: str = ""    # the library card's one or two sentences
-    cover: str = ""    # the library card's picture
+    library_cover: str = ""  # the library's cover picture (a /static/ path)
+    cover_page: int = 0      # each book's bookshelf cover: this page, cropped upright around the hero
 
     @property
     def slug(self) -> str:
@@ -74,7 +75,8 @@ def load_story(path: Path = DEFAULT_STORY) -> Story:
     return Story(title=raw["title"], style=raw["style"], world=raw["world"], theme=raw.get("theme", "default"),
                  hero_names=raw["hero"]["names"], hero_outfit=raw["hero"]["outfit"],
                  characters=characters, pages=tuple(pages), key=Path(path).stem,
-                 blurb=" ".join(raw.get("blurb", "").split()), cover=raw.get("cover", ""))
+                 blurb=" ".join(raw.get("blurb", "").split()), library_cover=raw.get("library_cover", ""),
+                 cover_page=int(raw.get("cover_page", 0)))
 
 
 def all_stories() -> list[Story]:

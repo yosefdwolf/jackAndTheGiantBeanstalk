@@ -26,7 +26,7 @@ from .book.providers import is_mock  # noqa: E402
 from .book.story import PRONOUNS, Story, all_stories, load_story, story_by_slug  # noqa: E402
 from .db.models import Book, RequestError, Review  # noqa: E402
 from .db.session import create_tables_if_sqlite, session  # noqa: E402
-from .faces import UploadError, prepare  # noqa: E402
+from .faces import UploadError, drawn_face_x, prepare  # noqa: E402
 
 STATIC = Path(__file__).resolve().parent.parent / "static"
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024  # phone photos can be large; they are downscaled on arrival
@@ -109,7 +109,7 @@ def story_card(story: Story) -> str:
     pages = sum(1 for p in story.pages if p.type == "illustrated")
     title, href = escape(story.title), f"/stories/{story.slug}"
     return (f'<li class="story"><div class="stand-books"><a class="book-object" href="{href}" tabindex="-1" aria-hidden="true">'
-            f'<img src="{escape(story.cover)}" alt="" loading="lazy">'
+            f'<img src="{escape(story.library_cover)}" alt="" loading="lazy">'
             f'<span class="cover-title">{title}<small>starring you</small></span></a></div>'
             f'<div class="plank"></div>'
             f'<div class="card story-info"><h2>{title}</h2><p>{escape(story.blurb)}</p>'
@@ -201,11 +201,14 @@ async def my_books(request: Request):
     out = []
     for b in books:
         story = stories.get(b.story_key) or load_story()
-        hero = next((i for i in b.images if i.kind == "hero_sheet" and i.status == "done"), None)
+        done = {(i.kind, i.page_number) for i in b.images if i.status == "done"}
+        art = story.cover_page and ("page", story.cover_page) in done
+        cover_url = (f"/api/books/{b.id}/cover" if art else
+                     f"/api/books/{b.id}/images/hero_sheet-0" if ("hero_sheet", 0) in done else None)
         out.append({"id": b.id, "status": b.status, "title": story.title, "child_name": b.child_name,
                     "hero": story.hero_names.get(b.gender, ""), "created_at": jobs._iso(b.created_at),
                     "url": f"/stories/{story.slug}#book={b.id}",
-                    "cover_url": f"/api/books/{b.id}/images/hero_sheet-0" if hero else None})
+                    "cover_url": cover_url, "cover_is_art": bool(art)})
     return {"books": out}
 
 
@@ -347,6 +350,28 @@ async def book_image(request: Request, ref: str, name: str, w: int | None = None
         img.save(buf, "WEBP", quality=85)
         data = buf.getvalue()
     return Response(data, media_type="image/webp", headers={"Cache-Control": "private, max-age=86400"})
+
+
+@app.get("/api/books/{ref}/cover")
+async def book_cover(request: Request, ref: str):
+    """The book's cover on the bookshelf: its story's cover page (the first climb, for Jack), cropped
+    upright around the hero's face, or around the middle if the face can't be found."""
+    await can_see(request, ref)
+    async with session() as s:
+        story_key = (await s.execute(select(Book.story_key).where(Book.id == ref))).scalar_one()
+    story = next((s for s in all_stories() if s.key == story_key), None) or load_story()
+    data = await jobs.image_bytes(ref, "page", story.cover_page) if story.cover_page else None
+    if data is None:
+        raise HTTPException(404, "No cover yet.")
+    img = Image.open(io.BytesIO(data)).convert("RGB")
+    width = min(img.width, round(img.height * 2 / 3))
+    centre = (drawn_face_x(img) or 0.5) * img.width
+    left = int(min(max(centre - width / 2, 0), img.width - width))
+    img = img.crop((left, 0, left + width, img.height))
+    img.thumbnail((600, 900))
+    buf = io.BytesIO()
+    img.save(buf, "WEBP", quality=85)
+    return Response(buf.getvalue(), media_type="image/webp", headers={"Cache-Control": "private, max-age=86400"})
 
 
 @app.get("/api/books/{ref}/pdf")
