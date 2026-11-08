@@ -3,6 +3,9 @@
 :root {
   --sky: #8fd0f5;
   --bar-tip: url("/static/themes/jack/art/beans.webp");  /* a magic bean rides each progress bar */
+  --icon-key: url("/static/themes/jack/art/icon-key.webp");
+  --icon-book: url("/static/themes/jack/art/icon-book.webp");   /* a book with a beanstalk sprouting from it */
+  --icon-camera: url("/static/themes/jack/art/icon-camera.webp");
   --leaf: #3f9a2e;
   --leaf-deep: #2c7a1f;
   --on-leaf: #ffffff;

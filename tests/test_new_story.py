@@ -266,3 +266,20 @@ def test_the_admin_can_draw_a_character_now(client):
     again = client.post("/admin/api/characters/little_red_riding_hood/wolf/draw").json()
     assert (first["name"], again["name"]) == ("wolf-1", "wolf-2") and again["in_use"]
     assert client.post("/admin/api/characters/little_red_riding_hood/dragon/draw").status_code == 404
+
+
+def test_a_story_page_wears_its_look(client):
+    from tests.test_books import ADMIN, sign_in
+    sign_in(client, ADMIN)  # Little Red is a draft
+    red = client.get("/stories/little-red-riding-hood").text
+    assert "/static/themes/story/theme.css" in red and "--accent: #d6322b;" in red
+    assert '--scene-wide: url("/static/themes/red/art/scene-wide.webp");' in red
+    assert '--bar-tip: url("/static/themes/red/art/bar-tip.webp");' in red
+    jack = client.get("/stories/jack-and-the-beanstalk").text
+    assert "/static/themes/jack/theme.css" in jack and "--scene-wide" not in jack
+
+
+def test_a_bad_colour_is_caught(stories):
+    path = stories / "little_red_riding_hood.yaml"
+    path.write_text(path.read_text().replace('accent: "#d6322b"', 'accent: "red; } body { display: none"'))
+    assert any("accent must be a colour" in p for p in check_story(load_story(path)))

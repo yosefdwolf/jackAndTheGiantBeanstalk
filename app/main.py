@@ -1,5 +1,6 @@
 import hashlib
 import json
+import re
 from html import escape
 import hmac
 import io
@@ -94,14 +95,31 @@ async def refs_and_errors(request: Request, call_next):
 LIBRARY_TITLE = "Picture books starring you"
 
 
+def look_vars(story: Story) -> str:
+    """A story file's look: section as the shared story theme's CSS variables (colours checked by check_story)."""
+    art = f"/static/themes/{story.theme}/art/"
+    lines = [f"--{k.replace('_', '-')}: {v};" for k, v in (story.look.get("colors") or {}).items()
+             if re.fullmatch(r"#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?", str(v))]
+    lines += [f'--scene-wide: url("{art}scene-wide.webp");', f'--scene-tall: url("{art}scene-tall.webp");']
+    for name in ("bar-tip", "icon-key", "icon-book", "icon-camera"):  # optional extra art the file asks for
+        if (STATIC / "themes" / story.theme / "art" / f"{name}.webp").exists():
+            lines.append(f'--{name}: url("{art}{name}.webp");')
+    return "<style>:root { " + " ".join(lines) + " }</style>"
+
+
 def themed(page: str, story: Story | None = None) -> str:
     """A page from static/, dressed in a story's theme (static/themes/<theme>/), or the library's look
     for pages that belong to every story (the library itself, the wallet, privacy)."""
     theme = story.theme if story else "library"
-    if not (STATIC / "themes" / theme / "theme.css").exists():  # a story without its own look borrows the library's
-        theme = "library"
+    look = ""
+    if not (STATIC / "themes" / theme / "theme.css").exists():
+        if story and (story.look or {}).get("colors"):  # the shared story theme: colours and backdrop from the file
+            look = look_vars(story)
+            theme = "story"
+        else:  # no look at all: the library's
+            theme = "library"
     html = (STATIC / page).read_text()
-    html = html.replace("<!--THEME_CSS-->", f'<link rel="stylesheet" href="/static/themes/{theme}/theme.css">')
+    html = html.replace("<!--THEME_CSS-->", f'<link rel="stylesheet" href="/static/themes/{theme}/theme.css">{look}')
     html = html.replace("<!--SCENE-->", (STATIC / "themes" / theme / "scene.html").read_text())
     html = html.replace("<!--NAV-->", (STATIC / "nav.html").read_text())
     html = html.replace("{{TITLE}}", escape(story.title if story else LIBRARY_TITLE))

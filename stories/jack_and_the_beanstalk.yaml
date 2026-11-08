@@ -10,6 +10,34 @@ style: animated3d
 theme: jack   # the website's look: static/themes/jack/
 blurb: You trade the family cow for five magic beans. By morning, nothing will ever be the same.
 library_cover: /static/themes/jack/art/cover.webp   # the library's cover (the site sets the title on it)
+# The story page's look. Jack has its own theme folder (static/themes/jack/: colours and drifting clouds), so only
+# the art painted by `python -m scripts.make_theme_art jack_and_the_beanstalk` is described here.
+look:
+  backdrop:
+    wide: >-
+      A wide, cheerful storybook landscape for a children's website background. A bright soft daytime sky with a
+      few fluffy clouds. Rolling bright green hills along the bottom with wildflowers. A small cosy thatched
+      cottage with a red door on the lower left. A giant magic beanstalk curls up the far left edge into the
+      clouds. A tiny fairy-tale castle sits on a cloud at the top right. Keep the whole centre of the picture as
+      calm open sky with nothing in it, for text and cards to sit on.
+    tall: >-
+      A tall, cheerful storybook landscape for a phone background. A bright soft daytime sky with a few fluffy
+      clouds. Rolling bright green hills along the bottom with wildflowers and a small cosy thatched cottage. A
+      giant magic beanstalk curls up the left edge into the clouds, a tiny fairy-tale castle on a cloud at the
+      top. Keep the middle as calm open sky with nothing in it.
+  art:
+    - {name: cloud, transparent: true, prompt: "One big, soft, fluffy white storybook cloud, round and friendly. Nothing else."}
+    - name: beans
+      transparent: true
+      prompt: >-
+        Five plump magic beans in a little pile: one deep red, one purple, one cream with red speckles, one green,
+        one mottled brown, each with a faint golden magical glow and a few tiny sparkles. Nothing else.
+    - {name: icon-camera, transparent: true, prompt: "A cute, chunky toy camera icon, rounded, cream and leaf-green. Nothing else."}
+    - {name: icon-key, transparent: true, prompt: "A cute golden storybook key with a little leaf on its bow, rounded and chunky. Nothing else."}
+    - name: icon-book
+      transparent: true
+      prompt: A cute open storybook icon with a tiny beanstalk sprouting from its pages, rounded and chunky. Nothing else.
+
 # The library's cover picture (drawn once by `python -m scripts.make_cover <story>`; the site sets the title on it).
 cover:
   scene: >-

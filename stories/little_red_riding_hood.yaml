@@ -7,6 +7,37 @@ draft: true   # only admins see it until this line is removed
 style: animated3d
 theme: red   # the website's look: static/themes/red/ if it exists, otherwise the library's
 blurb: Grandmother's cottage is just through the woods. Stay on the path, and don't talk to strangers.
+# The story page's look: its colours, and the backdrop painted behind it by
+# `python -m scripts.make_theme_art little_red_riding_hood` (saved in static/themes/<theme>/art/).
+look:
+  colors:
+    sky: "#bfe0f5"          # behind the painting while it loads: its blue sky
+    leaf: "#2f7d3a"         # buttons and headings: forest green
+    leaf_deep: "#1f5e2a"
+    accent: "#d6322b"       # the red hood
+    accent_deep: "#a51f1a"
+    berry: "#d6322b"
+    card: "#fffaf0"
+    card_edge: "#ead9b4"
+    ink: "#2b2219"
+    ink_soft: "#6f5d4a"
+  backdrop:
+    wide: >-
+      A wide, cheerful storybook landscape for a children's website background. The sunny edge of a deep, friendly
+      forest of tall old oaks and pines along the left and right edges. A winding dirt path through a meadow of
+      poppies, daisies and bluebells along the bottom. Grandmother's small ivy-covered cottage with a round door
+      peeks between the trees at the lower right, a thin curl of smoke from its chimney. Warm shafts of sunlight.
+      Keep the whole centre of the picture as calm, soft, open light with nothing in it, for text and cards to sit on.
+    tall: >-
+      A tall, cheerful storybook landscape for a phone background. Tall old oaks and pines along the left and right
+      edges, a winding dirt path through wildflowers along the bottom, Grandmother's small ivy-covered cottage
+      peeking between the trees near the bottom. Warm shafts of sunlight. Keep the middle as calm, soft, open light
+      with nothing in it.
+  art:   # optional extras: bar-tip rides each progress bar; icon-key, icon-book, icon-camera replace the shared icons
+    - name: bar-tip
+      transparent: true
+      prompt: A tiny posy of wildflowers (a red poppy, a daisy and a bluebell) tied with a red ribbon. Nothing else.
+
 # The library's cover picture (drawn once by `python -m scripts.make_cover <story>`; the site sets the title on it).
 cover:
   scene: >-

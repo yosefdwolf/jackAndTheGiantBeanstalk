@@ -54,7 +54,7 @@ p { margin: 0; }
 /* The magic word */
 .gate { text-align: center; padding-top: 72px; }
 .gate::before { content: ""; position: absolute; top: -46px; left: 50%; width: 108px; height: 108px; transform: translateX(-50%) rotate(-12deg);
-  background: url("/static/themes/jack/art/icon-key.webp") center / contain no-repeat; filter: drop-shadow(0 6px 6px rgba(0,0,0,.15)); }
+  background: var(--icon-key, url("/static/themes/library/art/icon-key.webp")) center / contain no-repeat; filter: drop-shadow(0 6px 6px rgba(0,0,0,.15)); }
 .gate-row { display: flex; gap: 12px; align-items: flex-end; margin-top: 16px; text-align: left; }
 .gate-row .box { flex: 1; margin: 0; }
 .gate.opening { animation: unlock .55s cubic-bezier(.5, -.3, .7, 1) forwards; }
@@ -65,7 +65,7 @@ p { margin: 0; }
 /* Google sign-in: Google's own button look, so people recognise it */
 .signin { text-align: center; padding-top: 72px; }
 .signin::before { content: ""; position: absolute; top: -46px; left: 50%; width: 108px; height: 108px; transform: translateX(-50%) rotate(8deg);
-  background: url("/static/themes/jack/art/icon-book.webp") center / contain no-repeat; filter: drop-shadow(0 6px 6px rgba(0,0,0,.15)); }
+  background: var(--icon-book, url("/static/themes/library/art/icon-flip.webp")) center / contain no-repeat; filter: drop-shadow(0 6px 6px rgba(0,0,0,.15)); }
 .btn.google { display: inline-flex; align-items: center; gap: 12px; margin-top: 18px; background: #fff; color: #1f1f1f;
   border: 1px solid #747775; border-radius: 999px; padding: 0 22px; min-height: 50px; font: 500 17px/1 Roboto, Arial, sans-serif;
   text-decoration: none; box-shadow: 0 2px 0 var(--card-edge); }
@@ -115,7 +115,7 @@ p { margin: 0; }
 .polaroid-photo img { width: 100%; height: 100%; object-fit: cover; }
 .polaroid-empty { text-align: center; padding: 14px; font: 600 16px/1.3 var(--hand); color: var(--ink-soft); }
 .polaroid-empty::before { content: ""; display: block; width: 96px; height: 96px; margin: 0 auto 6px;
-  background: url("/static/themes/jack/art/icon-camera.webp") center / contain no-repeat; }
+  background: var(--icon-camera, url("/static/themes/library/art/icon-camera.webp")) center / contain no-repeat; }
 .polaroid-empty svg { display: none; }
 .polaroid.has-photo .polaroid-empty { display: none; }
 .polaroid-caption { text-align: center; font-size: 17px; padding-top: 6px; color: var(--ink-soft); }
@@ -200,7 +200,8 @@ p { margin: 0; }
 .about-page dd { margin: 0; }
 .end-page { display: grid; place-items: center; text-align: center; background: var(--card); }
 .end-page h3 { font-size: clamp(30px, 7vw, 56px); color: var(--leaf-deep); }
-.end-page::before { content: ""; width: 34%; aspect-ratio: 1; background: url("/static/themes/jack/art/icon-book.webp") center / contain no-repeat; }
+.end-page::before { content: ""; width: 34%; aspect-ratio: 1;
+  background: var(--icon-book, url("/static/themes/library/art/icon-flip.webp")) center / contain no-repeat; }
 .reader-controls { display: flex; align-items: center; gap: 18px; }
 .page-count { min-width: 120px; text-align: center; font-size: 18px; font-weight: 600; color: var(--leaf-deep); background: var(--card);
   padding: 6px 14px; border-radius: 999px; }

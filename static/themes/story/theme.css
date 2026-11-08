@@ -1,0 +1,20 @@
+/* The shared look for any story without its own theme folder (theme.css). Its colours and painted backdrop
+   come from the story file's `look:` section: the site sets them as the variables below, and
+   scripts/make_theme_art.py paints the backdrop into static/themes/<theme>/art/. */
+:root {
+  --on-leaf: #ffffff;
+  --alert: #c0392b;
+  --display: "Grandstander", "Comic Sans MS", cursive;
+  --hand: "Shantell Sans", "Comic Sans MS", cursive;
+  --text: "Literata", Georgia, serif;
+  color-scheme: light;
+}
+
+body { background: var(--sky); }
+
+/* The painting sits in one fixed layer behind the page (a fixed background lags on Safari). */
+.scene { position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background: var(--sky) var(--scene-wide) center bottom / cover no-repeat; }
+@media (max-aspect-ratio: 1/1) {
+  .scene { background-image: var(--scene-tall); }
+}

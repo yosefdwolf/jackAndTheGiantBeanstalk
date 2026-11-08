@@ -1,5 +1,6 @@
 """The story file (stories/*.yaml) loaded into typed objects, plus per-book name and pronoun filling."""
 import logging
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -57,6 +58,7 @@ class Story:
     pronouns: dict = field(default_factory=dict)  # the form's boy/girl question and its two buttons' labels
     draft: bool = False  # only admins see it, to try it before customers can buy it
     cover: dict = field(default_factory=dict)  # the library cover's scene / mood / composition (scripts/make_cover.py)
+    look: dict = field(default_factory=dict)   # the story page's colours and painted backdrop (shared story theme)
 
     @property
     def slug(self) -> str:
@@ -71,6 +73,8 @@ TEXT_ZONES = {"bottom", "top", "bottom-dark"}
 # isn't shown in the library; check_story says why.
 TEMPLATE_ZONES = ("bottom", "top", "bottom-dark", "top", "bottom", "bottom", "top", "bottom", "bottom", "bottom",
                   "bottom", "top", "bottom", "top", "top", "bottom", "top", "bottom", "top", "bottom")
+LOOK_COLOURS = ("sky", "leaf", "leaf_deep", "accent", "accent_deep", "card", "card_edge", "ink", "ink_soft")
+HEX = re.compile(r"^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$")
 SITE_WORDS = ("heading", "go", "going", "growing", "binding", "failed", "hero_progress", "about_placeholder",
               "review_placeholder", "pdf_name", "musing")
 
@@ -97,7 +101,7 @@ def load_story(path: Path = DEFAULT_STORY) -> Story:
                  blurb=" ".join(raw.get("blurb", "").split()), library_cover=raw.get("library_cover", ""),
                  cover_page=int(raw.get("cover_page", 0)), site=raw.get("site", {}),
                  pronouns=raw.get("pronouns", {}), draft=bool(raw.get("draft", False)),
-                 cover=raw.get("cover", {}))
+                 cover=raw.get("cover", {}), look=raw.get("look", {}))
 
 
 def check_story(story: Story) -> list[str]:
@@ -109,6 +113,12 @@ def check_story(story: Story) -> list[str]:
     if not (story.hero_names.get("boy") and story.hero_names.get("girl")):
         problems.append("hero: names needs both boy and girl")
     problems += [f"pronouns: {k} is missing" for k in ("question", "boy", "girl") if not story.pronouns.get(k)]
+    if story.look:
+        colours = story.look.get("colors") or {}
+        if colours:  # needed only by stories without a theme folder of their own
+            problems += [f"look: colors: {k} is missing" for k in LOOK_COLOURS if k not in colours]
+        problems += [f"look: colors: {k} must be a colour like #2f7d3a" for k, v in colours.items() if not HEX.match(str(v))]
+        problems += [f"look: backdrop: {k} is missing" for k in ("wide", "tall") if not (story.look.get("backdrop") or {}).get(k)]
     if not story.blurb:
         problems.append("blurb (the library's description) is missing")
     problems += [f"site: {k} is missing" for k in SITE_WORDS if not story.site.get(k)]

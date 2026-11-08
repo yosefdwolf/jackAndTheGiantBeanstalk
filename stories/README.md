@@ -14,7 +14,9 @@ Everything the site says about a story comes from its file:
 | `world`, `characters` | what the pictures look like and who is in them |
 | `pages` | the 20 pages: words, where the words go, who's in the picture, the scene, and the line shown while it's drawn |
 | `cover_page` | which page becomes each book's cover on the bookshelf |
-| `theme`, `library_cover` | optional: see below |
+| `look` | the story page's colours and its painted backdrop (plus optional extras like the little picture riding the progress bar) |
+| `cover` | the library's cover picture: its scene, mood and composition |
+| `theme` | the folder its painted art goes in (`static/themes/<theme>/art/`) |
 | `draft: true` | optional: only admins see the story, to try it (and check its characters' pictures) before customers can buy it. Delete the line to publish |
 
 **The template.** Every story has 20 painted pages, then an `about_me` page. Page N puts its words in the same place
@@ -32,11 +34,12 @@ yourself: click the character's picture on the Characters tab to upload it.
 `characters` tables (pictures are in `character_pictures`). Never edit those tables: the files win on the next
 restart. A story whose file is deleted stays in the database, inactive, so books already made still open.
 
-**Optional extras.**
-- `theme`: a folder `static/themes/<theme>/` with `theme.css` and `scene.html` gives the story page its own look.
-  Without one, it uses the library's.
-- A cover: `static/themes/<theme>/art/cover.webp` (or `library_cover:` pointing anywhere). Without one, the library
-  shows a plain book with the title.
+**Its look.** Paint the backdrop and cover once (a few cents each), then commit the art:
+- `python -m scripts.make_theme_art <story>` paints what `look:` describes into `static/themes/<theme>/art/`.
+- `python -m scripts.make_cover <story>` paints the library cover from `cover:`.
+The story page then wears the shared story theme in the file's colours, over its backdrop. Until the art is painted,
+or with no `look:` at all, it uses the library's look; without a cover, the library shows a plain book with the
+title. (A story can also have a fully custom theme folder with its own `theme.css`, like Jack's drifting clouds.)
 
 **Before you pay for pictures,** read every prompt the story will send:
 `python -m scripts.show_prompts <story>` writes them to `docs/prompts/<story>.md`.

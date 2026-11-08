@@ -1,8 +1,9 @@
-"""Paint a theme's website art ONCE, in the books' own style, and save it to static/themes/<theme>/art/.
+"""Paint a story's website art ONCE (its backdrop and extras, described in its story file's look: section), or
+the library's, in the books' own style, and save it to static/themes/<theme>/art/.
 
-    python -m scripts.make_theme_art jack               # only images that don't exist yet
-    python -m scripts.make_theme_art jack cloud beans   # redo just these
-    python -m scripts.make_theme_art library            # the shared pages (library, bookshelf, wallet)
+    python -m scripts.make_theme_art little_red_riding_hood            # a story's look: section, only missing images
+    python -m scripts.make_theme_art jack_and_the_beanstalk cloud      # redo just these
+    python -m scripts.make_theme_art library                           # the shared pages (library, bookshelf, wallet)
 
 The art is the same for every visitor, so commit it. About $0.02–0.04 per image with gpt-image-2.5-flare.
 """
@@ -20,34 +21,12 @@ load_dotenv()
 from openai import AsyncOpenAI  # noqa: E402
 from PIL import Image  # noqa: E402
 
-from app.book.story import load_story  # noqa: E402
+from app.book.story import load_story, story_for  # noqa: E402
 from app.book.styles import get_style  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 
-# Per theme: (name, size, transparent background, what to paint)
-JACK = [
-    ("scene-wide", "1536x1024", False,
-     "A wide, cheerful storybook landscape for a children's website background. A bright soft daytime sky with "
-     "a few fluffy clouds. Rolling bright green hills along the bottom with wildflowers. A small cosy thatched "
-     "cottage with a red door on the lower left. A giant magic beanstalk curls up the far left edge into the "
-     "clouds. A tiny fairy-tale castle sits on a cloud at the top right. Keep the whole centre of the picture "
-     "as calm open sky with nothing in it, for text and cards to sit on."),
-    ("scene-tall", "1024x1536", False,
-     "A tall, cheerful storybook landscape for a phone background. A bright soft daytime sky with a few fluffy "
-     "clouds. Rolling bright green hills along the bottom with wildflowers and a small cosy thatched cottage. "
-     "A giant magic beanstalk curls up the left edge into the clouds, a tiny fairy-tale castle on a cloud at the "
-     "top. Keep the middle as calm open sky with nothing in it."),
-    ("cloud", "1024x1024", True, "One big, soft, fluffy white storybook cloud, round and friendly. Nothing else."),
-    ("beans", "1024x1024", True,
-     "Five plump magic beans in a little pile: one deep red, one purple, one cream with red speckles, one green, "
-     "one mottled brown, each with a faint golden magical glow and a few tiny sparkles. Nothing else."),
-    ("icon-camera", "1024x1024", True, "A cute, chunky toy camera icon, rounded, cream and leaf-green. Nothing else."),
-    ("icon-key", "1024x1024", True, "A cute golden storybook key with a little leaf on its bow, rounded and chunky. Nothing else."),
-    ("icon-book", "1024x1024", True,
-     "A cute open storybook icon with a tiny beanstalk sprouting from its pages, rounded and chunky. Nothing else."),
-]
-
+# Per theme: (name, size, transparent background, what to paint). Stories' art comes from their story files.
 # The shared pages belong to every story: a cosy library that holds a hint of each one.
 LIBRARY = [
     ("room-wide", "1536x1024", False,
@@ -75,7 +54,15 @@ LIBRARY = [
      "golden sparkles. Nothing else."),
 ]
 
-ART = {"jack": JACK, "library": LIBRARY}
+def story_art(story) -> list[tuple[str, str, bool, str]]:
+    """A story's art, from its story file's look: section: the backdrop (wide and tall), then any extras."""
+    look = story.look or {}
+    backdrop = look.get("backdrop") or {}
+    art = [(f"scene-{shape}", size, False, backdrop[shape])
+           for shape, size in (("wide", "1536x1024"), ("tall", "1024x1536")) if backdrop.get(shape)]
+    art += [(a["name"], "1024x1024", bool(a.get("transparent")), " ".join(str(a["prompt"]).split()))
+            for a in look.get("art") or []]
+    return art
 
 
 def to_webp(png: bytes, transparent: bool, max_side: int) -> bytes:
@@ -87,13 +74,19 @@ def to_webp(png: bytes, transparent: bool, max_side: int) -> bytes:
     return buf.getvalue()
 
 
-async def main(theme: str, names: list[str]) -> None:
-    style = get_style(load_story().style)  # every story shares the book style, so the site does too
+async def main(target: str, names: list[str]) -> None:
+    if target == "library":
+        style, theme, art = get_style(load_story().style), "library", LIBRARY  # every story shares the book style
+    else:
+        story = story_for(target)
+        if story.key != target:
+            raise SystemExit(f"No story file stories/{target}.yaml (or say `library`)")
+        style, theme, art = get_style(story.style), story.theme, story_art(story)
     out = ROOT / "static" / "themes" / theme / "art"
     out.mkdir(parents=True, exist_ok=True)
     client = AsyncOpenAI(max_retries=0, timeout=180)
     model = os.getenv("IMAGE_MODEL", "gpt-image-2.5-flare")
-    for name, size, transparent, what in ART[theme]:
+    for name, size, transparent, what in art:
         path = out / f"{name}.webp"
         if (names and name not in names) or (not names and path.exists()):
             continue
