@@ -17,7 +17,7 @@ type or image provider is one new class.
 | Pages | `app/book/pages.py` | `Page` abstract class. `IllustratedPage` and `AboutMePage` are registered by type name. |
 | Providers | `app/book/providers.py` | `ImageProvider` abstract class. OpenAI (`gpt-image-2.5-flare`) and a free mock. |
 | PDF | `app/book/pdf.py` | Full-bleed art, with the story text drawn on top in a real font. The image model never draws text. About Me is last. |
-| Jobs | `app/book/jobs.py` | Draws the hero sheet, then every page, 5 at a time. Each picture gets up to 3 tries a short pause apart (a failed try isn't charged); if one still fails, the book stops and its owner can retry the missing pictures by hand. |
+| Jobs | `app/book/jobs.py` | Draws the hero sheet, then every page, 7 at a time: the child added into the page's saved scene (scene bible, `app/book/scenes.py`), or a page without the hero reused whole. Each picture gets up to 3 tries a short pause apart (a failed try isn't charged); if one still fails, the book stops and its owner can retry the missing pictures by hand. |
 | Progress | `static/clothesline.js` | The pages "drying on a line" while a book is drawn: each fills with colour, the left-most takes each finished picture onto the stack, a failed try tears. Above it, one bar names the stage. |
 
 **Keeping the child the same on every page:** one hero sheet and one style string, reused on every

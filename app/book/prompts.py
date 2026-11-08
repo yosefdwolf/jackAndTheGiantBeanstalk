@@ -2,6 +2,8 @@
 
 Wording here was tuned by hand in the OpenAI Playground before it went into code.
 """
+import re
+
 from .story import HERO, Casting, Character, PageSpec, Story
 from .styles import ArtStyle
 
@@ -48,9 +50,9 @@ class PromptBuilder:
             NO_TEXT,
         ])
 
-    def page(self, spec: PageSpec, earlier: tuple[int, ...] = ()) -> str:
-        """Prompt for one illustrated page. Reference images are attached in spec.cast order, then the earlier
-        pages in `earlier` (the ones from spec.see that have been drawn)."""
+    def page(self, spec: PageSpec) -> str:
+        """Prompt for a whole page drawn from the cast's sheets (attached in spec.cast order): a page without
+        the hero (shared by every book). Pages with the hero are drawn on their scene (on_scene)."""
         c = self.casting
         refs = []
         for i, key in enumerate(spec.cast, 1):
@@ -59,9 +61,6 @@ class PromptBuilder:
                             f"skin tone, and outfit: {self.story.hero_outfit}).")
             else:
                 refs.append(f"Image {i} is {c.name_of(key)}: draw them exactly as shown.")
-        for i, n in enumerate(earlier, len(spec.cast) + 1):
-            refs.append(f"Image {i} is page {n} of this same book, the moment just before: keep the same place, "
-                        "furniture, light and costumes, so the two pages follow on.")
         names = [c.name_of(k) for k in spec.cast]
         only = (", ".join(names[:-1]) + " and " + names[-1]) if len(names) > 1 else names[0]
         return "\n".join([
@@ -74,3 +73,54 @@ class PromptBuilder:
             *([f"Costumes (exactly as on the other pages): {c.fill(spec.costume)}"] if spec.costume else []),
             f"Only these characters appear: {only}. No other people or animals.",
         ])
+
+    # --- the scene bible: each page's scene drawn once per story, then the child added in every book ---------
+
+    def _neutral(self, text: str) -> str:
+        """Story text with the hero as "the hero", so a scene is the same for a boy's and a girl's book."""
+        words = {"hero": "the hero", "he": "the hero", "his": "the hero's", "him": "the hero"}
+        words |= {k.capitalize(): v.capitalize() for k, v in words.items() if k != "hero"}
+        return re.sub(r"(^|[.!?:]\s+)the hero", r"\1The hero", text.format(**words))
+
+    def scene(self, spec: PageSpec, earlier: tuple[int, ...] = ()) -> str:
+        """Prompt for a page's scene, without the hero: drawn once per story and kept (app/book/scenes.py).
+        Attached: the other characters' sheets in cast order, then the scenes of `earlier` pages."""
+        others = [k for k in spec.cast if k != HERO]
+        refs = [f"Image {i} is {self._neutral(self.story.characters[k].name)}: draw them exactly as shown."
+                for i, k in enumerate(others, 1)]
+        refs += [f"Image {i} is the scene of page {n}, the moment just before: keep the same place, furniture, "
+                 "light and costumes, so the two pages follow on." for i, n in enumerate(earlier, len(others) + 1)]
+        names = [self._neutral(self.story.characters[k].name) for k in others]
+        cast = (f"Only these characters appear: {', '.join(names[:-1]) + ' and ' + names[-1] if len(names) > 1 else names[0]}. "
+                "No other people or animals.") if names else "No people or animals at all."
+        return "\n".join([
+            *([" ".join(refs)] if refs else []),
+            *self._style_lines(),
+            f"Wide picture-book illustration: the background scene for one page. {NO_TEXT}",
+            "The hero, a child, is added into this picture later, so do NOT draw the hero or any child. Leave the "
+            "spot where the hero is described clear and empty, with nothing in front of it, so the hero can be "
+            "added there; everything else in the scene is drawn exactly as described.",
+            f"Scene: {self._neutral(spec.scene)}",
+            f"Mood and light: {self._neutral(spec.mood)}",
+            f"Composition: {self._neutral(spec.composition)} The hero's spot must not be in that space for text.",
+            *([f"Costumes (exactly as on the other pages): {self._neutral(spec.costume)}"] if spec.costume else []),
+            cast,
+        ])
+
+    def on_scene(self, spec: PageSpec) -> str:
+        """Prompt for a book's page: the hero (image 1) added into the page's saved scene (image 2)."""
+        c = self.casting
+        text_area = {"top": "top third", "bottom": "bottom third", "bottom-dark": "bottom quarter"}[spec.text_zone]
+        return "\n".join([
+            f"Image 1 is {c.hero_name}: use {c.fill('{him}')} exactly (same face, hair, skin tone, and outfit: "
+            f"{self.story.hero_outfit}). Image 2 is this page's finished scene.",
+            f"Draw image 2 again with {c.hero_name} added into it, as described below. Keep everything else in image "
+            "2 exactly the same: the place, the other characters, the light, the colours and the composition.",
+            *self._style_lines(),
+            f"Wide picture-book illustration. {NO_TEXT}",
+            f"Scene: {c.fill(spec.scene)}",
+            f"Keep {c.hero_name}, and above all {c.fill('{his}')} face, out of the {text_area} of the picture: it "
+            "stays plain, for the story text.",
+            f"{c.hero_name} is the only person added; nothing else changes.",
+        ])
+

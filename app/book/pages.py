@@ -30,7 +30,7 @@ class BookContext:
     provider: ImageProvider
     sheets: CastSheets
     child: ChildInfo
-    drawn: dict[int, bytes] = field(default_factory=dict)  # finished pages, for pages that see them (see_pages:)
+    scenes: dict[int, bytes] = field(default_factory=dict)  # page -> its scene from the scene bible (scenes.py)
 
 
 @dataclass
@@ -68,15 +68,20 @@ class IllustratedPage(Page):
     """Art from the cast's reference sheets, story text drawn on top by the PDF layer."""
     needs_image = True
 
-    def earlier(self, ctx) -> tuple[int, ...]:
-        return tuple(n for n in self.spec.see if n in ctx.drawn)
+    def on_scene(self, ctx) -> bool:
+        """Drawn as the child added into the page's saved scene (every page with the hero on it)."""
+        return self.spec.number in ctx.scenes
 
     def prompt(self, ctx):
-        return ctx.prompts.page(self.spec, self.earlier(ctx))
+        return ctx.prompts.on_scene(self.spec) if self.on_scene(ctx) else ctx.prompts.page(self.spec)
+
+    def refs(self, ctx) -> list[tuple[str, bytes]]:
+        if self.on_scene(ctx):
+            return [("hero.png", ctx.sheets.hero_sheet), (f"scene-{self.spec.number}.png", ctx.scenes[self.spec.number])]
+        return ctx.sheets.refs(self.spec.cast)
 
     async def draw(self, ctx):
-        refs = ctx.sheets.refs(self.spec.cast) + [(f"page-{n}.png", ctx.drawn[n]) for n in self.earlier(ctx)]
-        return await ctx.provider.edit(label=self.label, refs=refs, prompt=self.prompt(ctx), size=PAGE_SIZE)
+        return await ctx.provider.edit(label=self.label, refs=self.refs(ctx), prompt=self.prompt(ctx), size=PAGE_SIZE)
 
     def layout(self, ctx, image):
         return RenderedPage(self.spec.number, "illustrated", image=image,

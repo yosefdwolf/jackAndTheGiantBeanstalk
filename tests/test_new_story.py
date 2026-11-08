@@ -1,4 +1,5 @@
 """Adding a story is adding a file: the template check, the library, and the character bible."""
+import shutil
 import pytest
 from sqlalchemy import select
 
@@ -20,8 +21,7 @@ def test_every_story_file_fits_the_template(path):
 @pytest.fixture
 def stories(tmp_path, monkeypatch):
     """A stories folder of our own, starting with a copy of Little Red."""
-    text = (STORIES / "little_red_riding_hood.yaml").read_text().replace("\ndraft: true", "\n# not a draft here")
-    (tmp_path / "little_red_riding_hood.yaml").write_text(text)
+    shutil.copy(STORIES / "little_red_riding_hood.yaml", tmp_path / "little_red_riding_hood.yaml")
     monkeypatch.setattr(story_mod, "STORIES", tmp_path)
     return tmp_path
 
@@ -244,8 +244,10 @@ def test_an_upload_doesnt_beat_a_pin(client, monkeypatch, stories):
     assert r["in_use"] is False and "pins wolf-1" in r["note"]
 
 
-def test_a_draft_story_is_only_for_admins(client):
+def test_a_draft_story_is_only_for_admins(client, stories):
     from tests.test_books import ADMIN, PARENT, post_book, sign_in
+    path = stories / "little_red_riding_hood.yaml"
+    path.write_text(path.read_text().replace("title: Little Red Riding Hood\n", "title: Little Red Riding Hood\ndraft: true\n"))
     assert story_for("little_red_riding_hood").draft
     sign_in(client, PARENT)
     shelf = client.get("/").text
@@ -269,8 +271,6 @@ def test_the_admin_can_draw_a_character_now(client):
 
 
 def test_a_story_page_wears_its_look(client):
-    from tests.test_books import ADMIN, sign_in
-    sign_in(client, ADMIN)  # Little Red is a draft
     red = client.get("/stories/little-red-riding-hood").text
     assert "/static/themes/story/theme.css" in red and "--accent: #d6322b;" in red
     assert '--scene-wide: url("/static/themes/red/art/scene-wide.webp");' in red
@@ -285,16 +285,31 @@ def test_a_bad_colour_is_caught(stories):
     assert any("accent must be a colour" in p for p in check_story(load_story(path)))
 
 
-def test_a_page_that_sees_another_waits_for_it_and_gets_it(client):
+def test_pages_are_drawn_on_their_scene_and_scenes_see_earlier_scenes(client):
     from tests.test_books import ADMIN, post_book, rows, sign_in, wait_for
-    from app.db.models import BookImage
+    from app.db.models import BookImage, Scene
     sign_in(client, ADMIN)
     ref = post_book(client, story="little-red-riding-hood").json()["id"]
     assert wait_for(client, ref, timeout=30)["status"] == "done"
     pages = {i.page_number: i for i in run(rows(BookImage, book_id=ref)) if i.kind == "page"}
-    assert pages[13].refs == ["hero", "wolf", "page-12"] and "Image 3 is page 12" in pages[13].prompt
-    assert pages[13].started_at >= pages[12].finished_at  # drawn after page 12 was finished
-    assert "Costumes (exactly as on the other pages)" in pages[16].prompt
+    assert pages[13].refs == ["hero", "scene-13"] and "Image 2 is this page's finished scene" in pages[13].prompt
+    assert pages[8].refs == ["wolf"]  # no hero: the whole page, shared by every book
+    saved = {r.page_number: r for r in run(rows(Scene, story_key="little_red_riding_hood"))}
+    assert sorted(saved) == [n for n in range(1, 21) if n not in (8, 9, 10)]  # a scene for each page with the hero
+    assert "Image 2 is the scene of page 12" in saved[13].prompt  # page 13's scene was drawn from page 12's
+    assert "do NOT draw the hero" in saved[1].prompt and "Little Red" not in saved[1].prompt
+
+
+def test_a_second_book_reuses_every_scene(client):
+    from tests.test_books import ADMIN, post_book, rows, sign_in, wait_for
+    from app.db.models import BookEvent, Scene
+    sign_in(client, ADMIN)
+    first = post_book(client, story="little-red-riding-hood").json()["id"]
+    wait_for(client, first, timeout=30)
+    second = post_book(client, story="little-red-riding-hood", gender="girl", name="Ann").json()["id"]
+    assert wait_for(client, second, timeout=30)["status"] == "done"
+    assert len(run(rows(Scene, story_key="little_red_riding_hood"))) == 17  # a girl's book drew no new scenes
+    assert not [e for e in run(rows(BookEvent, book_id=second)) if e.step.startswith("scene")]
 
 
 def test_seeing_a_later_page_is_caught(stories):
@@ -319,3 +334,23 @@ def test_pages_without_the_hero_are_drawn_once_and_reused(client):
     reused = sorted(e.step for e in run(rows(BookEvent, book_id=second)) if e.event == "reused")
     assert reused == ["page 10", "page 8", "page 9"]  # only those three; every page with the hero is drawn
     assert not [e for e in run(rows(BookEvent, book_id=first)) if e.event == "reused"]
+
+
+def test_words_move_off_a_face(client):
+    import io as _io
+    from PIL import Image
+    from pillow_heif import register_heif_opener
+    from app.faces import choose_zone
+    register_heif_opener()
+    face = Image.open(STORIES.parent / "tests" / "fixtures" / "photo.heic").convert("RGB")
+    face.thumbnail((340, 340))
+
+    def page(at_bottom):
+        img = Image.new("RGB", (1536, 1024), "#bfe0f5")
+        img.paste(face, (600, 1024 - face.height - 20 if at_bottom else 20))
+        buf = _io.BytesIO()
+        img.save(buf, "PNG")
+        return buf.getvalue()
+    assert choose_zone(page(at_bottom=True), "bottom") == "top"     # a face where the words go: they move up
+    assert choose_zone(page(at_bottom=False), "bottom") == "bottom"  # the face is up top: words stay
+    assert choose_zone(page(at_bottom=False), "top") == "bottom"

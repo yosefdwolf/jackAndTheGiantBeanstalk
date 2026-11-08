@@ -31,7 +31,8 @@
     constructor(root, { total = 0 } = {}) {
       this.root = root;
       this.total = total;
-      this.slots = window.innerWidth < 560 ? 3 : 5;  // a phone shows 3 even though 5 are drawn at once
+      // 7 pictures are drawn at once; a wide screen shows all 7 pages, a narrower one 5, a phone 3.
+      this.slots = window.innerWidth < 560 ? 3 : window.innerWidth < 1000 ? 5 : 7;
       this.status = new Map();   // key -> last status seen
       this.tries = new Map();    // key -> last try number seen
       this.queue = [];           // done / fail events, played one at a time

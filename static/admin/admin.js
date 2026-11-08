@@ -472,8 +472,45 @@
     return el('div', { class: 'cast-picture' }, button, input, draw);
   }
 
+  // Each story's scenes (scene bible): drawn once without the hero, then every book adds its child in.
+  let scenesTimer = 0;
+  function scenesBlock(sc) {
+    if (!sc) return null;
+    const drawAll = el('button', { class: 'btn small', type: 'button', disabled: sc.drawing || !sc.missing,
+      text: sc.drawing ? 'Drawing the scenes… (this page updates itself)'
+        : sc.missing ? `Draw the ${sc.missing} missing scenes (about ${fmt.cost(sc.missing * 0.04)})` : 'Every scene is drawn',
+      onclick: async () => {
+        if (!window.confirm(`Draw ${sc.missing} scenes for ${sc.title}? About ${fmt.cost(sc.missing * 0.04)}, a few minutes.`)) return;
+        drawAll.disabled = true;
+        await api(`/scenes/${encodeURIComponent(sc.key)}/draw`, { method: 'POST' });
+        loadCharacters();
+      } });
+    return el('div', { class: 'scenes' },
+      el('div', { class: 'scenes-head' }, el('h3', { text: 'Scenes' }),
+        el('p', { class: 'soft', text: 'Each page drawn once without the hero; every book adds its child into it. Pages without the hero are shared whole, drawn by the first book.' }),
+        drawAll),
+      el('div', { class: 'scene-grid' }, ...sc.pages.map((p) => el('figure', { class: `scene ${p.kind}` },
+        p.url ? el('img', { src: `${p.url}?w=360`, alt: `Page ${p.page}`, loading: 'lazy' })
+          : el('div', { class: 'scene-empty', text: p.kind === 'scene' ? 'Not drawn yet' : 'Drawn by the first book' }),
+        el('figcaption', {},
+          el('b', { text: `p. ${p.page}` }), ' ',
+          el('span', { class: 'soft', text: `${p.kind === 'shared' ? 'no hero, shared · ' : ''}words ${p.zone}` }),
+          el('span', { class: 'scene-text', text: p.text }),
+          p.kind === 'scene' && p.url ? el('button', { class: 'btn plain small', type: 'button', text: 'Draw again',
+            onclick: async (e) => {
+              if (!window.confirm(`Draw page ${p.page}'s scene again? About 4¢; books use the new one from then on.`)) return;
+              e.currentTarget.disabled = true;
+              e.currentTarget.textContent = 'Drawing… (about a minute)';
+              await api(`/scenes/${encodeURIComponent(sc.key)}/${p.page}/draw`, { method: 'POST' }).catch((err) => window.alert(err.message));
+              loadCharacters();
+            } }) : null)))));
+  }
+
   async function loadCharacters() {
-    const stories = await api('/characters');
+    const [stories, sceneList] = await Promise.all([api('/characters'), api('/scenes')]);
+    const byKey = Object.fromEntries(sceneList.map((s) => [s.key, s]));
+    clearTimeout(scenesTimer);
+    if (sceneList.some((s) => s.drawing)) scenesTimer = setTimeout(() => { if (readHash().tab === 'characters') loadCharacters(); }, 8000);
     $('characterStories').replaceChildren(...stories.map((st) => el('section', { class: 'cast-story' },
       el('h2', { class: 'section-title', text: st.title }),
       el('div', { class: 'cast-grid' }, ...st.characters.map((c) => el('article', { class: 'panel cast-card' },
@@ -487,7 +524,8 @@
           el('figcaption', {}, el('button', { class: 'btn plain small', type: 'button', title: 'Copy picture: ' + v.name,
             text: v.name, onclick: (e) => copyPin(v.name, e.currentTarget) }),
             el('span', { class: 'soft', text: `${v.source}${v.cost ? ` · ${fmt.cost(v.cost)}` : ''}` })))))
-          : null))))));
+          : null))),
+      scenesBlock(byKey[st.key]))));
   }
 
   // --- errors ------------------------------------------------------------------------------------

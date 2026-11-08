@@ -84,17 +84,31 @@ No text, letters, numbers or signs anywhere in the image.
 
 **While it's drawn:** Checking the empty cupboard…
 
-**Pictures sent with it:** hero.png, mother.png, milky_white.png
+**The scene** (drawn once for every book; pictures sent: mother, milky_white):
 
 ```
-Image 1 is Jack: use him exactly (same face, hair, skin tone, and outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots). Image 2 is Jack's mother: draw them exactly as shown. Image 3 is Milky-White, the cow: draw them exactly as shown.
+Image 1 is The hero's mother: draw them exactly as shown. Image 2 is Milky-White, the cow: draw them exactly as shown.
+Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
+World: a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours; nothing new, clean or polished.
+Wide picture-book illustration: the background scene for one page. No text, letters, numbers or signs anywhere in the image.
+The hero, a child, is added into this picture later, so do NOT draw the hero or any child. Leave the spot where the hero is described clear and empty, with nothing in front of it, so the hero can be added there; everything else in the scene is drawn exactly as described.
+Scene: A bare, poor cottage kitchen in a hard winter. The cupboard doors hang open on empty, dusty shelves; a cracked empty bowl sits on a rough table. The hero's mother stands by the empty cupboard, worried. The hero, thin and serious, is shown full face, front-lit by cold daylight from the door, looking at the hero's mother with a sad, worried expression. Through the open door behind them, Milky-White stands in a muddy yard.
+Mood and light: Quiet, sad and hungry. Cold, overcast grey daylight, deep shadows in the corners; no golden sunshine.
+Composition: Characters in the upper two-thirds. The lower third is the worn, uneven earth floor in soft shadow, plain and low in detail, for text added later. Not a table edge, board or blank panel. The hero's spot must not be in that space for text.
+Only these characters appear: The hero's mother and Milky-White, the cow. No other people or animals.
+```
+
+**Each book's page** (pictures sent: hero, the scene):
+
+```
+Image 1 is Jack: use him exactly (same face, hair, skin tone, and outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots). Image 2 is this page's finished scene.
+Draw image 2 again with Jack added into it, as described below. Keep everything else in image 2 exactly the same: the place, the other characters, the light, the colours and the composition.
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours; nothing new, clean or polished.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
 Scene: A bare, poor cottage kitchen in a hard winter. The cupboard doors hang open on empty, dusty shelves; a cracked empty bowl sits on a rough table. Jack's mother stands by the empty cupboard, worried. Jack, thin and serious, is shown full face, front-lit by cold daylight from the door, looking at his mother with a sad, worried expression. Through the open door behind them, Milky-White stands in a muddy yard.
-Mood and light: Quiet, sad and hungry. Cold, overcast grey daylight, deep shadows in the corners; no golden sunshine.
-Composition: Characters in the upper two-thirds. The lower third is the worn, uneven earth floor in soft shadow, plain and low in detail, for text added later. Not a table edge, board or blank panel.
-Only these characters appear: Jack, Jack's mother and Milky-White, the cow. No other people or animals.
+Keep Jack, and above all his face, out of the bottom third of the picture: it stays plain, for the story text.
+Jack is the only person added; nothing else changes.
 ```
 
 ## Page 2
@@ -103,17 +117,31 @@ Only these characters appear: Jack, Jack's mother and Milky-White, the cow. No o
 
 **While it's drawn:** Swapping the cow for beans…
 
-**Pictures sent with it:** hero.png, old_man.png, milky_white.png
+**The scene** (drawn once for every book; pictures sent: old_man, milky_white):
 
 ```
-Image 1 is Jack: use him exactly (same face, hair, skin tone, and outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots). Image 2 is the strange old man: draw them exactly as shown. Image 3 is Milky-White, the cow: draw them exactly as shown.
+Image 1 is the strange old man: draw them exactly as shown. Image 2 is Milky-White, the cow: draw them exactly as shown.
+Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
+World: a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours; nothing new, clean or polished.
+Wide picture-book illustration: the background scene for one page. No text, letters, numbers or signs anywhere in the image.
+The hero, a child, is added into this picture later, so do NOT draw the hero or any child. Leave the spot where the hero is described clear and empty, with nothing in front of it, so the hero can be added there; everything else in the scene is drawn exactly as described.
+Scene: A muddy dirt road under a grey, overcast sky, bare hedgerows and twisted trees, a village tiny in the far distance. The strange old man holds out his open palm with exactly five beans: one deep red, one purple, one cream with red speckles, one green, one mottled brown; real dried beans, each with a faint magical glow, not candy, not jelly beans. The hero, in three-quarter view and in the same clothes as before, holds a frayed rope tied to Milky-White and stares at the beans: unsure, tempted, hungry. Milky-White looks tired.
+Mood and light: Uncertain and a little eerie; the old man's smile is knowing, not jolly. Flat, cool overcast light; muted colours.
+Composition: Characters in the lower two-thirds. The top third is plain, soft overcast sky with no birds or detail, for text added later. The hero's spot must not be in that space for text.
+Only these characters appear: the strange old man and Milky-White, the cow. No other people or animals.
+```
+
+**Each book's page** (pictures sent: hero, the scene):
+
+```
+Image 1 is Jack: use him exactly (same face, hair, skin tone, and outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots). Image 2 is this page's finished scene.
+Draw image 2 again with Jack added into it, as described below. Keep everything else in image 2 exactly the same: the place, the other characters, the light, the colours and the composition.
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours; nothing new, clean or polished.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
 Scene: A muddy dirt road under a grey, overcast sky, bare hedgerows and twisted trees, a village tiny in the far distance. The strange old man holds out his open palm with exactly five beans: one deep red, one purple, one cream with red speckles, one green, one mottled brown; real dried beans, each with a faint magical glow, not candy, not jelly beans. Jack, in three-quarter view and in the same clothes as before, holds a frayed rope tied to Milky-White and stares at the beans: unsure, tempted, hungry. Milky-White looks tired.
-Mood and light: Uncertain and a little eerie; the old man's smile is knowing, not jolly. Flat, cool overcast light; muted colours.
-Composition: Characters in the lower two-thirds. The top third is plain, soft overcast sky with no birds or detail, for text added later.
-Only these characters appear: Jack, the strange old man and Milky-White, the cow. No other people or animals.
+Keep Jack, and above all his face, out of the top third of the picture: it stays plain, for the story text.
+Jack is the only person added; nothing else changes.
 ```
 
 ## Page 3
@@ -122,17 +150,31 @@ Only these characters appear: Jack, the strange old man and Milky-White, the cow
 
 **While it's drawn:** Throwing the beans out the window…
 
-**Pictures sent with it:** hero.png, mother.png
+**The scene** (drawn once for every book; pictures sent: mother):
 
 ```
-Image 1 is Jack: use him exactly (same face, hair, skin tone, and outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots). Image 2 is Jack's mother: draw them exactly as shown.
+Image 1 is The hero's mother: draw them exactly as shown.
+Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
+World: a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours; nothing new, clean or polished.
+Wide picture-book illustration: the background scene for one page. No text, letters, numbers or signs anywhere in the image.
+The hero, a child, is added into this picture later, so do NOT draw the hero or any child. Leave the spot where the hero is described clear and empty, with nothing in front of it, so the hero can be added there; everything else in the scene is drawn exactly as described.
+Scene: The cottage at dusk, seen from the garden. The hero's mother leans out of the window, angrily throwing the beans. Exactly five beans scatter through the air into the garden below: one deep red, one purple, one cream with red speckles, one green, one mottled brown; real dried beans, faintly glowing, not candy. The hero stands alone in the open doorway, watching, worried.
+Mood and light: Darker than the daytime pages: deep blue dusk, warm lamplight in the window.
+Composition: Keep the bottom quarter as plain, dark grass with no detail, for text added later. The hero's spot must not be in that space for text.
+Only these characters appear: The hero's mother. No other people or animals.
+```
+
+**Each book's page** (pictures sent: hero, the scene):
+
+```
+Image 1 is Jack: use him exactly (same face, hair, skin tone, and outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots). Image 2 is this page's finished scene.
+Draw image 2 again with Jack added into it, as described below. Keep everything else in image 2 exactly the same: the place, the other characters, the light, the colours and the composition.
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours; nothing new, clean or polished.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
 Scene: The cottage at dusk, seen from the garden. Jack's mother leans out of the window, angrily throwing the beans. Exactly five beans scatter through the air into the garden below: one deep red, one purple, one cream with red speckles, one green, one mottled brown; real dried beans, faintly glowing, not candy. Jack stands alone in the open doorway, watching, worried.
-Mood and light: Darker than the daytime pages: deep blue dusk, warm lamplight in the window.
-Composition: Keep the bottom quarter as plain, dark grass with no detail, for text added later.
-Only these characters appear: Jack and Jack's mother. No other people or animals.
+Keep Jack, and above all his face, out of the bottom quarter of the picture: it stays plain, for the story text.
+Jack is the only person added; nothing else changes.
 ```
 
 ## Page 4
@@ -141,17 +183,30 @@ Only these characters appear: Jack and Jack's mother. No other people or animals
 
 **While it's drawn:** Waiting for the beans to sprout…
 
-**Pictures sent with it:** hero.png
+**The scene** (drawn once for every book; pictures sent: none):
 
 ```
-Image 1 is Jack: use him exactly (same face, hair, skin tone, and outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots).
+Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
+World: a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours; nothing new, clean or polished.
+Wide picture-book illustration: the background scene for one page. No text, letters, numbers or signs anywhere in the image.
+The hero, a child, is added into this picture later, so do NOT draw the hero or any child. Leave the spot where the hero is described clear and empty, with nothing in front of it, so the hero can be added there; everything else in the scene is drawn exactly as described.
+Scene: Early morning in the cottage garden. A colossal, twisting green beanstalk, thick as an old tree, rises from the garden soil, coiling up and up until it disappears into low clouds. The hero stands at its foot in the same clothes, head tilted all the way back, mouth open in wonder, one hand on the enormous stalk.
+Mood and light: Wonder and a first touch of hope. Cool pale dawn light, mist on the ground, a soft glow where the stalk meets the clouds.
+Composition: Tall, upward-looking view with the stalk filling the middle. The top third is soft, plain cloud and pale sky for text added later. The hero's spot must not be in that space for text.
+No people or animals at all.
+```
+
+**Each book's page** (pictures sent: hero, the scene):
+
+```
+Image 1 is Jack: use him exactly (same face, hair, skin tone, and outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots). Image 2 is this page's finished scene.
+Draw image 2 again with Jack added into it, as described below. Keep everything else in image 2 exactly the same: the place, the other characters, the light, the colours and the composition.
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours; nothing new, clean or polished.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
 Scene: Early morning in the cottage garden. A colossal, twisting green beanstalk, thick as an old tree, rises from the garden soil, coiling up and up until it disappears into low clouds. Jack stands at its foot in the same clothes, head tilted all the way back, mouth open in wonder, one hand on the enormous stalk.
-Mood and light: Wonder and a first touch of hope. Cool pale dawn light, mist on the ground, a soft glow where the stalk meets the clouds.
-Composition: Tall, upward-looking view with the stalk filling the middle. The top third is soft, plain cloud and pale sky for text added later.
-Only these characters appear: Jack. No other people or animals.
+Keep Jack, and above all his face, out of the top third of the picture: it stays plain, for the story text.
+Jack is the only person added; nothing else changes.
 ```
 
 ## Page 5
@@ -160,17 +215,30 @@ Only these characters appear: Jack. No other people or animals.
 
 **While it's drawn:** Climbing past the birds…
 
-**Pictures sent with it:** hero.png
+**The scene** (drawn once for every book; pictures sent: none):
 
 ```
-Image 1 is Jack: use him exactly (same face, hair, skin tone, and outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots).
+Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
+World: a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours; nothing new, clean or polished.
+Wide picture-book illustration: the background scene for one page. No text, letters, numbers or signs anywhere in the image.
+The hero, a child, is added into this picture later, so do NOT draw the hero or any child. Leave the spot where the hero is described clear and empty, with nothing in front of it, so the hero can be added there; everything else in the scene is drawn exactly as described.
+Scene: High on the beanstalk, among huge leaves. The hero climbs, gripping the stalk with both hands, boots on a curling tendril, looking up with determination. Far below, the cottage, the garden and the village are tiny. Small birds fly past at the hero's level.
+Mood and light: Brave and dizzying, a little exciting. Brighter, clearer morning light the higher the hero goes.
+Composition: The hero near the middle of the picture, side to side, with the hero's face clearly visible; the hero and the stalk in the upper two-thirds. The lower third is soft white mist and cloud, plain and low in detail, for text added later. The hero's spot must not be in that space for text.
+No people or animals at all.
+```
+
+**Each book's page** (pictures sent: hero, the scene):
+
+```
+Image 1 is Jack: use him exactly (same face, hair, skin tone, and outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots). Image 2 is this page's finished scene.
+Draw image 2 again with Jack added into it, as described below. Keep everything else in image 2 exactly the same: the place, the other characters, the light, the colours and the composition.
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours; nothing new, clean or polished.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
 Scene: High on the beanstalk, among huge leaves. Jack climbs, gripping the stalk with both hands, boots on a curling tendril, looking up with determination. Far below, the cottage, the garden and the village are tiny. Small birds fly past at his level.
-Mood and light: Brave and dizzying, a little exciting. Brighter, clearer morning light the higher he goes.
-Composition: Jack near the middle of the picture, side to side, with his face clearly visible; Jack and the stalk in the upper two-thirds. The lower third is soft white mist and cloud, plain and low in detail, for text added later.
-Only these characters appear: Jack. No other people or animals.
+Keep Jack, and above all his face, out of the bottom third of the picture: it stays plain, for the story text.
+Jack is the only person added; nothing else changes.
 ```
 
 ## Page 6
@@ -179,17 +247,30 @@ Only these characters appear: Jack. No other people or animals.
 
 **While it's drawn:** Knocking on a very big door…
 
-**Pictures sent with it:** hero.png
+**The scene** (drawn once for every book; pictures sent: none):
 
 ```
-Image 1 is Jack: use him exactly (same face, hair, skin tone, and outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots).
+Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
+World: a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours; nothing new, clean or polished.
+Wide picture-book illustration: the background scene for one page. No text, letters, numbers or signs anywhere in the image.
+The hero, a child, is added into this picture later, so do NOT draw the hero or any child. Leave the spot where the hero is described clear and empty, with nothing in front of it, so the hero can be added there; everything else in the scene is drawn exactly as described.
+Scene: On top of the clouds, a road of packed cloud leads to an ancient, enormous grey stone castle, mossy and weathered, with a door many times taller than a house, standing slightly open. The hero, tiny beside it, tiptoes toward the gap in the door, glancing back over the hero's shoulder.
+Mood and light: Hushed and a little scary. Soft golden afternoon light above the clouds, long shadows from the castle.
+Composition: The castle fills the upper part of the picture. The lower third is smooth, plain cloud ground, low in detail, for text added later. The hero's spot must not be in that space for text.
+No people or animals at all.
+```
+
+**Each book's page** (pictures sent: hero, the scene):
+
+```
+Image 1 is Jack: use him exactly (same face, hair, skin tone, and outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots). Image 2 is this page's finished scene.
+Draw image 2 again with Jack added into it, as described below. Keep everything else in image 2 exactly the same: the place, the other characters, the light, the colours and the composition.
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours; nothing new, clean or polished.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
 Scene: On top of the clouds, a road of packed cloud leads to an ancient, enormous grey stone castle, mossy and weathered, with a door many times taller than a house, standing slightly open. Jack, tiny beside it, tiptoes toward the gap in the door, glancing back over his shoulder.
-Mood and light: Hushed and a little scary. Soft golden afternoon light above the clouds, long shadows from the castle.
-Composition: The castle fills the upper part of the picture. The lower third is smooth, plain cloud ground, low in detail, for text added later.
-Only these characters appear: Jack. No other people or animals.
+Keep Jack, and above all his face, out of the bottom third of the picture: it stays plain, for the story text.
+Jack is the only person added; nothing else changes.
 ```
 
 ## Page 7
@@ -198,17 +279,31 @@ Only these characters appear: Jack. No other people or animals.
 
 **While it's drawn:** Hiding in the oven…
 
-**Pictures sent with it:** hero.png, giant.png
+**The scene** (drawn once for every book; pictures sent: giant):
 
 ```
-Image 1 is Jack: use him exactly (same face, hair, skin tone, and outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots). Image 2 is the giant: draw them exactly as shown.
+Image 1 is the giant: draw them exactly as shown.
+Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
+World: a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours; nothing new, clean or polished.
+Wide picture-book illustration: the background scene for one page. No text, letters, numbers or signs anywhere in the image.
+The hero, a child, is added into this picture later, so do NOT draw the hero or any child. Leave the spot where the hero is described clear and empty, with nothing in front of it, so the hero can be added there; everything else in the scene is drawn exactly as described.
+Scene: A vast, shadowy castle kitchen with a hearth as big as a room. The giant stomps in through a huge doorway, sniffing the air, eyes narrowed. In the foreground, the hero peeks out from inside the open door of a giant iron oven, eyes wide with fear, a hand over the hero's mouth.
+Mood and light: Tense and scary in a storybook way. Warm firelight from the hearth against deep shadows.
+Composition: The giant and the oven in the lower two-thirds. The top third is the dark, plain stone ceiling in shadow, low in detail, for text added later. The hero's spot must not be in that space for text.
+Only these characters appear: the giant. No other people or animals.
+```
+
+**Each book's page** (pictures sent: hero, the scene):
+
+```
+Image 1 is Jack: use him exactly (same face, hair, skin tone, and outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots). Image 2 is this page's finished scene.
+Draw image 2 again with Jack added into it, as described below. Keep everything else in image 2 exactly the same: the place, the other characters, the light, the colours and the composition.
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours; nothing new, clean or polished.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
 Scene: A vast, shadowy castle kitchen with a hearth as big as a room. The giant stomps in through a huge doorway, sniffing the air, eyes narrowed. In the foreground, Jack peeks out from inside the open door of a giant iron oven, eyes wide with fear, a hand over his mouth.
-Mood and light: Tense and scary in a storybook way. Warm firelight from the hearth against deep shadows.
-Composition: The giant and the oven in the lower two-thirds. The top third is the dark, plain stone ceiling in shadow, low in detail, for text added later.
-Only these characters appear: Jack and the giant. No other people or animals.
+Keep Jack, and above all his face, out of the top third of the picture: it stays plain, for the story text.
+Jack is the only person added; nothing else changes.
 ```
 
 ## Page 8
@@ -217,17 +312,31 @@ Only these characters appear: Jack and the giant. No other people or animals.
 
 **While it's drawn:** Counting the giant’s gold…
 
-**Pictures sent with it:** hero.png, giant.png
+**The scene** (drawn once for every book; pictures sent: giant):
 
 ```
-Image 1 is Jack: use him exactly (same face, hair, skin tone, and outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots). Image 2 is the giant: draw them exactly as shown.
+Image 1 is the giant: draw them exactly as shown.
+Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
+World: a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours; nothing new, clean or polished.
+Wide picture-book illustration: the background scene for one page. No text, letters, numbers or signs anywhere in the image.
+The hero, a child, is added into this picture later, so do NOT draw the hero or any child. Leave the spot where the hero is described clear and empty, with nothing in front of it, so the hero can be added there; everything else in the scene is drawn exactly as described.
+Scene: The giant sits at an enormous wooden table, a heap of gold coins and open money bags in front of him, his head nodding onto his folded arms, fast asleep. Across the room, the hero watches from the oven door, holding very still.
+Mood and light: Quiet and drowsy, holding its breath. Warm candlelight glinting on the gold.
+Composition: The table and the sleeping giant in the upper two-thirds. The lower third is the plain, dim stone floor, low in detail, for text added later. The hero's spot must not be in that space for text.
+Only these characters appear: the giant. No other people or animals.
+```
+
+**Each book's page** (pictures sent: hero, the scene):
+
+```
+Image 1 is Jack: use him exactly (same face, hair, skin tone, and outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots). Image 2 is this page's finished scene.
+Draw image 2 again with Jack added into it, as described below. Keep everything else in image 2 exactly the same: the place, the other characters, the light, the colours and the composition.
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours; nothing new, clean or polished.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
 Scene: The giant sits at an enormous wooden table, a heap of gold coins and open money bags in front of him, his head nodding onto his folded arms, fast asleep. Across the room, Jack watches from the oven door, holding very still.
-Mood and light: Quiet and drowsy, holding its breath. Warm candlelight glinting on the gold.
-Composition: The table and the sleeping giant in the upper two-thirds. The lower third is the plain, dim stone floor, low in detail, for text added later.
-Only these characters appear: Jack and the giant. No other people or animals.
+Keep Jack, and above all his face, out of the bottom third of the picture: it stays plain, for the story text.
+Jack is the only person added; nothing else changes.
 ```
 
 ## Page 9
@@ -236,17 +345,31 @@ Only these characters appear: Jack and the giant. No other people or animals.
 
 **While it's drawn:** Tiptoeing off with the gold…
 
-**Pictures sent with it:** hero.png, giant.png
+**The scene** (drawn once for every book; pictures sent: giant):
 
 ```
-Image 1 is Jack: use him exactly (same face, hair, skin tone, and outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots). Image 2 is the giant: draw them exactly as shown.
+Image 1 is the giant: draw them exactly as shown.
+Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
+World: a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours; nothing new, clean or polished.
+Wide picture-book illustration: the background scene for one page. No text, letters, numbers or signs anywhere in the image.
+The hero, a child, is added into this picture later, so do NOT draw the hero or any child. Leave the spot where the hero is described clear and empty, with nothing in front of it, so the hero can be added there; everything else in the scene is drawn exactly as described.
+Scene: Close to the table, the giant still snoring in the background, his huge hand resting near the coins. The hero tiptoes away hugging a heavy bag of gold almost as big as the hero's chest, a few coins spilling, glancing nervously back at the giant.
+Mood and light: Sneaky and breathless. Warm candlelight, gold glints, deep shadows.
+Composition: The hero and the giant in the upper two-thirds. The lower third is the plain stone floor in shadow, low in detail, for text added later. The hero's spot must not be in that space for text.
+Only these characters appear: the giant. No other people or animals.
+```
+
+**Each book's page** (pictures sent: hero, the scene):
+
+```
+Image 1 is Jack: use him exactly (same face, hair, skin tone, and outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots). Image 2 is this page's finished scene.
+Draw image 2 again with Jack added into it, as described below. Keep everything else in image 2 exactly the same: the place, the other characters, the light, the colours and the composition.
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours; nothing new, clean or polished.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
 Scene: Close to the table, the giant still snoring in the background, his huge hand resting near the coins. Jack tiptoes away hugging a heavy bag of gold almost as big as his chest, a few coins spilling, glancing nervously back at the giant.
-Mood and light: Sneaky and breathless. Warm candlelight, gold glints, deep shadows.
-Composition: Jack and the giant in the upper two-thirds. The lower third is the plain stone floor in shadow, low in detail, for text added later.
-Only these characters appear: Jack and the giant. No other people or animals.
+Keep Jack, and above all his face, out of the bottom third of the picture: it stays plain, for the story text.
+Jack is the only person added; nothing else changes.
 ```
 
 ## Page 10
@@ -255,17 +378,31 @@ Only these characters appear: Jack and the giant. No other people or animals.
 
 **While it's drawn:** Running all the way home…
 
-**Pictures sent with it:** hero.png, mother.png
+**The scene** (drawn once for every book; pictures sent: mother):
 
 ```
-Image 1 is Jack: use him exactly (same face, hair, skin tone, and outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots). Image 2 is Jack's mother: draw them exactly as shown.
+Image 1 is The hero's mother: draw them exactly as shown.
+Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
+World: a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours; nothing new, clean or polished.
+Wide picture-book illustration: the background scene for one page. No text, letters, numbers or signs anywhere in the image.
+The hero, a child, is added into this picture later, so do NOT draw the hero or any child. Leave the spot where the hero is described clear and empty, with nothing in front of it, so the hero can be added there; everything else in the scene is drawn exactly as described.
+Scene: The cottage doorway. The hero's mother kneels and hugs the hero tightly, tears of happiness on her face; the open bag of gold sits at their feet, coins spilling onto the doorstep. The beanstalk rises behind the cottage.
+Mood and light: Joy and relief. The first warm sunshine in the book, soft and golden.
+Composition: The two of them in the upper two-thirds. The lower third is the plain worn doorstep and earth, low in detail, for text added later. The hero's spot must not be in that space for text.
+Only these characters appear: The hero's mother. No other people or animals.
+```
+
+**Each book's page** (pictures sent: hero, the scene):
+
+```
+Image 1 is Jack: use him exactly (same face, hair, skin tone, and outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots). Image 2 is this page's finished scene.
+Draw image 2 again with Jack added into it, as described below. Keep everything else in image 2 exactly the same: the place, the other characters, the light, the colours and the composition.
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours; nothing new, clean or polished.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
 Scene: The cottage doorway. Jack's mother kneels and hugs Jack tightly, tears of happiness on her face; the open bag of gold sits at their feet, coins spilling onto the doorstep. The beanstalk rises behind the cottage.
-Mood and light: Joy and relief. The first warm sunshine in the book, soft and golden.
-Composition: The two of them in the upper two-thirds. The lower third is the plain worn doorstep and earth, low in detail, for text added later.
-Only these characters appear: Jack and Jack's mother. No other people or animals.
+Keep Jack, and above all his face, out of the bottom third of the picture: it stays plain, for the story text.
+Jack is the only person added; nothing else changes.
 ```
 
 ## Page 11
@@ -274,17 +411,31 @@ Only these characters appear: Jack and Jack's mother. No other people or animals
 
 **While it's drawn:** Spending the very last coin…
 
-**Pictures sent with it:** hero.png, mother.png
+**The scene** (drawn once for every book; pictures sent: mother):
 
 ```
-Image 1 is Jack: use him exactly (same face, hair, skin tone, and outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots). Image 2 is Jack's mother: draw them exactly as shown.
+Image 1 is The hero's mother: draw them exactly as shown.
+Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
+World: a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours; nothing new, clean or polished.
+Wide picture-book illustration: the background scene for one page. No text, letters, numbers or signs anywhere in the image.
+The hero, a child, is added into this picture later, so do NOT draw the hero or any child. Leave the spot where the hero is described clear and empty, with nothing in front of it, so the hero can be added there; everything else in the scene is drawn exactly as described.
+Scene: The cottage kitchen again, the cupboard nearly bare. The hero's mother holds up an empty, limp money bag, worried. The hero stands at the open door, looking out toward the beanstalk with quiet resolve, one hand on the door frame.
+Mood and light: Back to hard times, but braver now. Cool grey daylight through the door.
+Composition: Characters in the upper two-thirds. The lower third is the plain worn earth floor in soft shadow, low in detail, for text added later. The hero's spot must not be in that space for text.
+Only these characters appear: The hero's mother. No other people or animals.
+```
+
+**Each book's page** (pictures sent: hero, the scene):
+
+```
+Image 1 is Jack: use him exactly (same face, hair, skin tone, and outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots). Image 2 is this page's finished scene.
+Draw image 2 again with Jack added into it, as described below. Keep everything else in image 2 exactly the same: the place, the other characters, the light, the colours and the composition.
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours; nothing new, clean or polished.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
 Scene: The cottage kitchen again, the cupboard nearly bare. Jack's mother holds up an empty, limp money bag, worried. Jack stands at the open door, looking out toward the beanstalk with quiet resolve, one hand on the door frame.
-Mood and light: Back to hard times, but braver now. Cool grey daylight through the door.
-Composition: Characters in the upper two-thirds. The lower third is the plain worn earth floor in soft shadow, low in detail, for text added later.
-Only these characters appear: Jack and Jack's mother. No other people or animals.
+Keep Jack, and above all his face, out of the bottom third of the picture: it stays plain, for the story text.
+Jack is the only person added; nothing else changes.
 ```
 
 ## Page 12
@@ -293,17 +444,31 @@ Only these characters appear: Jack and Jack's mother. No other people or animals
 
 **While it's drawn:** Stealing the golden hen…
 
-**Pictures sent with it:** hero.png, giant.png, golden_hen.png
+**The scene** (drawn once for every book; pictures sent: giant, golden_hen):
 
 ```
-Image 1 is Jack: use him exactly (same face, hair, skin tone, and outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots). Image 2 is the giant: draw them exactly as shown. Image 3 is the golden hen: draw them exactly as shown.
+Image 1 is the giant: draw them exactly as shown. Image 2 is the golden hen: draw them exactly as shown.
+Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
+World: a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours; nothing new, clean or polished.
+Wide picture-book illustration: the background scene for one page. No text, letters, numbers or signs anywhere in the image.
+The hero, a child, is added into this picture later, so do NOT draw the hero or any child. Leave the spot where the hero is described clear and empty, with nothing in front of it, so the hero can be added there; everything else in the scene is drawn exactly as described.
+Scene: The giant's table. The golden hen sits on the table beside a shining golden egg; the giant slumps asleep in his huge chair. The hero is mid-run toward the door, the hen tucked safely under one arm, looking back.
+Mood and light: Daring and quick. Warm candlelight, the golden egg glowing.
+Composition: The scene in the lower two-thirds. The top third is the plain, dark stone wall in shadow, low in detail, for text added later. The hero's spot must not be in that space for text.
+Only these characters appear: the giant and the golden hen. No other people or animals.
+```
+
+**Each book's page** (pictures sent: hero, the scene):
+
+```
+Image 1 is Jack: use him exactly (same face, hair, skin tone, and outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots). Image 2 is this page's finished scene.
+Draw image 2 again with Jack added into it, as described below. Keep everything else in image 2 exactly the same: the place, the other characters, the light, the colours and the composition.
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours; nothing new, clean or polished.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
 Scene: The giant's table. The golden hen sits on the table beside a shining golden egg; the giant slumps asleep in his huge chair. Jack is mid-run toward the door, the hen tucked safely under one arm, looking back.
-Mood and light: Daring and quick. Warm candlelight, the golden egg glowing.
-Composition: The scene in the lower two-thirds. The top third is the plain, dark stone wall in shadow, low in detail, for text added later.
-Only these characters appear: Jack, the giant and the golden hen. No other people or animals.
+Keep Jack, and above all his face, out of the top third of the picture: it stays plain, for the story text.
+Jack is the only person added; nothing else changes.
 ```
 
 ## Page 13
@@ -312,17 +477,31 @@ Only these characters appear: Jack, the giant and the golden hen. No other peopl
 
 **While it's drawn:** Collecting golden eggs…
 
-**Pictures sent with it:** hero.png, mother.png, golden_hen.png
+**The scene** (drawn once for every book; pictures sent: mother, golden_hen):
 
 ```
-Image 1 is Jack: use him exactly (same face, hair, skin tone, and outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots). Image 2 is Jack's mother: draw them exactly as shown. Image 3 is the golden hen: draw them exactly as shown.
+Image 1 is The hero's mother: draw them exactly as shown. Image 2 is the golden hen: draw them exactly as shown.
+Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
+World: a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours; nothing new, clean or polished.
+Wide picture-book illustration: the background scene for one page. No text, letters, numbers or signs anywhere in the image.
+The hero, a child, is added into this picture later, so do NOT draw the hero or any child. Leave the spot where the hero is described clear and empty, with nothing in front of it, so the hero can be added there; everything else in the scene is drawn exactly as described.
+Scene: The cottage, now mended and cosy, with a full basket on the table. The hero's mother smiles, holding up a golden egg. The golden hen sits in a straw nest on the table. The hero stands at the window, gazing up at the beanstalk disappearing into the clouds, thoughtful and curious.
+Mood and light: Comfortable and happy, with a pull of curiosity. Warm afternoon sunlight.
+Composition: Characters in the upper two-thirds. The lower third is the plain wooden floor in soft shadow, low in detail, for text added later. The hero's spot must not be in that space for text.
+Only these characters appear: The hero's mother and the golden hen. No other people or animals.
+```
+
+**Each book's page** (pictures sent: hero, the scene):
+
+```
+Image 1 is Jack: use him exactly (same face, hair, skin tone, and outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots). Image 2 is this page's finished scene.
+Draw image 2 again with Jack added into it, as described below. Keep everything else in image 2 exactly the same: the place, the other characters, the light, the colours and the composition.
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours; nothing new, clean or polished.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
 Scene: The cottage, now mended and cosy, with a full basket on the table. Jack's mother smiles, holding up a golden egg. The golden hen sits in a straw nest on the table. Jack stands at the window, gazing up at the beanstalk disappearing into the clouds, thoughtful and curious.
-Mood and light: Comfortable and happy, with a pull of curiosity. Warm afternoon sunlight.
-Composition: Characters in the upper two-thirds. The lower third is the plain wooden floor in soft shadow, low in detail, for text added later.
-Only these characters appear: Jack, Jack's mother and the golden hen. No other people or animals.
+Keep Jack, and above all his face, out of the bottom third of the picture: it stays plain, for the story text.
+Jack is the only person added; nothing else changes.
 ```
 
 ## Page 14
@@ -331,17 +510,31 @@ Only these characters appear: Jack, Jack's mother and the golden hen. No other p
 
 **While it's drawn:** Peeking at the singing harp…
 
-**Pictures sent with it:** hero.png, giant.png, golden_harp.png
+**The scene** (drawn once for every book; pictures sent: giant, golden_harp):
 
 ```
-Image 1 is Jack: use him exactly (same face, hair, skin tone, and outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots). Image 2 is the giant: draw them exactly as shown. Image 3 is the golden harp: draw them exactly as shown.
+Image 1 is the giant: draw them exactly as shown. Image 2 is the golden harp: draw them exactly as shown.
+Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
+World: a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours; nothing new, clean or polished.
+Wide picture-book illustration: the background scene for one page. No text, letters, numbers or signs anywhere in the image.
+The hero, a child, is added into this picture later, so do NOT draw the hero or any child. Leave the spot where the hero is described clear and empty, with nothing in front of it, so the hero can be added there; everything else in the scene is drawn exactly as described.
+Scene: The giant's hall at night. The golden harp stands on the giant's table, playing all by itself, soft glowing notes drifting from its strings; its carved face is calm, eyes half closed, as if singing. The giant slumps in his huge chair, eyelids drooping, nodding off. The hero peeks out from behind one enormous chair leg, eyes fixed on the harp, wide with wonder.
+Mood and light: Hushed, magical and sleepy. Low warm candlelight, a soft golden glow from the harp.
+Composition: The scene in the lower two-thirds. The top third is the plain, dark stone ceiling in shadow, low in detail, for text added later. The hero's spot must not be in that space for text.
+Only these characters appear: the giant and the golden harp. No other people or animals.
+```
+
+**Each book's page** (pictures sent: hero, the scene):
+
+```
+Image 1 is Jack: use him exactly (same face, hair, skin tone, and outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots). Image 2 is this page's finished scene.
+Draw image 2 again with Jack added into it, as described below. Keep everything else in image 2 exactly the same: the place, the other characters, the light, the colours and the composition.
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours; nothing new, clean or polished.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
 Scene: The giant's hall at night. The golden harp stands on the giant's table, playing all by itself, soft glowing notes drifting from its strings; its carved face is calm, eyes half closed, as if singing. The giant slumps in his huge chair, eyelids drooping, nodding off. Jack peeks out from behind one enormous chair leg, eyes fixed on the harp, wide with wonder.
-Mood and light: Hushed, magical and sleepy. Low warm candlelight, a soft golden glow from the harp.
-Composition: The scene in the lower two-thirds. The top third is the plain, dark stone ceiling in shadow, low in detail, for text added later.
-Only these characters appear: Jack, the giant and the golden harp. No other people or animals.
+Keep Jack, and above all his face, out of the top third of the picture: it stays plain, for the story text.
+Jack is the only person added; nothing else changes.
 ```
 
 ## Page 15
@@ -350,17 +543,31 @@ Only these characters appear: Jack, the giant and the golden harp. No other peop
 
 **While it's drawn:** Grabbing the harp…
 
-**Pictures sent with it:** hero.png, giant.png, golden_harp.png
+**The scene** (drawn once for every book; pictures sent: giant, golden_harp):
 
 ```
-Image 1 is Jack: use him exactly (same face, hair, skin tone, and outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots). Image 2 is the giant: draw them exactly as shown. Image 3 is the golden harp: draw them exactly as shown.
+Image 1 is the giant: draw them exactly as shown. Image 2 is the golden harp: draw them exactly as shown.
+Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
+World: a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours; nothing new, clean or polished.
+Wide picture-book illustration: the background scene for one page. No text, letters, numbers or signs anywhere in the image.
+The hero, a child, is added into this picture later, so do NOT draw the hero or any child. Leave the spot where the hero is described clear and empty, with nothing in front of it, so the hero can be added there; everything else in the scene is drawn exactly as described.
+Scene: The same hall. The hero has just lifted the golden harp from the table and holds it in both arms; the carved face on the harp has its mouth wide open, crying out. The hero stares at the harp in shock. Behind the hero, the giant is asleep in his chair, but one huge eye is starting to open.
+Mood and light: The moment it all goes wrong: startled and alarming. Low candlelight, the harp gleaming.
+Composition: The scene in the lower two-thirds. The top third is the plain, dark stone ceiling in shadow, low in detail, for text added later. The hero's spot must not be in that space for text.
+Only these characters appear: the giant and the golden harp. No other people or animals.
+```
+
+**Each book's page** (pictures sent: hero, the scene):
+
+```
+Image 1 is Jack: use him exactly (same face, hair, skin tone, and outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots). Image 2 is this page's finished scene.
+Draw image 2 again with Jack added into it, as described below. Keep everything else in image 2 exactly the same: the place, the other characters, the light, the colours and the composition.
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours; nothing new, clean or polished.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
 Scene: The same hall. Jack has just lifted the golden harp from the table and holds it in both arms; the carved face on the harp has its mouth wide open, crying out. Jack stares at the harp in shock. Behind him, the giant is asleep in his chair, but one huge eye is starting to open.
-Mood and light: The moment it all goes wrong: startled and alarming. Low candlelight, the harp gleaming.
-Composition: The scene in the lower two-thirds. The top third is the plain, dark stone ceiling in shadow, low in detail, for text added later.
-Only these characters appear: Jack, the giant and the golden harp. No other people or animals.
+Keep Jack, and above all his face, out of the top third of the picture: it stays plain, for the story text.
+Jack is the only person added; nothing else changes.
 ```
 
 ## Page 16
@@ -369,17 +576,31 @@ Only these characters appear: Jack, the giant and the golden harp. No other peop
 
 **While it's drawn:** Outrunning a giant…
 
-**Pictures sent with it:** hero.png, giant.png, golden_harp.png
+**The scene** (drawn once for every book; pictures sent: giant, golden_harp):
 
 ```
-Image 1 is Jack: use him exactly (same face, hair, skin tone, and outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots). Image 2 is the giant: draw them exactly as shown. Image 3 is the golden harp: draw them exactly as shown.
+Image 1 is the giant: draw them exactly as shown. Image 2 is the golden harp: draw them exactly as shown.
+Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
+World: a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours; nothing new, clean or polished.
+Wide picture-book illustration: the background scene for one page. No text, letters, numbers or signs anywhere in the image.
+The hero, a child, is added into this picture later, so do NOT draw the hero or any child. Leave the spot where the hero is described clear and empty, with nothing in front of it, so the hero can be added there; everything else in the scene is drawn exactly as described.
+Scene: Outside the castle, on the road of clouds. The hero runs toward the top of the beanstalk, clutching the harp. Behind the hero, the giant charges out of the castle door, arms reaching, shouting, his huge footsteps sending up puffs of cloud.
+Mood and light: A thrilling chase. Dramatic stormy light, the sky turning dark behind the giant.
+Composition: The chase in the upper two-thirds. The lower third is smooth, plain cloud ground, low in detail, for text added later. The hero's spot must not be in that space for text.
+Only these characters appear: the giant and the golden harp. No other people or animals.
+```
+
+**Each book's page** (pictures sent: hero, the scene):
+
+```
+Image 1 is Jack: use him exactly (same face, hair, skin tone, and outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots). Image 2 is this page's finished scene.
+Draw image 2 again with Jack added into it, as described below. Keep everything else in image 2 exactly the same: the place, the other characters, the light, the colours and the composition.
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours; nothing new, clean or polished.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
 Scene: Outside the castle, on the road of clouds. Jack runs toward the top of the beanstalk, clutching the harp. Behind him, the giant charges out of the castle door, arms reaching, shouting, his huge footsteps sending up puffs of cloud.
-Mood and light: A thrilling chase. Dramatic stormy light, the sky turning dark behind the giant.
-Composition: The chase in the upper two-thirds. The lower third is smooth, plain cloud ground, low in detail, for text added later.
-Only these characters appear: Jack, the giant and the golden harp. No other people or animals.
+Keep Jack, and above all his face, out of the bottom third of the picture: it stays plain, for the story text.
+Jack is the only person added; nothing else changes.
 ```
 
 ## Page 17
@@ -388,17 +609,31 @@ Only these characters appear: Jack, the giant and the golden harp. No other peop
 
 **While it's drawn:** Scrambling down the beanstalk…
 
-**Pictures sent with it:** hero.png, giant.png, golden_harp.png
+**The scene** (drawn once for every book; pictures sent: giant, golden_harp):
 
 ```
-Image 1 is Jack: use him exactly (same face, hair, skin tone, and outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots). Image 2 is the giant: draw them exactly as shown. Image 3 is the golden harp: draw them exactly as shown.
+Image 1 is the giant: draw them exactly as shown. Image 2 is the golden harp: draw them exactly as shown.
+Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
+World: a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours; nothing new, clean or polished.
+Wide picture-book illustration: the background scene for one page. No text, letters, numbers or signs anywhere in the image.
+The hero, a child, is added into this picture later, so do NOT draw the hero or any child. Leave the spot where the hero is described clear and empty, with nothing in front of it, so the hero can be added there; everything else in the scene is drawn exactly as described.
+Scene: The beanstalk seen from below. The hero climbs down fast with the harp slung on the hero's back. High above, the giant climbs down after the hero, the stalk bending and swaying, leaves flying. The cottage roof is close below.
+Mood and light: Urgent and dizzying. Grey windy light, leaves whipping past.
+Composition: The hero and the giant in the lower two-thirds. The top third is plain, soft grey cloud for text added later. The hero's spot must not be in that space for text.
+Only these characters appear: the giant and the golden harp. No other people or animals.
+```
+
+**Each book's page** (pictures sent: hero, the scene):
+
+```
+Image 1 is Jack: use him exactly (same face, hair, skin tone, and outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots). Image 2 is this page's finished scene.
+Draw image 2 again with Jack added into it, as described below. Keep everything else in image 2 exactly the same: the place, the other characters, the light, the colours and the composition.
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours; nothing new, clean or polished.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
 Scene: The beanstalk seen from below. Jack climbs down fast with the harp slung on his back. High above, the giant climbs down after him, the stalk bending and swaying, leaves flying. The cottage roof is close below.
-Mood and light: Urgent and dizzying. Grey windy light, leaves whipping past.
-Composition: Jack and the giant in the lower two-thirds. The top third is plain, soft grey cloud for text added later.
-Only these characters appear: Jack, the giant and the golden harp. No other people or animals.
+Keep Jack, and above all his face, out of the top third of the picture: it stays plain, for the story text.
+Jack is the only person added; nothing else changes.
 ```
 
 ## Page 18
@@ -407,17 +642,31 @@ Only these characters appear: Jack, the giant and the golden harp. No other peop
 
 **While it's drawn:** Shouting for the axe…
 
-**Pictures sent with it:** hero.png, mother.png
+**The scene** (drawn once for every book; pictures sent: mother):
 
 ```
-Image 1 is Jack: use him exactly (same face, hair, skin tone, and outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots). Image 2 is Jack's mother: draw them exactly as shown.
+Image 1 is The hero's mother: draw them exactly as shown.
+Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
+World: a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours; nothing new, clean or polished.
+Wide picture-book illustration: the background scene for one page. No text, letters, numbers or signs anywhere in the image.
+The hero, a child, is added into this picture later, so do NOT draw the hero or any child. Leave the spot where the hero is described clear and empty, with nothing in front of it, so the hero can be added there; everything else in the scene is drawn exactly as described.
+Scene: The cottage garden at the foot of the beanstalk. The hero jumps the last few feet to the ground, calling out. The hero's mother runs from the cottage holding out a woodcutter's axe. The beanstalk shakes violently above them.
+Mood and light: Urgent and determined. Windy grey light, leaves falling.
+Composition: Characters in the upper two-thirds. The lower third is the plain garden grass, low in detail, for text added later. The hero's spot must not be in that space for text.
+Only these characters appear: The hero's mother. No other people or animals.
+```
+
+**Each book's page** (pictures sent: hero, the scene):
+
+```
+Image 1 is Jack: use him exactly (same face, hair, skin tone, and outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots). Image 2 is this page's finished scene.
+Draw image 2 again with Jack added into it, as described below. Keep everything else in image 2 exactly the same: the place, the other characters, the light, the colours and the composition.
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours; nothing new, clean or polished.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
 Scene: The cottage garden at the foot of the beanstalk. Jack jumps the last few feet to the ground, calling out. Jack's mother runs from the cottage holding out a woodcutter's axe. The beanstalk shakes violently above them.
-Mood and light: Urgent and determined. Windy grey light, leaves falling.
-Composition: Characters in the upper two-thirds. The lower third is the plain garden grass, low in detail, for text added later.
-Only these characters appear: Jack and Jack's mother. No other people or animals.
+Keep Jack, and above all his face, out of the bottom third of the picture: it stays plain, for the story text.
+Jack is the only person added; nothing else changes.
 ```
 
 ## Page 19
@@ -426,17 +675,31 @@ Only these characters appear: Jack and Jack's mother. No other people or animals
 
 **While it's drawn:** Chop! Chop! Chop!…
 
-**Pictures sent with it:** hero.png, mother.png, giant.png
+**The scene** (drawn once for every book; pictures sent: mother, giant):
 
 ```
-Image 1 is Jack: use him exactly (same face, hair, skin tone, and outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots). Image 2 is Jack's mother: draw them exactly as shown. Image 3 is the giant: draw them exactly as shown.
+Image 1 is The hero's mother: draw them exactly as shown. Image 2 is the giant: draw them exactly as shown.
+Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
+World: a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours; nothing new, clean or polished.
+Wide picture-book illustration: the background scene for one page. No text, letters, numbers or signs anywhere in the image.
+The hero, a child, is added into this picture later, so do NOT draw the hero or any child. Leave the spot where the hero is described clear and empty, with nothing in front of it, so the hero can be added there; everything else in the scene is drawn exactly as described.
+Scene: The hero swings the axe into the base of the beanstalk, which is snapping and toppling. Far up in the sky, the giant tumbles away into the clouds, small and distant, arms flailing, like a falling leaf; nothing violent or hurt is shown. The hero's mother watches, hands at her mouth.
+Mood and light: The big climax, then relief. The clouds breaking and a burst of sunlight coming through.
+Composition: The action in the lower two-thirds. The top third is plain, bright sky breaking through the clouds, for text added later. The hero's spot must not be in that space for text.
+Only these characters appear: The hero's mother and the giant. No other people or animals.
+```
+
+**Each book's page** (pictures sent: hero, the scene):
+
+```
+Image 1 is Jack: use him exactly (same face, hair, skin tone, and outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots). Image 2 is this page's finished scene.
+Draw image 2 again with Jack added into it, as described below. Keep everything else in image 2 exactly the same: the place, the other characters, the light, the colours and the composition.
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours; nothing new, clean or polished.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
 Scene: Jack swings the axe into the base of the beanstalk, which is snapping and toppling. Far up in the sky, the giant tumbles away into the clouds, small and distant, arms flailing, like a falling leaf; nothing violent or hurt is shown. Jack's mother watches, hands at her mouth.
-Mood and light: The big climax, then relief. The clouds breaking and a burst of sunlight coming through.
-Composition: The action in the lower two-thirds. The top third is plain, bright sky breaking through the clouds, for text added later.
-Only these characters appear: Jack, Jack's mother and the giant. No other people or animals.
+Keep Jack, and above all his face, out of the top third of the picture: it stays plain, for the story text.
+Jack is the only person added; nothing else changes.
 ```
 
 ## Page 20
@@ -445,17 +708,31 @@ Only these characters appear: Jack, Jack's mother and the giant. No other people
 
 **While it's drawn:** Living happily ever after…
 
-**Pictures sent with it:** hero.png, mother.png, golden_hen.png, golden_harp.png
+**The scene** (drawn once for every book; pictures sent: mother, golden_hen, golden_harp):
 
 ```
-Image 1 is Jack: use him exactly (same face, hair, skin tone, and outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots). Image 2 is Jack's mother: draw them exactly as shown. Image 3 is the golden hen: draw them exactly as shown. Image 4 is the golden harp: draw them exactly as shown.
+Image 1 is The hero's mother: draw them exactly as shown. Image 2 is the golden hen: draw them exactly as shown. Image 3 is the golden harp: draw them exactly as shown.
+Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
+World: a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours; nothing new, clean or polished.
+Wide picture-book illustration: the background scene for one page. No text, letters, numbers or signs anywhere in the image.
+The hero, a child, is added into this picture later, so do NOT draw the hero or any child. Leave the spot where the hero is described clear and empty, with nothing in front of it, so the hero can be added there; everything else in the scene is drawn exactly as described.
+Scene: The cottage, now mended, with flowers by the door and a full cupboard. The hero and the hero's mother sit together by a warm fire, smiling. The golden hen sits in her nest, and the golden harp plays on a shelf. Milky-White's old halter hangs on a peg by the door.
+Mood and light: Warm, safe and happy. Golden evening firelight, the brightest and cosiest page in the book.
+Composition: Characters in the upper two-thirds. The lower third is the plain wooden floor and rug in soft shadow, low in detail, for text added later. The hero's spot must not be in that space for text.
+Only these characters appear: The hero's mother, the golden hen and the golden harp. No other people or animals.
+```
+
+**Each book's page** (pictures sent: hero, the scene):
+
+```
+Image 1 is Jack: use him exactly (same face, hair, skin tone, and outfit: oatmeal linen tunic, brown vest, patched brown trousers, worn leather boots). Image 2 is this page's finished scene.
+Draw image 2 again with Jack added into it, as described below. Keep everything else in image 2 exactly the same: the place, the other characters, the light, the colours and the composition.
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours; nothing new, clean or polished.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
 Scene: The cottage, now mended, with flowers by the door and a full cupboard. Jack and his mother sit together by a warm fire, smiling. The golden hen sits in her nest, and the golden harp plays on a shelf. Milky-White's old halter hangs on a peg by the door.
-Mood and light: Warm, safe and happy. Golden evening firelight, the brightest and cosiest page in the book.
-Composition: Characters in the upper two-thirds. The lower third is the plain wooden floor and rug in soft shadow, low in detail, for text added later.
-Only these characters appear: Jack, Jack's mother, the golden hen and the golden harp. No other people or animals.
+Keep Jack, and above all his face, out of the bottom third of the picture: it stays plain, for the story text.
+Jack is the only person added; nothing else changes.
 ```
 
 ## Page 21: about me (no picture)

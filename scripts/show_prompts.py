@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 
 from app.book.prompts import PromptBuilder
-from app.book.story import ROOT, Casting, story_for
+from app.book.story import HERO, ROOT, Casting, story_for
 from app.book.styles import get_style
 
 
@@ -30,9 +30,15 @@ def main(story_key: str, gender: str = "boy") -> Path:
             out += [f"## Page {spec.number}: {spec.type.replace('_', ' ')} (no picture)", ""]
             continue
         out += [f"## Page {spec.number}", "", f"**Words on the page** (text at the {spec.text_zone}): "
-                f"{reader.fill(spec.text)}", "", f"**While it's drawn:** {spec.progress}", "",
-                f"**Pictures sent with it:** {', '.join(f'{k}.png' for k in spec.cast)}", "", "```",
-                prompts.page(spec), "```", ""]
+                f"{reader.fill(spec.text)}", "", f"**While it's drawn:** {spec.progress}", ""]
+        if HERO in spec.cast:  # the scene, drawn once per story, then the child added in every book
+            others = [k for k in spec.cast if k != HERO] + [f"scene-{n}" for n in spec.see]
+            out += [f"**The scene** (drawn once for every book; pictures sent: {', '.join(others) or 'none'}):", "",
+                    "```", prompts.scene(spec, tuple(spec.see)), "```", "",
+                    "**Each book's page** (pictures sent: hero, the scene):", "", "```", prompts.on_scene(spec), "```", ""]
+        else:
+            out += [f"**The whole page, shared by every book** (pictures sent: "
+                    f"{', '.join(spec.cast)}):", "", "```", prompts.page(spec), "```", ""]
     path = ROOT / "docs" / "prompts" / f"{story.key}.md"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("\n".join(out))

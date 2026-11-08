@@ -22,8 +22,8 @@ from sqlalchemy.orm import selectinload
 
 from ..db.models import Activity, Book, BookEvent, BookImage, SharedPage, Upload
 from ..db.session import session
-from ..faces import PreparedPhoto, UploadError, from_saved, prepare
-from . import bible
+from ..faces import PreparedPhoto, UploadError, choose_zone, from_saved, prepare
+from . import bible, scenes
 from .cast import CastSheets, MissingSheetError
 from .log import record, start_book, step
 from .pages import BookContext, ChildInfo, RenderedPage, make_page
@@ -36,7 +36,7 @@ from .styles import get_style
 HERO = ("hero_sheet", 0)
 DEFAULT_ETA = {"hero_sheet": 22.0, "page": 28.0}  # seconds, until there's history to go on
 # Pictures drawn at the same time. OpenAI refuses too many image calls at once, and a book now has 20.
-IMAGE_CONCURRENCY = int(os.getenv("IMAGE_CONCURRENCY", "5"))
+IMAGE_CONCURRENCY = int(os.getenv("IMAGE_CONCURRENCY", "7"))
 MAX_TRIES = 3
 RETRY_PAUSE = float(os.getenv("RETRY_PAUSE_SECONDS", "2"))
 _tasks: set[asyncio.Task] = set()  # keep references so running books aren't garbage-collected
@@ -333,35 +333,16 @@ async def _run(ref: str) -> None:
             and rows[("page", p.spec.number)].status != "done"]
     # A few pages at a time; each picture waits its turn (shown as "waiting" on its progress bar).
     gate = asyncio.Semaphore(IMAGE_CONCURRENCY)
-    # A page that sees earlier pages (see_pages:) waits for them, then gets them as pictures too.
-    seen = {n for p in pages for n in p.spec.see}
-    for n in seen:
-        row = rows.get(("page", n))
-        if row is not None and row.status == "done":
-            ctx.drawn[n] = to_png(row.image)
-    drawing_now = {p.spec.number for p in todo}  # only wait for pages this run will actually draw
-    finished = {n: asyncio.get_running_loop().create_future() for n in seen if n not in ctx.drawn and n in drawing_now}
-
     async def draw_page(p):
-        for n in p.spec.see:
-            if n in finished:
-                await finished[n]  # True or False: without it the page is still drawn, just without that picture
         number = p.spec.number
-        try:
-            if HERO_CAST not in p.spec.cast and not p.spec.see:  # the same in every book: drawn once, then reused
-                png = await _shared_page(ref, story, p, ctx, provider, gate)
-            else:
-                async with gate:
-                    png = await _draw(ref, ("page", number), provider, p.prompt(ctx),
-                                      list(p.spec.cast) + [f"page-{n}" for n in p.earlier(ctx)], lambda: p.draw(ctx))
-        except BaseException:
-            if number in finished and not finished[number].done():
-                finished[number].set_result(False)
-            raise
-        if number in seen:
-            ctx.drawn[number] = png
-            if number in finished and not finished[number].done():
-                finished[number].set_result(True)
+        if HERO_CAST not in p.spec.cast:  # the same in every book: drawn once, then reused
+            png = await _shared_page(ref, story, p, ctx, provider, gate)
+        else:  # the child added into the page's scene, drawn once per story (scene bible)
+            ctx.scenes[number] = await scenes.scene_for(story, p.spec, ctx.prompts, provider, ctx.sheets.sheets, gate)
+            async with gate:
+                png = await _draw(ref, ("page", number), provider, p.prompt(ctx), ["hero", f"scene-{number}"],
+                                  lambda: p.draw(ctx))
+        await _set_image(ref, ("page", number), text_zone=choose_zone(png, p.spec.text_zone))
         return png
 
     outcomes = await asyncio.gather(*(draw_page(p) for p in todo), return_exceptions=True)
@@ -439,14 +420,14 @@ async def status(ref: str) -> dict | None:
 
 def _flipbook(book, story, casting) -> dict:
     """What the on-site flip book shows: the same pages and text as the PDF, plus a cover."""
-    drawn = {i.page_number for i in book.images if i.kind == "page" and i.status == "done"}
+    drawn = {i.page_number: i for i in book.images if i.kind == "page" and i.status == "done"}
     pages = []
     for spec in story.pages:
         if make_page(spec).needs_image:
             if spec.number not in drawn:
                 continue  # a page added to the story after this book was made
             pages.append({"kind": "illustrated", "number": spec.number, "text": casting.fill(spec.text),
-                          "text_zone": spec.text_zone, "image_url": f"/api/books/{book.id}/images/page-{spec.number}"})
+                          "text_zone": drawn[spec.number].text_zone or spec.text_zone, "image_url": f"/api/books/{book.id}/images/page-{spec.number}"})
         else:
             pages.append({"kind": spec.type, "number": spec.number})
     return {"title": story.title, "hero": casting.story_hero, "child_name": display_name(book.child_name),
@@ -474,7 +455,10 @@ async def pdf_bytes(ref: str) -> bytes | None:
         if page.needs_image and (("page", spec.number) not in rows or rows[("page", spec.number)].status != "done"):
             continue  # a page added to the story after this book was made
         image = to_jpeg(rows[("page", spec.number)].image) if page.needs_image else None
-        pages.append(page.layout(ctx, image))
+        laid = page.layout(ctx, image)
+        if page.needs_image and rows[("page", spec.number)].text_zone:  # moved off a face when it was drawn
+            laid.text_zone = rows[("page", spec.number)].text_zone
+        pages.append(laid)
     cover = RenderedPage(0, "cover", image=ctx.sheets.hero_sheet, child=ctx.child)
     return build_pdf(pages, story.title, cover=cover)
 

@@ -62,17 +62,31 @@ No text, letters, numbers or signs anywhere in the image.
 
 **While it's drawn:** Sewing a little red cape…
 
-**Pictures sent with it:** hero.png, mother.png
+**The scene** (drawn once for every book; pictures sent: mother):
 
 ```
-Image 1 is Little Red: use him exactly (same face, hair, skin tone, and outfit: a bright red hooded cape over a cream linen shirt, a brown laced vest, brown trousers or a brown skirt, and worn brown leather boots; the red cape is always on). Image 2 is Little Red's mother: draw them exactly as shown.
+Image 1 is The hero's mother: draw them exactly as shown.
+Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
+World: a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
+Wide picture-book illustration: the background scene for one page. No text, letters, numbers or signs anywhere in the image.
+The hero, a child, is added into this picture later, so do NOT draw the hero or any child. Leave the spot where the hero is described clear and empty, with nothing in front of it, so the hero can be added there; everything else in the scene is drawn exactly as described.
+Scene: The doorstep of a thatched cottage on a sunny morning. The hero twirls in the red hooded cape, the cape flaring out, shown full face and laughing. The hero's mother leans in the doorway, smiling. Hollyhocks by the door, a picket fence, the dark edge of the forest far behind.
+Mood and light: Happy and bright. Warm morning sunshine.
+Composition: Characters in the upper two-thirds. The lower third is the plain stone path and grass in soft shadow, low in detail, for text added later. The hero's spot must not be in that space for text.
+Only these characters appear: The hero's mother. No other people or animals.
+```
+
+**Each book's page** (pictures sent: hero, the scene):
+
+```
+Image 1 is Little Red: use him exactly (same face, hair, skin tone, and outfit: a bright red hooded cape over a cream linen shirt, a brown laced vest, brown trousers or a brown skirt, and worn brown leather boots; the red cape is always on). Image 2 is this page's finished scene.
+Draw image 2 again with Little Red added into it, as described below. Keep everything else in image 2 exactly the same: the place, the other characters, the light, the colours and the composition.
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
 Scene: The doorstep of a thatched cottage on a sunny morning. Little Red twirls in the red hooded cape, the cape flaring out, shown full face and laughing. Little Red's mother leans in the doorway, smiling. Hollyhocks by the door, a picket fence, the dark edge of the forest far behind.
-Mood and light: Happy and bright. Warm morning sunshine.
-Composition: Characters in the upper two-thirds. The lower third is the plain stone path and grass in soft shadow, low in detail, for text added later.
-Only these characters appear: Little Red and Little Red's mother. No other people or animals.
+Keep Little Red, and above all his face, out of the bottom third of the picture: it stays plain, for the story text.
+Little Red is the only person added; nothing else changes.
 ```
 
 ## Page 2
@@ -81,17 +95,31 @@ Only these characters appear: Little Red and Little Red's mother. No other peopl
 
 **While it's drawn:** Packing bread and honey…
 
-**Pictures sent with it:** hero.png, mother.png
+**The scene** (drawn once for every book; pictures sent: mother):
 
 ```
-Image 1 is Little Red: use him exactly (same face, hair, skin tone, and outfit: a bright red hooded cape over a cream linen shirt, a brown laced vest, brown trousers or a brown skirt, and worn brown leather boots; the red cape is always on). Image 2 is Little Red's mother: draw them exactly as shown.
+Image 1 is The hero's mother: draw them exactly as shown.
+Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
+World: a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
+Wide picture-book illustration: the background scene for one page. No text, letters, numbers or signs anywhere in the image.
+The hero, a child, is added into this picture later, so do NOT draw the hero or any child. Leave the spot where the hero is described clear and empty, with nothing in front of it, so the hero can be added there; everything else in the scene is drawn exactly as described.
+Scene: Inside the cottage kitchen. The hero's mother kneels to hand the hero a wicker basket covered with a checked cloth; a loaf of bread, a jar of honey and a little pot of soup peek out. She holds up one finger in warning. The hero, in the red cape, takes the basket and nods seriously.
+Mood and light: Warm and cosy, but the warning matters. Soft window light.
+Composition: Characters in the lower two-thirds. The top third is a plain, softly lit plaster wall and wooden beams, for text added later. The hero's spot must not be in that space for text.
+Only these characters appear: The hero's mother. No other people or animals.
+```
+
+**Each book's page** (pictures sent: hero, the scene):
+
+```
+Image 1 is Little Red: use him exactly (same face, hair, skin tone, and outfit: a bright red hooded cape over a cream linen shirt, a brown laced vest, brown trousers or a brown skirt, and worn brown leather boots; the red cape is always on). Image 2 is this page's finished scene.
+Draw image 2 again with Little Red added into it, as described below. Keep everything else in image 2 exactly the same: the place, the other characters, the light, the colours and the composition.
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
 Scene: Inside the cottage kitchen. Little Red's mother kneels to hand Little Red a wicker basket covered with a checked cloth; a loaf of bread, a jar of honey and a little pot of soup peek out. She holds up one finger in warning. Little Red, in the red cape, takes the basket and nods seriously.
-Mood and light: Warm and cosy, but the warning matters. Soft window light.
-Composition: Characters in the lower two-thirds. The top third is a plain, softly lit plaster wall and wooden beams, for text added later.
-Only these characters appear: Little Red and Little Red's mother. No other people or animals.
+Keep Little Red, and above all his face, out of the top third of the picture: it stays plain, for the story text.
+Little Red is the only person added; nothing else changes.
 ```
 
 ## Page 3
@@ -100,17 +128,30 @@ Only these characters appear: Little Red and Little Red's mother. No other peopl
 
 **While it's drawn:** Following the path into the woods…
 
-**Pictures sent with it:** hero.png
+**The scene** (drawn once for every book; pictures sent: none):
 
 ```
-Image 1 is Little Red: use him exactly (same face, hair, skin tone, and outfit: a bright red hooded cape over a cream linen shirt, a brown laced vest, brown trousers or a brown skirt, and worn brown leather boots; the red cape is always on).
+Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
+World: a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
+Wide picture-book illustration: the background scene for one page. No text, letters, numbers or signs anywhere in the image.
+The hero, a child, is added into this picture later, so do NOT draw the hero or any child. Leave the spot where the hero is described clear and empty, with nothing in front of it, so the hero can be added there; everything else in the scene is drawn exactly as described.
+Scene: A narrow dirt path leads into a deep forest of tall, old trees with twisted roots. The hero, small in the frame, walks along it carrying the basket, the red cape the brightest thing in the picture. Shafts of light fall between the trunks; deeper in, the trees grow darker.
+Mood and light: Quiet, a little spooky, full of wonder. Cool green-blue shade with a few warm beams of light.
+Composition: Keep the bottom quarter as plain, dark forest floor and moss with no detail, for text added later. The hero's spot must not be in that space for text.
+No people or animals at all.
+```
+
+**Each book's page** (pictures sent: hero, the scene):
+
+```
+Image 1 is Little Red: use him exactly (same face, hair, skin tone, and outfit: a bright red hooded cape over a cream linen shirt, a brown laced vest, brown trousers or a brown skirt, and worn brown leather boots; the red cape is always on). Image 2 is this page's finished scene.
+Draw image 2 again with Little Red added into it, as described below. Keep everything else in image 2 exactly the same: the place, the other characters, the light, the colours and the composition.
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
 Scene: A narrow dirt path leads into a deep forest of tall, old trees with twisted roots. Little Red, small in the frame, walks along it carrying the basket, the red cape the brightest thing in the picture. Shafts of light fall between the trunks; deeper in, the trees grow darker.
-Mood and light: Quiet, a little spooky, full of wonder. Cool green-blue shade with a few warm beams of light.
-Composition: Keep the bottom quarter as plain, dark forest floor and moss with no detail, for text added later.
-Only these characters appear: Little Red. No other people or animals.
+Keep Little Red, and above all his face, out of the bottom quarter of the picture: it stays plain, for the story text.
+Little Red is the only person added; nothing else changes.
 ```
 
 ## Page 4
@@ -119,17 +160,31 @@ Only these characters appear: Little Red. No other people or animals.
 
 **While it's drawn:** Meeting someone with a big smile…
 
-**Pictures sent with it:** hero.png, wolf.png
+**The scene** (drawn once for every book; pictures sent: wolf):
 
 ```
-Image 1 is Little Red: use him exactly (same face, hair, skin tone, and outfit: a bright red hooded cape over a cream linen shirt, a brown laced vest, brown trousers or a brown skirt, and worn brown leather boots; the red cape is always on). Image 2 is the wolf: draw them exactly as shown.
+Image 1 is the wolf: draw them exactly as shown.
+Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
+World: a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
+Wide picture-book illustration: the background scene for one page. No text, letters, numbers or signs anywhere in the image.
+The hero, a child, is added into this picture later, so do NOT draw the hero or any child. Leave the spot where the hero is described clear and empty, with nothing in front of it, so the hero can be added there; everything else in the scene is drawn exactly as described.
+Scene: On the forest path. The wolf has stepped out from behind a huge oak trunk and bows politely, with a too-wide, toothy smile. The hero stops, holding the basket close, surprised but curious, in three-quarter view.
+Mood and light: Uneasy and charming at once. Dappled light; the wolf half in shadow.
+Composition: Characters in the lower two-thirds. The top third is plain, soft, hazy light through the high leaves, for text added later. The hero's spot must not be in that space for text.
+Only these characters appear: the wolf. No other people or animals.
+```
+
+**Each book's page** (pictures sent: hero, the scene):
+
+```
+Image 1 is Little Red: use him exactly (same face, hair, skin tone, and outfit: a bright red hooded cape over a cream linen shirt, a brown laced vest, brown trousers or a brown skirt, and worn brown leather boots; the red cape is always on). Image 2 is this page's finished scene.
+Draw image 2 again with Little Red added into it, as described below. Keep everything else in image 2 exactly the same: the place, the other characters, the light, the colours and the composition.
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
 Scene: On the forest path. The wolf has stepped out from behind a huge oak trunk and bows politely, with a too-wide, toothy smile. Little Red stops, holding the basket close, surprised but curious, in three-quarter view.
-Mood and light: Uneasy and charming at once. Dappled light; the wolf half in shadow.
-Composition: Characters in the lower two-thirds. The top third is plain, soft, hazy light through the high leaves, for text added later.
-Only these characters appear: Little Red and the wolf. No other people or animals.
+Keep Little Red, and above all his face, out of the top third of the picture: it stays plain, for the story text.
+Little Red is the only person added; nothing else changes.
 ```
 
 ## Page 5
@@ -138,17 +193,31 @@ Only these characters appear: Little Red and the wolf. No other people or animal
 
 **While it's drawn:** Telling the wolf far too much…
 
-**Pictures sent with it:** hero.png, wolf.png
+**The scene** (drawn once for every book; pictures sent: wolf):
 
 ```
-Image 1 is Little Red: use him exactly (same face, hair, skin tone, and outfit: a bright red hooded cape over a cream linen shirt, a brown laced vest, brown trousers or a brown skirt, and worn brown leather boots; the red cape is always on). Image 2 is the wolf: draw them exactly as shown.
+Image 1 is the wolf: draw them exactly as shown.
+Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
+World: a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
+Wide picture-book illustration: the background scene for one page. No text, letters, numbers or signs anywhere in the image.
+The hero, a child, is added into this picture later, so do NOT draw the hero or any child. Leave the spot where the hero is described clear and empty, with nothing in front of it, so the hero can be added there; everything else in the scene is drawn exactly as described.
+Scene: The wolf sits beside the path, ears up, listening very closely. The hero points down the path, chatting happily and shown full face, with no idea of the danger. In the far distance, a tiny cottage chimney with smoke.
+Mood and light: Friendly on the surface, sly underneath. Dappled forest light.
+Composition: Characters in the upper two-thirds. The lower third is the plain dirt path and fallen leaves, low in detail, for text added later. The hero's spot must not be in that space for text.
+Only these characters appear: the wolf. No other people or animals.
+```
+
+**Each book's page** (pictures sent: hero, the scene):
+
+```
+Image 1 is Little Red: use him exactly (same face, hair, skin tone, and outfit: a bright red hooded cape over a cream linen shirt, a brown laced vest, brown trousers or a brown skirt, and worn brown leather boots; the red cape is always on). Image 2 is this page's finished scene.
+Draw image 2 again with Little Red added into it, as described below. Keep everything else in image 2 exactly the same: the place, the other characters, the light, the colours and the composition.
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
 Scene: The wolf sits beside the path, ears up, listening very closely. Little Red points down the path, chatting happily and shown full face, with no idea of the danger. In the far distance, a tiny cottage chimney with smoke.
-Mood and light: Friendly on the surface, sly underneath. Dappled forest light.
-Composition: Characters in the upper two-thirds. The lower third is the plain dirt path and fallen leaves, low in detail, for text added later.
-Only these characters appear: Little Red and the wolf. No other people or animals.
+Keep Little Red, and above all his face, out of the bottom third of the picture: it stays plain, for the story text.
+Little Red is the only person added; nothing else changes.
 ```
 
 ## Page 6
@@ -157,17 +226,31 @@ Only these characters appear: Little Red and the wolf. No other people or animal
 
 **While it's drawn:** Spotting the prettiest flowers…
 
-**Pictures sent with it:** hero.png, wolf.png
+**The scene** (drawn once for every book; pictures sent: wolf):
 
 ```
-Image 1 is Little Red: use him exactly (same face, hair, skin tone, and outfit: a bright red hooded cape over a cream linen shirt, a brown laced vest, brown trousers or a brown skirt, and worn brown leather boots; the red cape is always on). Image 2 is the wolf: draw them exactly as shown.
+Image 1 is the wolf: draw them exactly as shown.
+Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
+World: a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
+Wide picture-book illustration: the background scene for one page. No text, letters, numbers or signs anywhere in the image.
+The hero, a child, is added into this picture later, so do NOT draw the hero or any child. Leave the spot where the hero is described clear and empty, with nothing in front of it, so the hero can be added there; everything else in the scene is drawn exactly as described.
+Scene: The wolf points a paw off the path towards a sunny clearing full of bright wildflowers. The hero looks towards the flowers, delighted and tempted, one foot already stepping off the path.
+Mood and light: Tempting and sunny, with the wolf's sly look as the only warning.
+Composition: Characters in the upper two-thirds. The lower third is plain, shadowed grass at the path's edge, low in detail, for text added later. The hero's spot must not be in that space for text.
+Only these characters appear: the wolf. No other people or animals.
+```
+
+**Each book's page** (pictures sent: hero, the scene):
+
+```
+Image 1 is Little Red: use him exactly (same face, hair, skin tone, and outfit: a bright red hooded cape over a cream linen shirt, a brown laced vest, brown trousers or a brown skirt, and worn brown leather boots; the red cape is always on). Image 2 is this page's finished scene.
+Draw image 2 again with Little Red added into it, as described below. Keep everything else in image 2 exactly the same: the place, the other characters, the light, the colours and the composition.
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
 Scene: The wolf points a paw off the path towards a sunny clearing full of bright wildflowers. Little Red looks towards the flowers, delighted and tempted, one foot already stepping off the path.
-Mood and light: Tempting and sunny, with the wolf's sly look as the only warning.
-Composition: Characters in the upper two-thirds. The lower third is plain, shadowed grass at the path's edge, low in detail, for text added later.
-Only these characters appear: Little Red and the wolf. No other people or animals.
+Keep Little Red, and above all his face, out of the bottom third of the picture: it stays plain, for the story text.
+Little Red is the only person added; nothing else changes.
 ```
 
 ## Page 7
@@ -176,17 +259,31 @@ Only these characters appear: Little Red and the wolf. No other people or animal
 
 **While it's drawn:** Wandering off the path…
 
-**Pictures sent with it:** hero.png, wolf.png
+**The scene** (drawn once for every book; pictures sent: wolf):
 
 ```
-Image 1 is Little Red: use him exactly (same face, hair, skin tone, and outfit: a bright red hooded cape over a cream linen shirt, a brown laced vest, brown trousers or a brown skirt, and worn brown leather boots; the red cape is always on). Image 2 is the wolf: draw them exactly as shown.
+Image 1 is the wolf: draw them exactly as shown.
+Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
+World: a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
+Wide picture-book illustration: the background scene for one page. No text, letters, numbers or signs anywhere in the image.
+The hero, a child, is added into this picture later, so do NOT draw the hero or any child. Leave the spot where the hero is described clear and empty, with nothing in front of it, so the hero can be added there; everything else in the scene is drawn exactly as described.
+Scene: A sunlit meadow of poppies, daisies and bluebells. The hero kneels among the flowers, gathering a big bunch, happy and unaware. Far behind, small, the wolf runs off down the path towards the cottage.
+Mood and light: Bright and carefree, with a small worrying detail in the distance. Warm midday light.
+Composition: Characters in the lower two-thirds. The top third is plain, soft summer sky with no birds or detail, for text added later. The hero's spot must not be in that space for text.
+Only these characters appear: the wolf. No other people or animals.
+```
+
+**Each book's page** (pictures sent: hero, the scene):
+
+```
+Image 1 is Little Red: use him exactly (same face, hair, skin tone, and outfit: a bright red hooded cape over a cream linen shirt, a brown laced vest, brown trousers or a brown skirt, and worn brown leather boots; the red cape is always on). Image 2 is this page's finished scene.
+Draw image 2 again with Little Red added into it, as described below. Keep everything else in image 2 exactly the same: the place, the other characters, the light, the colours and the composition.
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
 Scene: A sunlit meadow of poppies, daisies and bluebells. Little Red kneels among the flowers, gathering a big bunch, happy and unaware. Far behind, small, the wolf runs off down the path towards the cottage.
-Mood and light: Bright and carefree, with a small worrying detail in the distance. Warm midday light.
-Composition: Characters in the lower two-thirds. The top third is plain, soft summer sky with no birds or detail, for text added later.
-Only these characters appear: Little Red and the wolf. No other people or animals.
+Keep Little Red, and above all his face, out of the top third of the picture: it stays plain, for the story text.
+Little Red is the only person added; nothing else changes.
 ```
 
 ## Page 8
@@ -195,7 +292,7 @@ Only these characters appear: Little Red and the wolf. No other people or animal
 
 **While it's drawn:** Knocking at Grandmother’s door…
 
-**Pictures sent with it:** wolf.png
+**The whole page, shared by every book** (pictures sent: wolf):
 
 ```
 Image 1 is the wolf: draw them exactly as shown.
@@ -214,7 +311,7 @@ Only these characters appear: the wolf. No other people or animals.
 
 **While it's drawn:** Hiding Grandmother in the wardrobe…
 
-**Pictures sent with it:** grandmother.png, wolf.png
+**The whole page, shared by every book** (pictures sent: grandmother, wolf):
 
 ```
 Image 1 is Grandmother: draw them exactly as shown. Image 2 is the wolf: draw them exactly as shown.
@@ -233,7 +330,7 @@ Only these characters appear: Grandmother and the wolf. No other people or anima
 
 **While it's drawn:** Trying on Grandmother’s nightcap…
 
-**Pictures sent with it:** wolf.png
+**The whole page, shared by every book** (pictures sent: wolf):
 
 ```
 Image 1 is the wolf: draw them exactly as shown.
@@ -253,17 +350,30 @@ Only these characters appear: the wolf. No other people or animals.
 
 **While it's drawn:** Arriving with a big bunch of flowers…
 
-**Pictures sent with it:** hero.png
+**The scene** (drawn once for every book; pictures sent: none):
 
 ```
-Image 1 is Little Red: use him exactly (same face, hair, skin tone, and outfit: a bright red hooded cape over a cream linen shirt, a brown laced vest, brown trousers or a brown skirt, and worn brown leather boots; the red cape is always on).
+Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
+World: a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
+Wide picture-book illustration: the background scene for one page. No text, letters, numbers or signs anywhere in the image.
+The hero, a child, is added into this picture later, so do NOT draw the hero or any child. Leave the spot where the hero is described clear and empty, with nothing in front of it, so the hero can be added there; everything else in the scene is drawn exactly as described.
+Scene: Grandmother's cottage doorway, the round door slightly open. The hero stands on the step with the basket on one arm and a big bunch of wildflowers in the other hand, shown full face, smiling but puzzled, peering in.
+Mood and light: Calm but odd. Late afternoon golden light.
+Composition: The hero in the upper two-thirds. The lower third is the plain stone doorstep and grass, low in detail, for text added later. The hero's spot must not be in that space for text.
+No people or animals at all.
+```
+
+**Each book's page** (pictures sent: hero, the scene):
+
+```
+Image 1 is Little Red: use him exactly (same face, hair, skin tone, and outfit: a bright red hooded cape over a cream linen shirt, a brown laced vest, brown trousers or a brown skirt, and worn brown leather boots; the red cape is always on). Image 2 is this page's finished scene.
+Draw image 2 again with Little Red added into it, as described below. Keep everything else in image 2 exactly the same: the place, the other characters, the light, the colours and the composition.
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
 Scene: Grandmother's cottage doorway, the round door slightly open. Little Red stands on the step with the basket on one arm and a big bunch of wildflowers in the other hand, shown full face, smiling but puzzled, peering in.
-Mood and light: Calm but odd. Late afternoon golden light.
-Composition: Little Red in the upper two-thirds. The lower third is the plain stone doorstep and grass, low in detail, for text added later.
-Only these characters appear: Little Red. No other people or animals.
+Keep Little Red, and above all his face, out of the bottom third of the picture: it stays plain, for the story text.
+Little Red is the only person added; nothing else changes.
 ```
 
 ## Page 12
@@ -272,18 +382,32 @@ Only these characters appear: Little Red. No other people or animals.
 
 **While it's drawn:** Noticing Grandmother’s big ears…
 
-**Pictures sent with it:** hero.png, wolf.png
+**The scene** (drawn once for every book; pictures sent: wolf):
 
 ```
-Image 1 is Little Red: use him exactly (same face, hair, skin tone, and outfit: a bright red hooded cape over a cream linen shirt, a brown laced vest, brown trousers or a brown skirt, and worn brown leather boots; the red cape is always on). Image 2 is the wolf: draw them exactly as shown.
+Image 1 is the wolf: draw them exactly as shown.
+Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
+World: a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
+Wide picture-book illustration: the background scene for one page. No text, letters, numbers or signs anywhere in the image.
+The hero, a child, is added into this picture later, so do NOT draw the hero or any child. Leave the spot where the hero is described clear and empty, with nothing in front of it, so the hero can be added there; everything else in the scene is drawn exactly as described.
+Scene: Grandmother's bedroom, beside the wooden bed with the patchwork quilt. The wolf lies in the bed under the quilt, in Grandmother's nightgown and nightcap and her round spectacles, his big furry ears sticking up out of the nightcap: the ears are what the picture is about. The hero stands at the bedside holding the flowers, head tilted, puzzled.
+Mood and light: Funny and creepy. Dim, cosy bedroom light.
+Composition: Characters in the lower two-thirds. The top third is the plain bedroom wall and a beam, softly lit, for text added later. The hero's spot must not be in that space for text.
+Costumes (exactly as on the other pages): The wolf wears Grandmother's long pale-blue nightgown and her white lace nightcap, the same on every page from when he climbs into her bed until he runs away into the forest.
+Only these characters appear: the wolf. No other people or animals.
+```
+
+**Each book's page** (pictures sent: hero, the scene):
+
+```
+Image 1 is Little Red: use him exactly (same face, hair, skin tone, and outfit: a bright red hooded cape over a cream linen shirt, a brown laced vest, brown trousers or a brown skirt, and worn brown leather boots; the red cape is always on). Image 2 is this page's finished scene.
+Draw image 2 again with Little Red added into it, as described below. Keep everything else in image 2 exactly the same: the place, the other characters, the light, the colours and the composition.
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
 Scene: Grandmother's bedroom, beside the wooden bed with the patchwork quilt. The wolf lies in the bed under the quilt, in Grandmother's nightgown and nightcap and her round spectacles, his big furry ears sticking up out of the nightcap: the ears are what the picture is about. Little Red stands at the bedside holding the flowers, head tilted, puzzled.
-Mood and light: Funny and creepy. Dim, cosy bedroom light.
-Composition: Characters in the lower two-thirds. The top third is the plain bedroom wall and a beam, softly lit, for text added later.
-Costumes (exactly as on the other pages): The wolf wears Grandmother's long pale-blue nightgown and her white lace nightcap, the same on every page from when he climbs into her bed until he runs away into the forest.
-Only these characters appear: Little Red and the wolf. No other people or animals.
+Keep Little Red, and above all his face, out of the top third of the picture: it stays plain, for the story text.
+Little Red is the only person added; nothing else changes.
 ```
 
 ## Page 13
@@ -292,18 +416,32 @@ Only these characters appear: Little Red and the wolf. No other people or animal
 
 **While it's drawn:** Noticing Grandmother’s big eyes…
 
-**Pictures sent with it:** hero.png, wolf.png
+**The scene** (drawn once for every book; pictures sent: wolf, scene-12):
 
 ```
-Image 1 is Little Red: use him exactly (same face, hair, skin tone, and outfit: a bright red hooded cape over a cream linen shirt, a brown laced vest, brown trousers or a brown skirt, and worn brown leather boots; the red cape is always on). Image 2 is the wolf: draw them exactly as shown.
+Image 1 is the wolf: draw them exactly as shown. Image 2 is the scene of page 12, the moment just before: keep the same place, furniture, light and costumes, so the two pages follow on.
+Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
+World: a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
+Wide picture-book illustration: the background scene for one page. No text, letters, numbers or signs anywhere in the image.
+The hero, a child, is added into this picture later, so do NOT draw the hero or any child. Leave the spot where the hero is described clear and empty, with nothing in front of it, so the hero can be added there; everything else in the scene is drawn exactly as described.
+Scene: Inside Grandmother's bedroom, the same wooden bed and patchwork quilt as on the page before, a little closer in. The wolf is still lying in the bed under the quilt, in the nightgown and nightcap, peering over the round spectacles with huge yellow eyes: the eyes are what the picture is about. The hero stands at the bedside and leans back a little, shown full face, eyes wide, starting to worry.
+Mood and light: Growing suspense. Dim light, the wolf's eyes catching the light.
+Composition: Characters in the upper two-thirds. The lower third is the plain patchwork quilt in soft shadow, low in detail, for text added later. The hero's spot must not be in that space for text.
+Costumes (exactly as on the other pages): The wolf wears Grandmother's long pale-blue nightgown and her white lace nightcap, the same on every page from when he climbs into her bed until he runs away into the forest.
+Only these characters appear: the wolf. No other people or animals.
+```
+
+**Each book's page** (pictures sent: hero, the scene):
+
+```
+Image 1 is Little Red: use him exactly (same face, hair, skin tone, and outfit: a bright red hooded cape over a cream linen shirt, a brown laced vest, brown trousers or a brown skirt, and worn brown leather boots; the red cape is always on). Image 2 is this page's finished scene.
+Draw image 2 again with Little Red added into it, as described below. Keep everything else in image 2 exactly the same: the place, the other characters, the light, the colours and the composition.
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
 Scene: Inside Grandmother's bedroom, the same wooden bed and patchwork quilt as on the page before, a little closer in. The wolf is still lying in the bed under the quilt, in the nightgown and nightcap, peering over the round spectacles with huge yellow eyes: the eyes are what the picture is about. Little Red stands at the bedside and leans back a little, shown full face, eyes wide, starting to worry.
-Mood and light: Growing suspense. Dim light, the wolf's eyes catching the light.
-Composition: Characters in the upper two-thirds. The lower third is the plain patchwork quilt in soft shadow, low in detail, for text added later.
-Costumes (exactly as on the other pages): The wolf wears Grandmother's long pale-blue nightgown and her white lace nightcap, the same on every page from when he climbs into her bed until he runs away into the forest.
-Only these characters appear: Little Red and the wolf. No other people or animals.
+Keep Little Red, and above all his face, out of the bottom third of the picture: it stays plain, for the story text.
+Little Red is the only person added; nothing else changes.
 ```
 
 ## Page 14
@@ -312,18 +450,32 @@ Only these characters appear: Little Red and the wolf. No other people or animal
 
 **While it's drawn:** Noticing Grandmother’s very big teeth…
 
-**Pictures sent with it:** hero.png, wolf.png
+**The scene** (drawn once for every book; pictures sent: wolf):
 
 ```
-Image 1 is Little Red: use him exactly (same face, hair, skin tone, and outfit: a bright red hooded cape over a cream linen shirt, a brown laced vest, brown trousers or a brown skirt, and worn brown leather boots; the red cape is always on). Image 2 is the wolf: draw them exactly as shown.
+Image 1 is the wolf: draw them exactly as shown.
+Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
+World: a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
+Wide picture-book illustration: the background scene for one page. No text, letters, numbers or signs anywhere in the image.
+The hero, a child, is added into this picture later, so do NOT draw the hero or any child. Leave the spot where the hero is described clear and empty, with nothing in front of it, so the hero can be added there; everything else in the scene is drawn exactly as described.
+Scene: Grandmother's bedroom. The wolf leaps up out of the wooden bed, throwing off the patchwork quilt, the round spectacles flying off his snout, jaws wide with big storybook teeth (not gory). The hero jumps back, flowers flying, shown full face with a shocked expression.
+Mood and light: The scariest moment, but storybook-scary. Sudden, dramatic light.
+Composition: Characters in the lower two-thirds. The top third is the plain bedroom wall and beams, for text added later. The hero's spot must not be in that space for text.
+Costumes (exactly as on the other pages): The wolf wears Grandmother's long pale-blue nightgown and her white lace nightcap, the same on every page from when he climbs into her bed until he runs away into the forest.
+Only these characters appear: the wolf. No other people or animals.
+```
+
+**Each book's page** (pictures sent: hero, the scene):
+
+```
+Image 1 is Little Red: use him exactly (same face, hair, skin tone, and outfit: a bright red hooded cape over a cream linen shirt, a brown laced vest, brown trousers or a brown skirt, and worn brown leather boots; the red cape is always on). Image 2 is this page's finished scene.
+Draw image 2 again with Little Red added into it, as described below. Keep everything else in image 2 exactly the same: the place, the other characters, the light, the colours and the composition.
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
 Scene: Grandmother's bedroom. The wolf leaps up out of the wooden bed, throwing off the patchwork quilt, the round spectacles flying off his snout, jaws wide with big storybook teeth (not gory). Little Red jumps back, flowers flying, shown full face with a shocked expression.
-Mood and light: The scariest moment, but storybook-scary. Sudden, dramatic light.
-Composition: Characters in the lower two-thirds. The top third is the plain bedroom wall and beams, for text added later.
-Costumes (exactly as on the other pages): The wolf wears Grandmother's long pale-blue nightgown and her white lace nightcap, the same on every page from when he climbs into her bed until he runs away into the forest.
-Only these characters appear: Little Red and the wolf. No other people or animals.
+Keep Little Red, and above all his face, out of the top third of the picture: it stays plain, for the story text.
+Little Red is the only person added; nothing else changes.
 ```
 
 ## Page 15
@@ -332,18 +484,32 @@ Only these characters appear: Little Red and the wolf. No other people or animal
 
 **While it's drawn:** Running for help…
 
-**Pictures sent with it:** hero.png, wolf.png
+**The scene** (drawn once for every book; pictures sent: wolf):
 
 ```
-Image 1 is Little Red: use him exactly (same face, hair, skin tone, and outfit: a bright red hooded cape over a cream linen shirt, a brown laced vest, brown trousers or a brown skirt, and worn brown leather boots; the red cape is always on). Image 2 is the wolf: draw them exactly as shown.
+Image 1 is the wolf: draw them exactly as shown.
+Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
+World: a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
+Wide picture-book illustration: the background scene for one page. No text, letters, numbers or signs anywhere in the image.
+The hero, a child, is added into this picture later, so do NOT draw the hero or any child. Leave the spot where the hero is described clear and empty, with nothing in front of it, so the hero can be added there; everything else in the scene is drawn exactly as described.
+Scene: Outside Grandmother's cottage. The hero runs out through the open door towards the viewer, red cape streaming, shouting, shown full face. The wolf bursts out of the doorway behind, still in Grandmother's nightgown and nightcap.
+Mood and light: Fast and exciting. Bright afternoon light.
+Composition: Characters in the lower two-thirds. The top third is plain sky and treetops with no detail, for text added later. The hero's spot must not be in that space for text.
+Costumes (exactly as on the other pages): The wolf wears Grandmother's long pale-blue nightgown and her white lace nightcap, the same on every page from when he climbs into her bed until he runs away into the forest.
+Only these characters appear: the wolf. No other people or animals.
+```
+
+**Each book's page** (pictures sent: hero, the scene):
+
+```
+Image 1 is Little Red: use him exactly (same face, hair, skin tone, and outfit: a bright red hooded cape over a cream linen shirt, a brown laced vest, brown trousers or a brown skirt, and worn brown leather boots; the red cape is always on). Image 2 is this page's finished scene.
+Draw image 2 again with Little Red added into it, as described below. Keep everything else in image 2 exactly the same: the place, the other characters, the light, the colours and the composition.
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
 Scene: Outside Grandmother's cottage. Little Red runs out through the open door towards the viewer, red cape streaming, shouting, shown full face. The wolf bursts out of the doorway behind, still in Grandmother's nightgown and nightcap.
-Mood and light: Fast and exciting. Bright afternoon light.
-Composition: Characters in the lower two-thirds. The top third is plain sky and treetops with no detail, for text added later.
-Costumes (exactly as on the other pages): The wolf wears Grandmother's long pale-blue nightgown and her white lace nightcap, the same on every page from when he climbs into her bed until he runs away into the forest.
-Only these characters appear: Little Red and the wolf. No other people or animals.
+Keep Little Red, and above all his face, out of the top third of the picture: it stays plain, for the story text.
+Little Red is the only person added; nothing else changes.
 ```
 
 ## Page 16
@@ -352,18 +518,32 @@ Only these characters appear: Little Red and the wolf. No other people or animal
 
 **While it's drawn:** Calling the woodcutter…
 
-**Pictures sent with it:** hero.png, woodcutter.png, wolf.png
+**The scene** (drawn once for every book; pictures sent: woodcutter, wolf):
 
 ```
-Image 1 is Little Red: use him exactly (same face, hair, skin tone, and outfit: a bright red hooded cape over a cream linen shirt, a brown laced vest, brown trousers or a brown skirt, and worn brown leather boots; the red cape is always on). Image 2 is the woodcutter: draw them exactly as shown. Image 3 is the wolf: draw them exactly as shown.
+Image 1 is the woodcutter: draw them exactly as shown. Image 2 is the wolf: draw them exactly as shown.
+Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
+World: a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
+Wide picture-book illustration: the background scene for one page. No text, letters, numbers or signs anywhere in the image.
+The hero, a child, is added into this picture later, so do NOT draw the hero or any child. Leave the spot where the hero is described clear and empty, with nothing in front of it, so the hero can be added there; everything else in the scene is drawn exactly as described.
+Scene: At the forest edge near the cottage. The woodcutter strides in from the trees, axe raised, looking brave and determined. The hero runs to him and points back at the wolf, who skids to a stop, startled, still in Grandmother's nightgown and nightcap.
+Mood and light: Relief arriving. Warm light breaking through the trees.
+Composition: Characters in the upper two-thirds. The lower third is the plain grassy ground, low in detail, for text added later. The hero's spot must not be in that space for text.
+Costumes (exactly as on the other pages): The wolf wears Grandmother's long pale-blue nightgown and her white lace nightcap, the same on every page from when he climbs into her bed until he runs away into the forest.
+Only these characters appear: the woodcutter and the wolf. No other people or animals.
+```
+
+**Each book's page** (pictures sent: hero, the scene):
+
+```
+Image 1 is Little Red: use him exactly (same face, hair, skin tone, and outfit: a bright red hooded cape over a cream linen shirt, a brown laced vest, brown trousers or a brown skirt, and worn brown leather boots; the red cape is always on). Image 2 is this page's finished scene.
+Draw image 2 again with Little Red added into it, as described below. Keep everything else in image 2 exactly the same: the place, the other characters, the light, the colours and the composition.
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
 Scene: At the forest edge near the cottage. The woodcutter strides in from the trees, axe raised, looking brave and determined. Little Red runs to him and points back at the wolf, who skids to a stop, startled, still in Grandmother's nightgown and nightcap.
-Mood and light: Relief arriving. Warm light breaking through the trees.
-Composition: Characters in the upper two-thirds. The lower third is the plain grassy ground, low in detail, for text added later.
-Costumes (exactly as on the other pages): The wolf wears Grandmother's long pale-blue nightgown and her white lace nightcap, the same on every page from when he climbs into her bed until he runs away into the forest.
-Only these characters appear: Little Red, the woodcutter and the wolf. No other people or animals.
+Keep Little Red, and above all his face, out of the bottom third of the picture: it stays plain, for the story text.
+Little Red is the only person added; nothing else changes.
 ```
 
 ## Page 17
@@ -372,18 +552,32 @@ Only these characters appear: Little Red, the woodcutter and the wolf. No other 
 
 **While it's drawn:** Chasing the wolf away…
 
-**Pictures sent with it:** woodcutter.png, wolf.png, hero.png
+**The scene** (drawn once for every book; pictures sent: woodcutter, wolf):
 
 ```
-Image 1 is the woodcutter: draw them exactly as shown. Image 2 is the wolf: draw them exactly as shown. Image 3 is Little Red: use him exactly (same face, hair, skin tone, and outfit: a bright red hooded cape over a cream linen shirt, a brown laced vest, brown trousers or a brown skirt, and worn brown leather boots; the red cape is always on).
+Image 1 is the woodcutter: draw them exactly as shown. Image 2 is the wolf: draw them exactly as shown.
+Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
+World: a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
+Wide picture-book illustration: the background scene for one page. No text, letters, numbers or signs anywhere in the image.
+The hero, a child, is added into this picture later, so do NOT draw the hero or any child. Leave the spot where the hero is described clear and empty, with nothing in front of it, so the hero can be added there; everything else in the scene is drawn exactly as described.
+Scene: The wolf flees into the dark forest with his tail between his legs, still in Grandmother's nightgown and nightcap, the nightgown snagging on a bush. The woodcutter chases after him waving the axe. The hero watches from the cottage gate, hands on the hero's cape, relieved.
+Mood and light: Triumphant and a bit funny. Golden late-afternoon light.
+Composition: Characters in the lower two-thirds. The top third is plain sky over the treetops, for text added later. The hero's spot must not be in that space for text.
+Costumes (exactly as on the other pages): The wolf wears Grandmother's long pale-blue nightgown and her white lace nightcap, the same on every page from when he climbs into her bed until he runs away into the forest.
+Only these characters appear: the woodcutter and the wolf. No other people or animals.
+```
+
+**Each book's page** (pictures sent: hero, the scene):
+
+```
+Image 1 is Little Red: use him exactly (same face, hair, skin tone, and outfit: a bright red hooded cape over a cream linen shirt, a brown laced vest, brown trousers or a brown skirt, and worn brown leather boots; the red cape is always on). Image 2 is this page's finished scene.
+Draw image 2 again with Little Red added into it, as described below. Keep everything else in image 2 exactly the same: the place, the other characters, the light, the colours and the composition.
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
 Scene: The wolf flees into the dark forest with his tail between his legs, still in Grandmother's nightgown and nightcap, the nightgown snagging on a bush. The woodcutter chases after him waving the axe. Little Red watches from the cottage gate, hands on his cape, relieved.
-Mood and light: Triumphant and a bit funny. Golden late-afternoon light.
-Composition: Characters in the lower two-thirds. The top third is plain sky over the treetops, for text added later.
-Costumes (exactly as on the other pages): The wolf wears Grandmother's long pale-blue nightgown and her white lace nightcap, the same on every page from when he climbs into her bed until he runs away into the forest.
-Only these characters appear: the woodcutter, the wolf and Little Red. No other people or animals.
+Keep Little Red, and above all his face, out of the top third of the picture: it stays plain, for the story text.
+Little Red is the only person added; nothing else changes.
 ```
 
 ## Page 18
@@ -392,17 +586,31 @@ Only these characters appear: the woodcutter, the wolf and Little Red. No other 
 
 **While it's drawn:** Opening the wardrobe…
 
-**Pictures sent with it:** hero.png, grandmother.png
+**The scene** (drawn once for every book; pictures sent: grandmother):
 
 ```
-Image 1 is Little Red: use him exactly (same face, hair, skin tone, and outfit: a bright red hooded cape over a cream linen shirt, a brown laced vest, brown trousers or a brown skirt, and worn brown leather boots; the red cape is always on). Image 2 is Grandmother: draw them exactly as shown.
+Image 1 is Grandmother: draw them exactly as shown.
+Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
+World: a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
+Wide picture-book illustration: the background scene for one page. No text, letters, numbers or signs anywhere in the image.
+The hero, a child, is added into this picture later, so do NOT draw the hero or any child. Leave the spot where the hero is described clear and empty, with nothing in front of it, so the hero can be added there; everything else in the scene is drawn exactly as described.
+Scene: Grandmother's bedroom, a little messy after the chase. The hero opens the tall wardrobe and Grandmother peeks out from between the hanging clothes, spectacles askew, smiling with relief.
+Mood and light: Relieved and sweet. Soft warm light.
+Composition: Characters in the upper two-thirds. The lower third is the plain wooden floor, low in detail, for text added later. The hero's spot must not be in that space for text.
+Only these characters appear: Grandmother. No other people or animals.
+```
+
+**Each book's page** (pictures sent: hero, the scene):
+
+```
+Image 1 is Little Red: use him exactly (same face, hair, skin tone, and outfit: a bright red hooded cape over a cream linen shirt, a brown laced vest, brown trousers or a brown skirt, and worn brown leather boots; the red cape is always on). Image 2 is this page's finished scene.
+Draw image 2 again with Little Red added into it, as described below. Keep everything else in image 2 exactly the same: the place, the other characters, the light, the colours and the composition.
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
 Scene: Grandmother's bedroom, a little messy after the chase. Little Red opens the tall wardrobe and Grandmother peeks out from between the hanging clothes, spectacles askew, smiling with relief.
-Mood and light: Relieved and sweet. Soft warm light.
-Composition: Characters in the upper two-thirds. The lower third is the plain wooden floor, low in detail, for text added later.
-Only these characters appear: Little Red and Grandmother. No other people or animals.
+Keep Little Red, and above all his face, out of the bottom third of the picture: it stays plain, for the story text.
+Little Red is the only person added; nothing else changes.
 ```
 
 ## Page 19
@@ -411,17 +619,31 @@ Only these characters appear: Little Red and Grandmother. No other people or ani
 
 **While it's drawn:** Sharing bread, honey and soup…
 
-**Pictures sent with it:** hero.png, grandmother.png, woodcutter.png
+**The scene** (drawn once for every book; pictures sent: grandmother, woodcutter):
 
 ```
-Image 1 is Little Red: use him exactly (same face, hair, skin tone, and outfit: a bright red hooded cape over a cream linen shirt, a brown laced vest, brown trousers or a brown skirt, and worn brown leather boots; the red cape is always on). Image 2 is Grandmother: draw them exactly as shown. Image 3 is the woodcutter: draw them exactly as shown.
+Image 1 is Grandmother: draw them exactly as shown. Image 2 is the woodcutter: draw them exactly as shown.
+Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
+World: a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
+Wide picture-book illustration: the background scene for one page. No text, letters, numbers or signs anywhere in the image.
+The hero, a child, is added into this picture later, so do NOT draw the hero or any child. Leave the spot where the hero is described clear and empty, with nothing in front of it, so the hero can be added there; everything else in the scene is drawn exactly as described.
+Scene: Grandmother's little table by the window. Grandmother, wrapped in her shawl, the hero in the red cape and the woodcutter sit together with bowls of soup, bread and honey. The wildflowers stand in a jug in the middle. Everyone is smiling.
+Mood and light: Cosy and happy. Warm golden evening light.
+Composition: Characters in the lower two-thirds. The top third is the plain wall and window light, for text added later. The hero's spot must not be in that space for text.
+Only these characters appear: Grandmother and the woodcutter. No other people or animals.
+```
+
+**Each book's page** (pictures sent: hero, the scene):
+
+```
+Image 1 is Little Red: use him exactly (same face, hair, skin tone, and outfit: a bright red hooded cape over a cream linen shirt, a brown laced vest, brown trousers or a brown skirt, and worn brown leather boots; the red cape is always on). Image 2 is this page's finished scene.
+Draw image 2 again with Little Red added into it, as described below. Keep everything else in image 2 exactly the same: the place, the other characters, the light, the colours and the composition.
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
 Scene: Grandmother's little table by the window. Grandmother, wrapped in her shawl, Little Red in the red cape and the woodcutter sit together with bowls of soup, bread and honey. The wildflowers stand in a jug in the middle. Everyone is smiling.
-Mood and light: Cosy and happy. Warm golden evening light.
-Composition: Characters in the lower two-thirds. The top third is the plain wall and window light, for text added later.
-Only these characters appear: Little Red, Grandmother and the woodcutter. No other people or animals.
+Keep Little Red, and above all his face, out of the top third of the picture: it stays plain, for the story text.
+Little Red is the only person added; nothing else changes.
 ```
 
 ## Page 20
@@ -430,17 +652,31 @@ Only these characters appear: Little Red, Grandmother and the woodcutter. No oth
 
 **While it's drawn:** Staying on the path, all the way home…
 
-**Pictures sent with it:** hero.png, mother.png
+**The scene** (drawn once for every book; pictures sent: mother):
 
 ```
-Image 1 is Little Red: use him exactly (same face, hair, skin tone, and outfit: a bright red hooded cape over a cream linen shirt, a brown laced vest, brown trousers or a brown skirt, and worn brown leather boots; the red cape is always on). Image 2 is Little Red's mother: draw them exactly as shown.
+Image 1 is The hero's mother: draw them exactly as shown.
+Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
+World: a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
+Wide picture-book illustration: the background scene for one page. No text, letters, numbers or signs anywhere in the image.
+The hero, a child, is added into this picture later, so do NOT draw the hero or any child. Leave the spot where the hero is described clear and empty, with nothing in front of it, so the hero can be added there; everything else in the scene is drawn exactly as described.
+Scene: Sunset at the hero's own cottage. The hero walks up the path with the empty basket, and the hero's mother runs out to hug the hero. The forest behind is calm and golden now.
+Mood and light: Safe, warm and happy. The brightest, cosiest page in the book.
+Composition: Characters in the upper two-thirds. The lower third is the plain path and grass in soft evening shadow, low in detail, for text added later. The hero's spot must not be in that space for text.
+Only these characters appear: The hero's mother. No other people or animals.
+```
+
+**Each book's page** (pictures sent: hero, the scene):
+
+```
+Image 1 is Little Red: use him exactly (same face, hair, skin tone, and outfit: a bright red hooded cape over a cream linen shirt, a brown laced vest, brown trousers or a brown skirt, and worn brown leather boots; the red cape is always on). Image 2 is this page's finished scene.
+Draw image 2 again with Little Red added into it, as described below. Keep everything else in image 2 exactly the same: the place, the other characters, the light, the colours and the composition.
 Style: Modern 3D animated feature — rounded forms, large expressive eyes, soft rim light.
 World: a gentle fairy tale in an old village at the edge of a deep forest. Timber-framed cottages with thatched roofs, mossy stone walls, tall old oaks and pines, wildflower meadows. Warm, rich storybook colours; the forest grows darker and more tangled the deeper the path goes, but it is never gory.
 Wide picture-book illustration. No text, letters, numbers or signs anywhere in the image.
 Scene: Sunset at Little Red's own cottage. Little Red walks up the path with the empty basket, and his mother runs out to hug him. The forest behind is calm and golden now.
-Mood and light: Safe, warm and happy. The brightest, cosiest page in the book.
-Composition: Characters in the upper two-thirds. The lower third is the plain path and grass in soft evening shadow, low in detail, for text added later.
-Only these characters appear: Little Red and Little Red's mother. No other people or animals.
+Keep Little Red, and above all his face, out of the bottom third of the picture: it stays plain, for the story text.
+Little Red is the only person added; nothing else changes.
 ```
 
 ## Page 21: about me (no picture)

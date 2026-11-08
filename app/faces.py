@@ -112,6 +112,37 @@ def drawn_face_x(img: Image.Image) -> float | None:
     return None if best is None else (best[0] + best[2] / 2) / img.width
 
 
+# Where each text zone sits on a page, top to bottom (0 = top edge). Matches ZONES in app/book/pdf.py.
+ZONE_BANDS = {"top": (0.0, 1 / 3), "bottom": (2 / 3, 1.0), "bottom-dark": (0.75, 1.0)}
+OTHER_ZONE = {"top": "bottom", "bottom": "top", "bottom-dark": "top"}
+
+
+def drawn_faces(img: Image.Image) -> list[tuple[int, int, int, int]]:
+    """Faces on a drawn page (x, y, w, h), counting only those with eyes found inside (leaves and clouds can
+    look like faces to the detector)."""
+    gray = cv2.cvtColor(np.array(img.convert("RGB")), cv2.COLOR_RGB2GRAY)
+    found = []
+    for (x, y, w, h) in _find_faces(gray):
+        eyes = EYES.detectMultiScale(gray[y:y + h * 2 // 3, x:x + w], 1.1, 3, minSize=(w // 10, w // 10))
+        if len(eyes):
+            found.append((int(x), int(y), int(w), int(h)))
+    return found
+
+
+def choose_zone(png: bytes, zone: str) -> str:
+    """Where a page's words go: the template's place, unless a face landed there and the other end of the page
+    is clear of faces; then the words move there instead. Free: no redrawing, just a different place."""
+    img = Image.open(io.BytesIO(png))
+    faces = drawn_faces(img)
+
+    def covers(band_zone):
+        top, bottom = (v * img.height for v in ZONE_BANDS[band_zone])
+        return any(min(y + h, bottom) - max(y, top) > h * 0.25 for (x, y, w, h) in faces)
+
+    other = OTHER_ZONE[zone]
+    return other if covers(zone) and not covers(other) else zone
+
+
 def from_saved(full: bytes, face_box: list[int] | None) -> PreparedPhoto:
     """Rebuild the photo the book was accepted with, from the saved copy, without detecting again
     (the saved copy is recompressed, and a second check on it failed books that had passed)."""

@@ -554,7 +554,6 @@ def test_a_book_made_before_pages_were_added_still_opens(client):
 
 
 def test_a_book_of_another_story_is_drawn_from_that_story(client):
-    sign_in(client, ADMIN)  # Little Red is still a draft: admins only
     ref = post_book(client, story="little-red-riding-hood").json()["id"]
     data = wait_for(client, ref)
     assert data["status"] == "done"

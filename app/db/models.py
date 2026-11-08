@@ -127,6 +127,21 @@ class SharedPage(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
 
+class Scene(Base):
+    """The scene bible: a page's scene drawn once per story without the hero (app/book/scenes.py); every book
+    adds its child into it. `key` covers everything that shapes the scene, so a changed page draws a new one.
+    Nothing is replaced: a redraw is a new row, and the newest row for a key is the one used."""
+    __tablename__ = "scenes"
+    id: Mapped[int] = mapped_column(Id, primary_key=True, autoincrement=True)
+    key: Mapped[str] = mapped_column(String(40), index=True)
+    story_key: Mapped[str] = mapped_column(String(64), index=True)
+    page_number: Mapped[int] = mapped_column(Integer)
+    image: Mapped[bytes] = mapped_column(Bytes)  # PNG, sent with each book's page
+    prompt: Mapped[str] = mapped_column(Text)
+    cost: Mapped[float | None] = mapped_column(Numeric(10, 4))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
 class Upload(Base):
     """The uploaded photo, kept so a failed or odd book can be compared with what was sent."""
     __tablename__ = "uploads"
@@ -149,6 +164,7 @@ class BookImage(Base):
     kind: Mapped[str] = mapped_column(String(16))  # hero_sheet | page
     page_number: Mapped[int] = mapped_column(Integer, default=0)  # 0 for the hero sheet
     status: Mapped[str] = mapped_column(String(16), default="waiting")  # waiting | drawing | done | failed
+    text_zone: Mapped[str | None] = mapped_column(String(16))  # where the words went (moved off a face if needed)
     attempts: Mapped[int] = mapped_column(Integer, default=0, server_default="0")  # tries so far (up to 3)
     prompt: Mapped[str | None] = mapped_column(Text)
     refs: Mapped[list | None] = mapped_column(Json)

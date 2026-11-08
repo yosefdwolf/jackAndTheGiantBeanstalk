@@ -3,7 +3,6 @@
 # prompts), {he} {his} {him} and capitalized {He} {His}.
 
 title: Little Red Riding Hood
-draft: true   # only admins see it until this line is removed
 style: animated3d
 theme: red   # the website's look: static/themes/red/ if it exists, otherwise the library's
 blurb: Grandmother's cottage is just through the woods. Stay on the path, and don't talk to strangers.

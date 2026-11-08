@@ -213,3 +213,18 @@ input[type="radio"], input[type="checkbox"] { min-height: 0; padding: 0; width: 
 .cast-main.replace:not(:has(img)) { border-color: var(--edge); }
 .cast-picture { display: grid; gap: 6px; }
 .cast-picture .draw { justify-self: start; }
+
+/* scenes */
+.scenes { margin-top: 18px; }
+.scenes-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-bottom: 10px; }
+.scenes-head h3 { font: 700 20px var(--display); margin: 0; color: var(--leaf); }
+.scenes-head p { margin: 0; font-size: 13px; flex: 1 1 320px; }
+.scene-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.scene-grid figure { margin: 0; background: var(--paper); border: 2px solid var(--edge); border-radius: 12px; padding: 8px;
+  display: grid; gap: 6px; align-content: start; }
+.scene-grid figure.shared { border-style: dashed; }
+.scene-grid img, .scene-empty { width: 100%; aspect-ratio: 3 / 2; object-fit: cover; border-radius: 8px; background: #f4efe6; }
+.scene-empty { display: grid; place-items: center; color: var(--soft); font-size: 13px; }
+.scene-grid figcaption { display: grid; gap: 4px; font-size: 13px; }
+.scene-text { color: var(--ink); font-size: 12px; line-height: 1.35; }
+.scene-grid .btn.small { justify-self: start; }

@@ -3,6 +3,7 @@ the model switch, the unlimited list and refund requests. Only ADMIN_EMAILS can 
 
 On the admin host, paths are mapped under /admin (see AdminHost), so the same routes serve both.
 """
+import asyncio
 import hashlib
 import io
 import os
@@ -16,10 +17,10 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import selectinload
 
 from . import auth, wallet
-from .book import bible
+from .book import bible, scenes
 from .book.providers import CHOICES, is_mock
 from .book.story import Casting, all_stories
-from .db.models import (Activity, AdminSettings, Book, BookEvent, BookImage, CharacterPicture, RequestError, Review,
+from .db.models import (Activity, AdminSettings, Book, BookEvent, BookImage, CharacterPicture, RequestError, Review, Scene, SharedPage,
                         StoryCharacter, StoryRow,
                         Transaction, UnlimitedEmail, Upload, User)
 from .db.session import session
@@ -370,6 +371,111 @@ async def draw_character(story_key: str, key: str, _=Depends(require_admin)):
     return {"name": picture.name, "in_use": in_use,
             "note": None if in_use else f"Drew {picture.name}, but the story file pins {pin}, so books keep using "
                                         f"that until the picture: line is changed."}
+
+
+# --- the scene bible --------------------------------------------------------------------------------
+
+_drawing: dict[str, asyncio.Task] = {}  # story key -> its "draw the missing scenes" run, while it runs
+
+
+async def _scene_inputs(story):
+    """What scenes are drawn with: the image model customers get, the story's prompts and character pictures."""
+    from .book.providers import get_provider
+    name, model, quality = await provider_for(None)
+    provider = get_provider(name, model, quality)
+    prompts = bible.prompts_for(story)
+    return provider, prompts, await bible.sheets_for(story, prompts, provider)
+
+
+@router.get("/api/scenes")
+async def scene_list(_=Depends(require_admin)):
+    """Each story's pages: the scene each one uses now (or the shared page, for pages without the hero)."""
+    from .book.providers import get_provider
+    name, model, quality = await provider_for(None)
+    provider = get_provider(name, model, quality)
+    out = []
+    for story in all_stories():
+        prompts = bible.prompts_for(story)
+        # The character pictures books use now, without drawing any (placeholders cost nothing when MOCK=1).
+        sheets = await (bible.sheets_for(story, prompts, provider) if is_mock() else bible.current(story))
+        pages = []
+        for spec in story.pages:
+            if spec.type != "illustrated":
+                continue
+            item = {"page": spec.number, "text": Casting(story).fill(spec.text), "zone": spec.text_zone,
+                    "kind": "scene" if scenes.needs_scene(spec) else "shared", "url": None, "cost": None}
+            if item["kind"] == "scene":
+                missing = [k for k in spec.cast if k != "hero" and k not in sheets]
+                row = None if missing else await scenes.saved(story, spec, prompts, provider, sheets)
+                if row is not None:
+                    item.update(url=f"/admin/api/scenes/{row.id}.png", cost=float(row.cost or 0), id=row.id)
+            else:
+                async with session() as s:
+                    row = (await s.execute(select(SharedPage.id, SharedPage.cost).where(
+                        SharedPage.story_key == story.key, SharedPage.page_number == spec.number)
+                        .order_by(SharedPage.id.desc()))).first()
+                if row is not None:
+                    item.update(url=f"/admin/api/shared/{row.id}.png", cost=float(row.cost or 0))
+            pages.append(item)
+        task = _drawing.get(story.key)
+        out.append({"key": story.key, "title": story.title, "pages": pages, "drawing": bool(task and not task.done()),
+                    "missing": sum(1 for p in pages if p["kind"] == "scene" and not p["url"])})
+    return out
+
+
+@router.post("/api/scenes/{story_key}/draw")
+async def draw_scenes(story_key: str, _=Depends(require_admin)):
+    """Draw every scene the story still needs, 7 at a time, in the background (about 4 cents each)."""
+    story = next((s for s in all_stories() if s.key == story_key), None)
+    if story is None:
+        raise HTTPException(404, {"message": "No such story."})
+    if story.key in _drawing and not _drawing[story.key].done():
+        return {"started": False, "note": "Already drawing."}
+
+    async def run():
+        provider, prompts, sheets = await _scene_inputs(story)
+        await scenes.draw_all(story, prompts, provider, sheets)
+    _drawing[story.key] = asyncio.create_task(run())
+    return {"started": True}
+
+
+@router.post("/api/scenes/{story_key}/{page}/draw")
+async def redraw_scene(story_key: str, page: int, _=Depends(require_admin)):
+    """Draw one page's scene again (a new version; books use it from then on)."""
+    story = next((s for s in all_stories() if s.key == story_key), None)
+    spec = next((p for p in story.pages if p.number == page), None) if story else None
+    if spec is None or not scenes.needs_scene(spec):
+        raise HTTPException(404, {"message": "That page has no scene (pages without the hero are shared whole)."})
+    provider, prompts, sheets = await _scene_inputs(story)
+    await scenes.scene_for(story, spec, prompts, provider, sheets, redraw=True)
+    return {"redrawn": page}
+
+
+async def _thumb(data: bytes, w: int) -> Response:
+    from PIL import Image
+    img = Image.open(io.BytesIO(data)).convert("RGB")
+    img.thumbnail((min(w, 1600), min(w, 1600)))
+    buf = io.BytesIO()
+    img.save(buf, "WEBP", quality=85)
+    return Response(buf.getvalue(), media_type="image/webp", headers={"Cache-Control": "private, max-age=86400"})
+
+
+@router.get("/api/scenes/{scene_id}.png")
+async def scene_png(scene_id: int, w: int = 480, _=Depends(require_admin)):
+    async with session() as s:
+        data = (await s.execute(select(Scene.image).where(Scene.id == scene_id))).scalar_one_or_none()
+    if data is None:
+        raise HTTPException(404, "No such scene.")
+    return await _thumb(data, w)
+
+
+@router.get("/api/shared/{page_id}.png")
+async def shared_png(page_id: int, w: int = 480, _=Depends(require_admin)):
+    async with session() as s:
+        data = (await s.execute(select(SharedPage.image).where(SharedPage.id == page_id))).scalar_one_or_none()
+    if data is None:
+        raise HTTPException(404, "No such page.")
+    return await _thumb(data, w)
 
 
 @router.get("/api/characters/{picture_id}.png")

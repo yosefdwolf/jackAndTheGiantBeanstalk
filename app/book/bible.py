@@ -31,7 +31,8 @@ _locks: dict[tuple[str, str], asyncio.Lock] = {}  # one writer per story / chara
 
 
 def _lock(*key: str) -> asyncio.Lock:
-    return _locks.setdefault(key, asyncio.Lock())
+    # Per event loop: a lock belongs to the loop that made it (tests run several).
+    return _locks.setdefault((id(asyncio.get_running_loop()), *key), asyncio.Lock())
 
 
 def prompts_for(story: Story) -> PromptBuilder:
@@ -207,6 +208,18 @@ async def add_upload(story: Story, key: str, png: bytes) -> tuple[CharacterPictu
             await _use(c, picture.id)
         await record("INFO", f"{key} sheet", "uploaded", story=story.key, picture=picture.name)
         return picture, not c.pin
+
+
+async def current(story: Story) -> dict[str, bytes]:
+    """The pictures books would use now, for the characters that have one. Draws and changes nothing."""
+    prompts, out = prompts_for(story), {}
+    for key in story.characters:
+        chosen = await choose(story, key, prompts)
+        if chosen.picture is not None:
+            async with session() as s:
+                out[key] = (await s.execute(select(CharacterPicture.image)
+                                            .where(CharacterPicture.id == chosen.picture.id))).scalar_one()
+    return out
 
 
 async def sheets_for(story: Story, prompts: PromptBuilder, provider: ImageProvider) -> dict[str, bytes]:
