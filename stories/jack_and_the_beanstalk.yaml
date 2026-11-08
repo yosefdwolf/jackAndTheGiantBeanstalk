@@ -8,9 +8,7 @@
 title: Jack and the Beanstalk
 style: animated3d
 theme: jack   # the website's look: static/themes/jack/
-blurb: >-
-  You trade the family cow for five magic beans, climb the beanstalk that grows overnight, and sneak
-  past a giant to bring home his gold, his golden hen and his singing harp.
+blurb: You trade the family cow for five magic beans. By morning, nothing will ever be the same.
 library_cover: /static/themes/jack/art/cover.webp   # the library's cover (the site sets the title on it)
 cover_page: 5   # each book's cover on the bookshelf is this page, cropped upright around the hero
 
