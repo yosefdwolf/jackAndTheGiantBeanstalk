@@ -2,6 +2,9 @@
 About Me, and The End. The same order as the flip book on the site."""
 import io
 
+import numpy as np
+from PIL import Image
+
 from reportlab.lib.colors import Color, HexColor
 from reportlab.lib.utils import ImageReader, simpleSplit
 from reportlab.pdfgen.canvas import Canvas
@@ -82,10 +85,30 @@ def _the_end(c: Canvas) -> None:
     c.drawCentredString(W / 2, H / 2 - 20, "The End")
 
 
+def shaded(image: bytes, zone: str) -> Image.Image:
+    """The page's picture with a smooth dark gradient behind where the words go: strongest at the page edge,
+    fading to clear, and darker over bright sky or flowers so white words stay readable. Drawn into the picture
+    in one piece (thin strips drawn one by one showed as stripes)."""
+    img = Image.open(io.BytesIO(image)).convert("RGB")
+    lo, hi, edge, strength = ZONES[zone]
+    top, bottom = int((1 - hi) * img.height), int((1 - lo) * img.height)  # the band, top to bottom in pixels
+    band = np.asarray(img.crop((0, top, img.width, bottom)).convert("L"), dtype=np.float32) / 255
+    brightness = float(band.mean()) if band.size else 0.0
+    strength = min(0.8, strength * (1 + 0.9 * max(0.0, brightness - 0.45) / 0.55))
+    t = np.linspace(0, 1, bottom - top, dtype=np.float32)  # 0 at the band's edge of the page, 1 at its far side
+    if edge == "bottom":
+        t = t[::-1]
+    alpha = (strength * (1 - t) ** 1.5 * 255).astype(np.uint8)
+    mask = Image.fromarray(np.repeat(alpha[:, None], img.width, axis=1), "L")
+    img.paste(Image.new("RGB", (img.width, bottom - top), (0, 0, 0)), (0, top), mask)
+    return img
+
+
 def _illustrated(c: Canvas, page: RenderedPage) -> None:
-    c.drawImage(ImageReader(io.BytesIO(page.image)), 0, 0, W, H)
+    buf = io.BytesIO()
+    shaded(page.image, page.text_zone).save(buf, "JPEG", quality=88)  # JPEG keeps the PDF small
+    c.drawImage(ImageReader(io.BytesIO(buf.getvalue())), 0, 0, W, H)
     lo, hi, edge, strength = ZONES[page.text_zone]
-    _scrim(c, lo * H, hi * H, edge, strength)
     lines = simpleSplit(page.text, STORY_FONT, STORY_SIZE, W * 0.78)
     block = len(lines) * STORY_LEADING
     y = (lo + hi) / 2 * H + block / 2 - STORY_SIZE * 0.8
@@ -96,19 +119,6 @@ def _illustrated(c: Canvas, page: RenderedPage) -> None:
         c.setFillColor(Color(1, 1, 1))
         c.drawCentredString(W / 2, y, line)
         y -= STORY_LEADING
-
-
-def _scrim(c: Canvas, y0: float, y1: float, edge: str, strength: float, steps: int = 160) -> None:
-    """A soft dark gradient behind the text, strongest at the page edge, fading to clear."""
-    c.saveState()
-    step = (y1 - y0) / steps
-    for i in range(steps):
-        t = i / steps  # 0 at the edge, 1 at the far side of the band
-        alpha = strength * (1 - t) ** 1.5
-        y = y0 + i * step if edge == "bottom" else y1 - (i + 1) * step
-        c.setFillColor(Color(0, 0, 0, alpha=alpha))
-        c.rect(0, y, W, step, stroke=0, fill=1)
-    c.restoreState()
 
 
 def _about_me(c: Canvas, page: RenderedPage) -> None:

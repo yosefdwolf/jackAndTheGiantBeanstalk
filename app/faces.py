@@ -129,6 +129,19 @@ def drawn_faces(img: Image.Image) -> list[tuple[int, int, int, int]]:
     return found
 
 
+def zone_clear_of(faces: list[dict], zone: str) -> str:
+    """Where a page's words go, given where faces are ({"top", "bottom"} as fractions, 0 = top edge): the
+    template's place if no face is in it, else the other end of the page if that's clear, else whichever end
+    covers less of the faces."""
+    def covered(band_zone):
+        top, bottom = ZONE_BANDS[band_zone]
+        return sum(max(0.0, min(f["bottom"], bottom) - max(f["top"], top)) / max(0.01, f["bottom"] - f["top"])
+                   for f in faces)
+    other = OTHER_ZONE[zone]
+    here, there = covered(zone), covered(other)
+    return zone if here <= 0.15 or here <= there else other
+
+
 def choose_zone(png: bytes, zone: str) -> str:
     """Where a page's words go: the template's place, unless a face landed there and the other end of the page
     is clear of faces; then the words move there instead. Free: no redrawing, just a different place."""

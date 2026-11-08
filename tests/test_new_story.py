@@ -285,7 +285,13 @@ def test_a_bad_colour_is_caught(stories):
     assert any("accent must be a colour" in p for p in check_story(load_story(path)))
 
 
-def test_pages_are_drawn_on_their_scene_and_scenes_see_earlier_scenes(client):
+@pytest.fixture
+def scenes_on(monkeypatch):
+    from app.book import jobs
+    monkeypatch.setattr(jobs, "USE_SCENES", True)
+
+
+def test_pages_are_drawn_on_their_scene_and_scenes_see_earlier_scenes(client, scenes_on):
     from tests.test_books import ADMIN, post_book, rows, sign_in, wait_for
     from app.db.models import BookImage, Scene
     sign_in(client, ADMIN)
@@ -300,7 +306,7 @@ def test_pages_are_drawn_on_their_scene_and_scenes_see_earlier_scenes(client):
     assert "do NOT draw the hero" in saved[1].prompt and "Little Red" not in saved[1].prompt
 
 
-def test_a_second_book_reuses_every_scene(client):
+def test_a_second_book_reuses_every_scene(client, scenes_on):
     from tests.test_books import ADMIN, post_book, rows, sign_in, wait_for
     from app.db.models import BookEvent, Scene
     sign_in(client, ADMIN)
@@ -356,7 +362,7 @@ def test_words_move_off_a_face(client):
     assert choose_zone(page(at_bottom=False), "top") == "bottom"
 
 
-def test_trying_a_page_keeps_each_try(client):
+def test_trying_a_page_keeps_each_try(client, scenes_on):
     from tests.test_books import ADMIN, PARENT, post_book, sign_in, wait_for
     sign_in(client, ADMIN)
     assert client.post("/admin/api/trials", json={"story": "little_red_riding_hood", "page": 12}).status_code == 400
@@ -369,3 +375,78 @@ def test_trying_a_page_keeps_each_try(client):
     assert [t["how"] for t in tries] == ["baseline", "swap"] and all(t["book"] == ref for t in tries)
     sign_in(client, PARENT)
     assert client.post("/admin/api/trials", json={"story": "little_red_riding_hood", "page": 12}).status_code == 403
+
+
+
+def test_without_scenes_pages_are_drawn_whole(client):
+    from tests.test_books import ADMIN, post_book, rows, sign_in, wait_for
+    from app.db.models import BookImage, Scene
+    sign_in(client, ADMIN)
+    ref = post_book(client, story="little-red-riding-hood").json()["id"]
+    assert wait_for(client, ref, timeout=30)["status"] == "done"
+    pages = {i.page_number: i for i in run(rows(BookImage, book_id=ref)) if i.kind == "page"}
+    assert pages[12].refs == ["hero", "wolf"] and run(rows(Scene)) == []
+
+
+def test_a_page_with_an_extra_child_is_drawn_again(client, monkeypatch):
+    from tests.test_books import ADMIN, post_book, rows, sign_in, wait_for
+    from app.book.providers import MockImageProvider
+    from app.db.models import BookEvent, BookImage
+    calls = []
+    original = MockImageProvider.edit
+
+    async def edit(self, label, refs, prompt, size):
+        calls.append(label)
+        return await original(self, label, refs, prompt, size)
+
+    async def look_counting(self, png):  # page 5's first try shows two children
+        label_tries = calls.count("page 5")
+        two = calls and calls[-1] == "page 5" and label_tries == 1
+        return {"faces": [{"top": 0.75, "bottom": 0.9, "left": 0.4, "right": 0.5}], "children": 2 if two else 1}
+    monkeypatch.setattr(MockImageProvider, "edit", edit)
+    monkeypatch.setattr(MockImageProvider, "look_at_page", look_counting)
+    from app.book import jobs
+    monkeypatch.setattr(jobs, "IMAGE_CONCURRENCY", 1)  # one at a time, so "the last picture" is page 5's
+    sign_in(client, ADMIN)
+    ref = post_book(client).json()["id"]
+    assert wait_for(client, ref, timeout=30)["status"] == "done"
+    assert calls.count("page 5") == 2  # redrawn once
+    events = [e for e in run(rows(BookEvent, book_id=ref)) if e.event == "picture check failed"]
+    assert [e.step for e in events] == ["page 5"] and events[0].fields["problem"] == "2 children, expected 1"
+    pages = {i.page_number: i for i in run(rows(BookImage, book_id=ref)) if i.kind == "page"}
+    assert pages[5].attempts == 2
+    # a face low on the page sends the words up: page 1's words were at the bottom in the story file
+    assert pages[1].text_zone == "top"
+
+
+def test_words_go_where_no_face_is():
+    from app.faces import zone_clear_of
+    low = [{"top": 0.7, "bottom": 0.85, "left": 0.4, "right": 0.5}]
+    high = [{"top": 0.1, "bottom": 0.25, "left": 0.4, "right": 0.5}]
+    assert zone_clear_of(low, "bottom") == "top" and zone_clear_of(low, "top") == "top"
+    assert zone_clear_of(high, "top") == "bottom" and zone_clear_of(high, "bottom") == "bottom"
+    assert zone_clear_of(low + high, "bottom") in ("top", "bottom")  # faces at both ends: the lesser overlap
+    assert zone_clear_of([], "bottom-dark") == "bottom-dark"
+
+
+def test_a_rate_limit_is_waited_out_not_counted_as_a_try(client, monkeypatch):
+    import httpx
+    import openai
+    from tests.test_books import ADMIN, post_book, rows, sign_in, wait_for
+    from app.book import jobs
+    from app.book.providers import MockImageProvider
+    from app.db.models import BookImage
+    original, refused = MockImageProvider.edit, []
+
+    async def edit(self, label, refs, prompt, size):
+        if label == "page 3" and not refused:
+            refused.append(label)
+            response = httpx.Response(429, headers={"retry-after": "1"}, request=httpx.Request("POST", "http://x"))
+            raise openai.RateLimitError("slow down", response=response, body=None)
+        return await original(self, label, refs, prompt, size)
+    monkeypatch.setattr(MockImageProvider, "edit", edit)
+    sign_in(client, ADMIN)
+    ref = post_book(client).json()["id"]
+    assert wait_for(client, ref, timeout=30)["status"] == "done" and refused == ["page 3"]
+    page3 = next(i for i in run(rows(BookImage, book_id=ref)) if i.kind == "page" and i.page_number == 3)
+    assert page3.attempts == 1  # waiting for the rate limit didn't use up a try

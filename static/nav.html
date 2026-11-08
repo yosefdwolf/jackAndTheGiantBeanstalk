@@ -12,13 +12,18 @@
   for (const a of document.querySelectorAll('.sitenav a')) {
     if (a.getAttribute('href') === location.pathname) a.setAttribute('aria-current', 'page');
   }
-  fetch('/api/me', { cache: 'no-store' }).then((r) => r.json()).then((me) => {
+  function paint(me) {
     const sign = document.getElementById('navSign');
     if (!me.signed_in) { sign.href = `/auth/login?next=${encodeURIComponent(location.pathname)}`; return; }
     sign.textContent = 'Sign out';
     sign.href = '/auth/logout';
     document.getElementById('navAdmin').hidden = !me.admin;
     if (!me.unlimited) document.getElementById('navWallet').textContent = `Wallet · $${(me.balance_cents / 100).toFixed(2)}`;
-  }).catch(() => {});
+  }
+  // Pages call this after money moves (a payment, a book, a refund), so the amount is never stale.
+  window.refreshNav = () => fetch('/api/me', { cache: 'no-store' }).then((r) => r.json()).then(paint).catch(() => {});
+  window.refreshNav();
+  // Coming back with the browser's back button can show a copy saved before signing in or paying: reload it.
+  window.addEventListener('pageshow', (e) => { if (e.persisted) location.reload(); });
 })();
 </script>

@@ -221,6 +221,7 @@
         : 'Stripe hasn’t confirmed the payment yet. Reload in a moment.');
     }
     paint();
+    if (window.refreshNav) window.refreshNav();  // the balance just changed (a payment was credited)
   }
   function flash(text) {
     $('flash').textContent = text;

@@ -7,6 +7,7 @@ progress bars can be watched locally.
 import asyncio
 import base64
 import io
+import json
 import os
 import random
 from abc import ABC, abstractmethod
@@ -46,6 +47,12 @@ class ImageProvider(ABC):
     async def describe_face(self, face_png: bytes) -> str:
         """Short text description of a face, added to the hero sheet prompt. Optional."""
         return ""
+
+    async def look_at_page(self, png: bytes) -> dict:
+        """What's on a finished page, for the picture check (jobs.check_page): every face's place as fractions
+        of the picture ({"top", "bottom", "left", "right"}, 0 = top/left edge) and how many children are in it.
+        Without a vision model: nothing found, so the check passes and the words stay in the template's place."""
+        return {"faces": [], "children": None}
 
 
 class OpenAIImageProvider(ImageProvider):
@@ -94,6 +101,34 @@ class OpenAIImageProvider(ImageProvider):
                          tokens_out=resp.usage.completion_tokens, provider_request=resp._request_id)
         return (resp.choices[0].message.content or "").strip()
 
+    async def look_at_page(self, png):
+        img = Image.open(io.BytesIO(png)).convert("RGB")
+        img.thumbnail((768, 768))  # plenty to place faces, and a fraction of a cent
+        buf = io.BytesIO()
+        img.save(buf, "JPEG", quality=85)
+        b64 = base64.b64encode(buf.getvalue()).decode()
+        async with step("picture check", call="chat.completions", model=self.vision_model):
+            resp = await self.client.chat.completions.create(
+                model=self.vision_model, max_tokens=400, response_format={"type": "json_object"},
+                messages=[{"role": "user", "content": [
+                    {"type": "text", "text": LOOK_AT_PAGE},
+                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}},
+                ]}],
+            )
+            tokens_in, tokens_out = resp.usage.prompt_tokens, resp.usage.completion_tokens
+            cost = (tokens_in * 0.40 + tokens_out * 1.60) / 1e6  # gpt-4.1-mini list prices per 1M tokens
+            add_cost(cost)
+            await record("INFO", "picture check", "usage", tokens_in=tokens_in, tokens_out=tokens_out,
+                         cost=f"${cost:.4f}", provider_request=resp._request_id)
+        try:
+            found = json.loads(resp.choices[0].message.content or "{}")
+        except ValueError:
+            return {"faces": [], "children": None}
+        faces = [{k: min(1.0, max(0.0, float(f.get(k, 0)))) for k in ("top", "bottom", "left", "right")}
+                 for f in found.get("faces") or [] if isinstance(f, dict)]
+        children = found.get("children")
+        return {"faces": faces, "children": int(children) if isinstance(children, (int, float)) else None}
+
     async def _result(self, label, resp) -> ImageResult:
         png = base64.b64decode(resp.data[0].b64_json)
         details = getattr(resp.usage, "input_tokens_details", None)
@@ -106,6 +141,15 @@ class OpenAIImageProvider(ImageProvider):
         add_cost(cost)
         await record("INFO", label, "usage", **tokens, cost=f"${cost:.3f}", provider_request=resp._request_id)
         return ImageResult(png, cost, tokens, resp._request_id)
+
+
+LOOK_AT_PAGE = (
+    "This is one page of a children's picture book. Answer in JSON only: "
+    '{"faces": [{"who": "short label", "top": 0.0, "bottom": 0.0, "left": 0.0, "right": 0.0}], "children": 0}. '
+    "faces: every face in the picture (people and animal characters), each as the box around the face only, in "
+    "fractions of the picture (0 = top or left edge, 1 = bottom or right edge). children: how many human children "
+    "are in the picture (count every child, even small, partly hidden or in the background)."
+)
 
 
 class MockImageProvider(ImageProvider):

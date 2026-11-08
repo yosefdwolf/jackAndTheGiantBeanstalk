@@ -282,6 +282,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
         me.balance_cents -= me.price_cents;
         paintAccount();
       }
+      if (window.refreshNav) window.refreshNav();  // the book was paid for: the nav's wallet amount changed
       watch(data.id, true);
     } catch {
       showError('We couldn’t reach the book. Check your connection and try again.');
@@ -440,6 +441,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     // A failed book gives the day's book back; a finished one uses it. Ask the server which.
     fetch('/api/me', { cache: 'no-store' }).then((r) => r.json()).then((m) => { me = m; paintAccount(); updateReady(); })
       .catch(() => {});
+    if (window.refreshNav) window.refreshNav();  // a failed book gives its money back
     if (data.status === 'done' && data.book) {
       track('book_ready', { fresh: watchingFresh ? '1' : '0', ref: data.id });
       openReader(data);

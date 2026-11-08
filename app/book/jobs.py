@@ -12,6 +12,7 @@ import io
 import os
 import statistics
 import uuid
+from dataclasses import dataclass
 from datetime import datetime, timezone
 
 import openai
@@ -22,7 +23,7 @@ from sqlalchemy.orm import selectinload
 
 from ..db.models import Activity, Book, BookEvent, BookImage, SharedPage, Upload
 from ..db.session import session
-from ..faces import PreparedPhoto, UploadError, choose_zone, from_saved, prepare
+from ..faces import PreparedPhoto, UploadError, choose_zone, from_saved, prepare, zone_clear_of
 from . import bible, scenes
 from .cast import CastSheets, MissingSheetError
 from .log import record, start_book, step
@@ -36,7 +37,9 @@ from .styles import get_style
 HERO = ("hero_sheet", 0)
 DEFAULT_ETA = {"hero_sheet": 22.0, "page": 28.0}  # seconds, until there's history to go on
 # Pictures drawn at the same time. OpenAI refuses too many image calls at once, and a book now has 20.
-IMAGE_CONCURRENCY = int(os.getenv("IMAGE_CONCURRENCY", "7"))
+IMAGE_CONCURRENCY = int(os.getenv("IMAGE_CONCURRENCY", "20"))  # every page at once; rate limits are waited out
+RATE_LIMIT_WAIT = 90  # seconds a picture may wait in all for the image service's rate limit
+USE_SCENES = os.getenv("SCENES", "") == "1"  # scene bible for books: off until single-page tries look right
 MAX_TRIES = 3
 RETRY_PAUSE = float(os.getenv("RETRY_PAUSE_SECONDS", "2"))
 _tasks: set[asyncio.Task] = set()  # keep references so running books aren't garbage-collected
@@ -193,18 +196,56 @@ async def _set_image(ref, key, **values):
         await s.commit()
 
 
-async def _draw(ref, key, provider, prompt, refs, call):
-    """Draw one image, up to MAX_TRIES times, a short pause apart. Returns PNG bytes, or raises the last
-    error. Never more than MAX_TRIES calls: this is the only loop around the image service."""
-    for attempt in range(1, MAX_TRIES + 1):
+async def _draw(ref, key, provider, prompt, refs, call, check=None):
+    """Draw one image, up to MAX_TRIES times, a short pause apart. Returns PNG bytes, or raises the last error.
+    With `check` (an async png -> Verdict), a picture that fails the check counts as a try too, and if every
+    try fails it, the best one is kept. A rate-limit refusal isn't a try: it waits and asks again (for up to
+    RATE_LIMIT_WAIT seconds in all). Never more than MAX_TRIES pictures: this is the only loop around the
+    image service."""
+    best, waited, attempt = None, 0.0, 1
+    while attempt <= MAX_TRIES:
         try:
-            return await _draw_once(ref, key, provider, prompt, refs, call, attempt)
+            png = await _draw_once(ref, key, provider, prompt, refs, call, attempt)
+        except openai.RateLimitError as e:
+            pause = _retry_after(e)
+            if waited + pause > RATE_LIMIT_WAIT:
+                raise
+            await record("WARNING", f"{key[0]} {key[1]}", "rate limited", wait=f"{pause:.0f}s")
+            waited += pause
+            await asyncio.sleep(pause)
+            continue
         except Exception as e:
             code, _ = friendly_error(e)
             await record("WARNING", f"{key[0]} {key[1]}", "try failed", attempt=attempt, error=code)
             if attempt == MAX_TRIES:
-                raise
+                if best is None:
+                    raise
+                break
+            attempt += 1
             await asyncio.sleep(RETRY_PAUSE)
+            continue
+        if check is None:
+            return png
+        verdict = await check(png)
+        if verdict.ok:
+            return png
+        await record("WARNING", f"{key[0]} {key[1]}", "picture check failed", attempt=attempt, problem=verdict.problem)
+        if best is None or verdict.score > best[0]:
+            best = (verdict.score, png)
+        if attempt == MAX_TRIES:
+            break
+        attempt += 1
+    await _set_image(ref, key, status="done", image=to_webp(best[1]))  # the best try, if none passed
+    await record("WARNING", f"{key[0]} {key[1]}", "kept the best try", note="no try passed the picture check")
+    return best[1]
+
+
+def _retry_after(e) -> float:
+    """How long the image service asked us to wait, or a short default."""
+    try:
+        return min(30.0, max(1.0, float(e.response.headers.get("retry-after", "5"))))
+    except (AttributeError, TypeError, ValueError):
+        return 5.0
 
 
 async def _draw_once(ref, key, provider, prompt, refs, call, attempt):
@@ -224,6 +265,22 @@ async def _draw_once(ref, key, provider, prompt, refs, call, attempt):
     return result.png
 
 
+@dataclass
+class Verdict:
+    ok: bool
+    score: int     # higher is better; the best try is kept if none passes
+    problem: str = ""
+
+
+def verdict(seen: dict, expect_children: int) -> Verdict:
+    """A page passes unless the vision model counted a different number of children than the page should have
+    (a second child, or none). Can't tell: it passes."""
+    children = seen.get("children")
+    if children is None or children == expect_children:
+        return Verdict(True, 0)
+    return Verdict(False, -abs(children - expect_children), f"{children} children, expected {expect_children}")
+
+
 def _shared_key(story, page, ctx, provider) -> tuple[str, str, list]:
     """Everything that shapes a page with no hero on it, hashed: the same key means the same picture."""
     prompt = page.prompt(ctx)
@@ -234,7 +291,7 @@ def _shared_key(story, page, ctx, provider) -> tuple[str, str, list]:
     return h.hexdigest(), prompt, [name.removesuffix(".png") for name, _ in refs]
 
 
-async def _shared_page(ref, story, page, ctx, provider, gate) -> bytes:
+async def _shared_page(ref, story, page, ctx, provider, gate, check=None) -> bytes:
     key, prompt, refs = _shared_key(story, page, ctx, provider)
     row_key = ("page", page.spec.number)
     async with session() as s:
@@ -247,7 +304,7 @@ async def _shared_page(ref, story, page, ctx, provider, gate) -> bytes:
         await record("INFO", f"page {page.spec.number}", "reused", note="no hero on it: the saved picture")
         return to_png(saved)
     async with gate:
-        png = await _draw(ref, row_key, provider, prompt, refs, lambda: page.draw(ctx))
+        png = await _draw(ref, row_key, provider, prompt, refs, lambda: page.draw(ctx), check)
     async with session() as s:
         image = (await s.execute(select(BookImage.image, BookImage.cost).where(
             BookImage.book_id == ref, BookImage.kind == "page", BookImage.page_number == page.spec.number))).one()
@@ -335,14 +392,26 @@ async def _run(ref: str) -> None:
     gate = asyncio.Semaphore(IMAGE_CONCURRENCY)
     async def draw_page(p):
         number = p.spec.number
+        expect = 1 if HERO_CAST in p.spec.cast else 0  # the hero is the only child in any story
+        looked = {}
+
+        async def check(png):  # extra children are redrawn; where the faces are decides where the words go
+            looked[id(png)] = seen = await provider.look_at_page(png)
+            return verdict(seen, expect)
         if HERO_CAST not in p.spec.cast:  # the same in every book: drawn once, then reused
-            png = await _shared_page(ref, story, p, ctx, provider, gate)
-        else:  # the child added into the page's scene, drawn once per story (scene bible)
-            ctx.scenes[number] = await scenes.scene_for(story, p.spec, ctx.prompts, provider, ctx.sheets.sheets, gate)
+            png = await _shared_page(ref, story, p, ctx, provider, gate, check)
+        else:
+            if USE_SCENES:  # the child added into the page's scene, drawn once per story (scene bible)
+                ctx.scenes[number] = await scenes.scene_for(story, p.spec, ctx.prompts, provider, ctx.sheets.sheets,
+                                                            gate)
             async with gate:
-                png = await _draw(ref, ("page", number), provider, p.prompt(ctx), ["hero", f"scene-{number}"],
-                                  lambda: p.draw(ctx))
-        await _set_image(ref, ("page", number), text_zone=choose_zone(png, p.spec.text_zone))
+                png = await _draw(ref, ("page", number), provider, p.prompt(ctx),
+                                  ["hero", f"scene-{number}"] if USE_SCENES else list(p.spec.cast),
+                                  lambda: p.draw(ctx), check)
+        seen = looked.get(id(png))
+        zone = zone_clear_of(seen["faces"], p.spec.text_zone) if seen and seen["faces"] else \
+            choose_zone(png, p.spec.text_zone)
+        await _set_image(ref, ("page", number), text_zone=zone)
         return png
 
     outcomes = await asyncio.gather(*(draw_page(p) for p in todo), return_exceptions=True)

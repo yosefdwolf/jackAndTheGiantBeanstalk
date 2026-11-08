@@ -33,8 +33,9 @@ class PromptBuilder:
             "Keep the child recognizable: same face shape, hairstyle and hair colour, skin tone, eye "
             "colour, apparent age, and any glasses or freckles. Redraw from scratch; do not trace or "
             "filter the photo." + described,
-            f"Head and shoulders, facing the viewer, gentle smile. Outfit: {self.story.hero_outfit}. "
-            "Plain soft warm-grey background.",
+            f"One single head-and-shoulders portrait, facing the viewer, gentle smile. Outfit: {self.story.hero_outfit}. "
+            "Plain soft warm-grey background. Only one view of the child: not a character sheet, turnaround, grid "
+            "or several poses.",
             NO_TEXT,
         ])
 

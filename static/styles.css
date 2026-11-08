@@ -330,3 +330,7 @@ dialog#camera::backdrop { background: rgba(20, 40, 60, .55); }
   .pile .stack { width: 60px; height: 42px; }
 }
 @media (prefers-reduced-motion: reduce) { .sheet { animation: none; } .sheet .wash { transition: none; } .sheet.waiting .paper::after { animation: none; opacity: 0; } }
+/* "try 2 of 3": a picture being drawn again (up to 3 tries), on the line and on the finished stack */
+.try-badge:empty { display: none; }
+.try-badge { position: absolute; right: 4px; top: 4px; z-index: 2; font: 700 11px/1 var(--hand); color: #fff;
+  background: var(--accent-deep); padding: 3px 6px; border-radius: 999px; }

@@ -61,7 +61,8 @@
       s.img = el('img');
       s.img.alt = '';
       s.num = el('span', 'num');
-      paper.append(s.wash, s.img, s.num);
+      s.try = el('span', 'try-badge');  // "try 2 of 3" when a picture is being drawn again
+      paper.append(s.wash, s.img, s.num, s.try);
       s.line = el('p', 'sheet-line');
       s.el.append(paper, s.line);
       this.sheetsEl.append(s.el);
@@ -106,6 +107,7 @@
       s.el.classList.toggle('blank', !img);
       s.el.classList.toggle('waiting', !!img && img.status === 'waiting');
       if (!img) {  // nothing left to hang: the page fades back
+        s.try.textContent = '';
         s.wash.style.height = '0%';
         s.num.textContent = '';
         s.line.textContent = '';
@@ -120,7 +122,9 @@
       }
       s.line.textContent = img.progress || '';
       if (img.status === 'drawing') s.wash.style.height = `${Math.min(97, fractionOf(img) * 100).toFixed(1)}%`;
-      s.el.classList.toggle('retrying', (img.attempt || 1) > 1);
+      const attempt = Math.min(3, img.attempt || 1);
+      s.el.classList.toggle('retrying', attempt > 1);
+      s.try.textContent = attempt > 1 ? `try ${attempt} of 3` : '';
     }
 
     remaining() {  // pictures still to finish, counting ones that failed but will be tried again
@@ -245,6 +249,8 @@
 
     addToDone(img, animate) {
       const card = el('div', 'stacked');
+      const attempt = Math.min(3, img.attempt || 1);
+      if (attempt > 1) card.append(el('span', 'try-badge', `try ${attempt} of 3`));
       if (img.image_url) {
         const pic = el('img');
         pic.src = `${img.image_url}${img.image_url.includes('?') ? '&' : '?'}w=240`;
