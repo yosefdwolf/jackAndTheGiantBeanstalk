@@ -21,7 +21,8 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
   const $ = (id) => document.getElementById(id);
   const form = $('form'), drop = $('drop'), preview = $('preview'), go = $('go'), error = $('error');
   const MAX_SIDE = 1600;
-  const PDF_NAME = 'JackAndTheBeanstalk.pdf';
+  const COPY = JSON.parse($('storyCopy').textContent);  // this story's own words, from its story file
+  const PDF_NAME = COPY.pdf_name;
   const PASSWORD_KEY = 'beanstalk-password';
   const BOOK_KEY = 'beanstalk-book';
   const POLL_MS = 1500;
@@ -253,7 +254,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     if (!form.name.value.trim()) return showError('Write your name first.');
     showError('');
     go.disabled = true;
-    go.textContent = 'Planting…';
+    go.textContent = COPY.going;
     hero = form.name.value.trim() || (new FormData(form).get('gender') === 'girl' ? 'Jane' : 'Jack');  // their own name, as in the story
 
     const body = new FormData(form);
@@ -278,21 +279,14 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     } catch {
       showError('We couldn’t reach the book. Check your connection and try again.');
     } finally {
-      go.textContent = 'Plant the magic beans';
+      go.textContent = COPY.go;
       updateReady();
     }
   });
 
-  // --- growing the book: one progress bar per picture -------------------------------------------------
+  // --- growing the book: the pages drying on a line (static/clothesline.js) --------------------------
 
-  // What each picture is "doing", by how far along it is. Showing the work holds attention and
-  // makes the wait feel worthwhile (Buell & Norton's labour illusion).
-  const STAGES = {
-    hero_sheet: ['Studying the photo', 'Sketching the face', 'Finding the likeness', 'Adding colour', 'Final sparkle'],
-    page: ['Setting the scene', 'Sketching {hero} and friends', 'Inking the lines', 'Painting the colours', 'Final sparkle'],
-  };
-
-  // How full a bar is, from how long the picture has been drawing (t) and how long that kind of
+  // How far along a picture is, from how long it has been drawing (t) and how long that kind of
   // picture usually takes (eta). Speeding up toward the end feels fastest and stalling near the end
   // feels worst (Harrison et al., "Rethinking the progress bar"), so: gently accelerate to 88% at the
   // usual time, keep creeping toward 97% without ever stopping, then sweep to 100% when it arrives.
@@ -302,73 +296,47 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     return 0.97 - 0.09 * Math.exp(-(r - 1) * 1.6);
   }
 
-  function stageText(img, fraction, overdue) {
-    if (overdue) return img.kind === 'page' ? 'Last little details…' : 'Taking a little longer than usual';
-    const list = STAGES[img.kind] || STAGES.page;
-    return list[Math.min(list.length - 1, Math.floor(fraction * list.length))].replace('{hero}', hero);
-  }
+  let book = null, clockOffset = 0, frame = 0, pollTimer = 0, watching = null, line = null;
+  const shown = new Map();  // "kind-page-try" -> how full it has been shown (it never goes backwards)
 
-  let book = null, clockOffset = 0, frame = 0, pollTimer = 0, watching = null;
-  const rows = new Map();  // "kind-page" -> {el, shown}
-
-  const key = (img) => `${img.kind}-${img.page}`;
   const seconds = (ms) => `${Math.max(0, Math.round(ms / 1000))}s`;
   const serverNow = () => Date.now() + clockOffset;
 
-  function makeRow(img) {
-    const li = document.createElement('li');
-    li.className = `plate waiting${img.kind === 'hero_sheet' ? ' hero' : ''}`;
-    li.innerHTML = '<div class="thumb"><img alt=""></div><div class="plate-body"><p class="plate-name"></p>' +
-      '<p class="plate-text"></p><p class="plate-stage"><span class="what"></span><span class="time"></span></p>' +
-      '<div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"><i></i></div></div>';
-    li.querySelector('.plate-name').textContent = img.label;
-    li.querySelector('.plate-text').textContent = img.text || 'Drawn first, so you look the same on every page.';
-    $('plates').append(li);
-    return { el: li, shown: 0 };
+  function fractionOf(img) {
+    if (img.status === 'done') return 1;
+    if (img.status !== 'drawing' || !img.started_at) return 0;
+    const k = `${img.kind}-${img.page}-${img.attempt}`;
+    const f = Math.max(shown.get(k) || 0, estimate((serverNow() - Date.parse(img.started_at)) / 1000, img.eta_seconds));
+    shown.set(k, f);
+    return f;
   }
 
-  function paintRow(img) {
-    const row = rows.get(key(img));
-    const el = row.el, bar = el.querySelector('.bar i'), what = el.querySelector('.what'), time = el.querySelector('.time');
-    el.className = `plate ${img.status}${img.kind === 'hero_sheet' ? ' hero' : ''}`;
-    let fraction = 0;
-    if (img.status === 'waiting') {
-      const heroImg = book.images.find((i) => i.kind === 'hero_sheet');
-      what.textContent = img.kind === 'page' && heroImg && heroImg.status !== 'done' ? 'Waiting for the cartoon' : 'Up next';
-      time.textContent = '';
-    } else if (img.status === 'drawing') {
-      const t = serverNow() - Date.parse(img.started_at);
-      fraction = estimate(t / 1000, img.eta_seconds);
-      what.textContent = stageText(img, fraction, t / 1000 > img.eta_seconds * 1.3);
-      time.textContent = `${seconds(t)} · usually ${Math.round(img.eta_seconds)}s`;
-    } else if (img.status === 'done') {
-      fraction = 1;
-      what.textContent = 'Done!';
-      time.textContent = img.started_at && img.finished_at ? seconds(Date.parse(img.finished_at) - Date.parse(img.started_at)) : '';
-      const pic = el.querySelector('.thumb img');
-      if (!pic.getAttribute('src') && img.image_url) {
-        pic.onload = () => pic.classList.add('shown');
-        pic.src = `${img.image_url}?w=360`;
-        pic.alt = img.label;
-      }
-    } else if (img.status === 'failed') {
-      fraction = Math.max(row.shown, 0.1);
-      what.textContent = img.error || 'This picture couldn’t be drawn.';
-      time.textContent = '';
-    }
-    // Never move a bar backwards; when a picture arrives, sweep the rest of the way.
-    fraction = Math.max(row.shown, fraction);
-    bar.style.transition = img.status === 'done' && row.shown < 1 ? 'width .45s ease-out' : 'none';
-    bar.style.width = `${(fraction * 100).toFixed(2)}%`;
-    el.querySelector('.bar').setAttribute('aria-valuenow', String(Math.round(fraction * 100)));
-    row.shown = fraction;
-    return fraction;
+  // The whole book: the stage it's in (cartoon, pages, binding) and the newest story line being drawn.
+  function paintOverall(fractions) {
+    const total = fractions.reduce((a, b) => a + b, 0) / Math.max(1, fractions.length);
+    $('overallBar').style.width = `${(total * 100).toFixed(1)}%`;
+    $('overallBar').parentElement.setAttribute('aria-valuenow', String(Math.round(total * 100)));
+    const heroImg = book.images.find((i) => i.kind === 'hero_sheet');
+    const pages = book.images.filter((i) => i.kind === 'page');
+    const pagesDone = pages.filter((i) => i.status === 'done').length;
+    const drawing = book.images.filter((i) => i.status === 'drawing')
+      .sort((a, b) => Date.parse(b.started_at) - Date.parse(a.started_at))[0];
+    let name;
+    if (book.status === 'failed') name = 'Stopped';
+    else if (heroImg && heroImg.status !== 'done') name = 'Drawing your cartoon';
+    else if (pagesDone < pages.length) name = `Painting the pages · ${pagesDone} of ${pages.length}`;
+    else name = COPY.binding;
+    $('stageName').textContent = name;
+    $('stageLine').textContent = drawing && drawing.progress ? drawing.progress : '';
   }
 
   function paintAll() {
     if (!book) return;
-    const fractions = book.images.map(paintRow);
+    const fractions = book.images.map(fractionOf);
     const done = book.images.filter((i) => i.status === 'done').length;
+    paintOverall(fractions);
+    if (!line) line = new Clothesline($('line'), { total: book.images.length });
+    line.update(book.images, fractionOf);
     $('tally').textContent = `${done} of ${book.images.length}`;
     const starts = book.images.map((i) => i.started_at).filter(Boolean).map(Date.parse);
     if (starts.length) {
@@ -388,7 +356,6 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
       clockOffset = Date.parse(data.server_time) - Date.now();
       book = data;
       if (data.hero) hero = data.hero;  // their own name, also for books opened from the bookshelf page
-      for (const img of data.images) if (!rows.has(key(img))) rows.set(key(img), makeRow(img));
       cancelAnimationFrame(frame);
       paintAll();
       if (data.status !== 'done') showProgress();
@@ -410,12 +377,12 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     watching = id;
     store.set(BOOK_KEY, id);
     if (location.hash !== `#book=${id}`) history.replaceState(null, '', `#book=${id}`);
-    rows.clear();
-    $('plates').replaceChildren();
+    line = null;  // a fresh line for this book, made on the first paint
+    shown.clear();
     $('ref').textContent = id;
     $('readerRef').textContent = id;
     $('bookError').hidden = true;
-    $('printingTitle').textContent = 'Growing your book';
+    $('printingTitle').textContent = COPY.growing;
     gate.hidden = true;
     form.hidden = true;
     $('signin').hidden = true;
@@ -439,7 +406,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
       openReader(data);
       showReview(data.id);
     } else {
-      $('printingTitle').textContent = 'Oh no, the beans didn’t grow';
+      $('printingTitle').textContent = COPY.failed;
       $('bookError').textContent = `${data.error || 'This book couldn’t be finished.'} (reference ${data.id})`;
       $('bookError').hidden = false;
       // Redraw only the missing pictures (the finished ones are kept), or start a fresh book.
@@ -525,7 +492,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
       return leaf;
     });
     current = 0;
-    $('printingTitle').textContent = 'Binding your book…';
+    $('printingTitle').textContent = COPY.binding;
     await preload(bookEl);
     $('printing').hidden = true;
     $('bookLoading').hidden = true;

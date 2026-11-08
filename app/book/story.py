@@ -32,6 +32,7 @@ class PageSpec:
     mood: str = ""
     composition: str = ""
     text_zone: str = "bottom"
+    progress: str = ""  # the witty line the progress card shows while this picture is drawn
 
 
 @dataclass(frozen=True)
@@ -48,6 +49,7 @@ class Story:
     blurb: str = ""    # the library card's one or two sentences
     library_cover: str = ""  # the library's cover picture (a /static/ path)
     cover_page: int = 0      # each book's bookshelf cover: this page, cropped upright around the hero
+    site: dict = field(default_factory=dict)  # the story page's own words (button, titles, placeholders)
 
     @property
     def slug(self) -> str:
@@ -65,7 +67,8 @@ def load_story(path: Path = DEFAULT_STORY) -> Story:
     for i, p in enumerate(raw["pages"], 1):
         spec = PageSpec(number=i, type=p["type"], text=p.get("text", ""), cast=tuple(p.get("cast", ())),
                         scene=p.get("scene", ""), mood=p.get("mood", ""),
-                        composition=p.get("composition", ""), text_zone=p.get("text_zone", "bottom"))
+                        composition=p.get("composition", ""), text_zone=p.get("text_zone", "bottom"),
+                        progress=p.get("progress", ""))
         unknown = [c for c in spec.cast if c != HERO and c not in characters]
         if unknown:
             raise ValueError(f"Page {i} casts unknown characters: {unknown}")
@@ -76,7 +79,7 @@ def load_story(path: Path = DEFAULT_STORY) -> Story:
                  hero_names=raw["hero"]["names"], hero_outfit=raw["hero"]["outfit"],
                  characters=characters, pages=tuple(pages), key=Path(path).stem,
                  blurb=" ".join(raw.get("blurb", "").split()), library_cover=raw.get("library_cover", ""),
-                 cover_page=int(raw.get("cover_page", 0)))
+                 cover_page=int(raw.get("cover_page", 0)), site=raw.get("site", {}))
 
 
 def all_stories() -> list[Story]:
@@ -86,6 +89,15 @@ def all_stories() -> list[Story]:
 
 def story_by_slug(slug: str) -> Story | None:
     return next((s for s in all_stories() if s.slug == slug), None)
+
+
+def display_name(name: str | None) -> str:
+    """The name as the book prints it. Typed all in lowercase, each word gets a capital ("yosef wolf" ->
+    "Yosef Wolf"). Any capital at all means they chose it, so it's kept as typed ("van Dyke", "McKenzie")."""
+    words = (name or "").split()
+    if any(not w.islower() for w in words):
+        return " ".join(words)
+    return " ".join(w[:1].upper() + w[1:] for w in words)
 
 
 @dataclass(frozen=True)

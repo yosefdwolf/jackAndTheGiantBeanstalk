@@ -137,34 +137,15 @@ p { margin: 0; }
 .press { text-align: center; display: grid; gap: 8px; justify-items: center; padding: 6px 0; }
 .press .note { color: var(--leaf-deep); text-shadow: 0 0 6px #fff; font-weight: 600; }
 
-/* Growing the book: one row per picture */
+/* Growing the book */
 .printing-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
 .tally { font: 600 15px var(--hand); color: var(--ink-soft); font-variant-numeric: tabular-nums; }
-.plates { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 12px; }
-.plate { display: grid; grid-template-columns: 96px 1fr; gap: 16px; align-items: center; padding: 12px;
-  background: #fff; border-radius: 18px; border: 2px solid #efe3c8; }
-.thumb { width: 96px; aspect-ratio: 3 / 2; border-radius: 12px; overflow: hidden; background: #f6efe0 url("/static/themes/jack/art/beans.webp") center / 46px no-repeat; }
-.plate.hero .thumb { aspect-ratio: 1; width: 72px; margin-left: 12px; border-radius: 50%; }
-.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transform: scale(1.15); transition: opacity .7s ease, transform .7s ease; }
-.thumb img.shown { opacity: 1; transform: scale(1); }
-.plate-name { font: 800 21px/1.2 var(--display); color: var(--leaf-deep); }
-.plate.waiting .plate-name { color: var(--ink-soft); }
-.plate-text { font-style: italic; font-size: 15px; color: var(--ink-soft); margin-top: 2px; }
-.plate-stage { display: flex; justify-content: space-between; gap: 10px; margin-top: 8px; font: 600 14px/1.3 var(--hand);
-  color: var(--ink-soft); font-variant-numeric: tabular-nums; }
 .bar { position: relative; height: 12px; margin-top: 6px; background: #f1e7d3; border-radius: 999px; }
 .bar i { position: absolute; inset: 0 auto 0 0; width: 0; border-radius: 999px;
   background: linear-gradient(90deg, var(--leaf-deep), var(--leaf)); }
 .bar i::after { /* a magic bean riding the tip of each bar */
   content: ""; position: absolute; right: -9px; top: 50%; width: 22px; height: 22px; transform: translateY(-50%);
   background: url("/static/themes/jack/art/beans.webp") center / contain no-repeat; }
-.plate.waiting .bar i::after { display: none; }
-.plate.drawing .bar i::after { animation: wiggle 1.2s ease-in-out infinite; }
-.plate.done .bar i { background: linear-gradient(90deg, var(--leaf), var(--accent)); }
-.plate.done .bar i::after { display: none; }
-.plate.failed .bar i { background: var(--alert); }
-.plate.failed .plate-stage { color: var(--alert); }
-@keyframes wiggle { 50% { transform: translateY(-50%) rotate(14deg) scale(1.1); } }
 .ref { font: 600 13px var(--hand); color: var(--ink-soft); margin: 12px auto 0; text-align: center; width: fit-content; background: var(--card); padding: 4px 12px; border-radius: 999px; }
 
 /* The flip book */
@@ -239,9 +220,6 @@ dialog#camera::backdrop { background: rgba(20, 40, 60, .55); }
   .star-fields { width: 100%; }
   .gate-row { flex-direction: column; align-items: stretch; }
   .press .btn.big { width: 100%; }
-  .plate { grid-template-columns: 72px 1fr; gap: 12px; }
-  .thumb { width: 72px; }
-  .plate.hero .thumb { width: 56px; margin-left: 8px; }
   .cover-page, .about-page { grid-template-columns: 40% 1fr; padding: 5%; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
@@ -294,3 +272,60 @@ dialog#camera::backdrop { background: rgba(20, 40, 60, .55); }
 #reviewNote { text-align: center; margin-top: 6px; }
 .thanks { text-align: center; font-size: 19px; color: var(--leaf-deep); font-weight: 600; padding: 8px 0; }
 @media (prefers-reduced-motion: reduce) { .stamps span { transition: none; } }
+
+/* The whole book's progress, above the per-picture rows. */
+.overall { margin: 10px 0 16px; padding: 12px 14px; border-radius: 14px; background: #fff; border: 2px solid var(--card-edge); }
+.overall-stage { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; font: 600 16px/1.3 var(--hand); color: var(--ink-soft); }
+.overall-stage b { font: 800 19px var(--display); color: var(--leaf-deep); }
+.overall .bar { height: 16px; }
+
+/* The book drying on a line (static/clothesline.js): finished pages stack on the left, pages being
+   drawn hang from pins; a failed one tears and falls away. */
+.clothesline { display: grid; grid-template-columns: 96px 1fr; gap: 14px; align-items: start; margin: 6px 0 4px; }
+.clothesline .line { position: relative; padding-top: 6px; min-width: 0; }
+.clothesline .string { position: absolute; left: -10px; right: -10px; top: 6px; width: calc(100% + 20px); height: 16px; overflow: visible; }
+.clothesline .string path { fill: none; stroke: #8a6a45; stroke-width: 2; }
+.clothesline .sheets { position: relative; display: flex; justify-content: space-around; gap: 8px; padding-top: 4px; }
+.sheet { position: relative; flex: 0 1 108px; min-width: 0; display: grid; justify-items: center; gap: 6px; transform-origin: 50% 0;
+  animation: sway 4.5s ease-in-out infinite; }
+.sheet:nth-child(2n) { animation-delay: -1.7s; } .sheet:nth-child(3n) { animation-delay: -3.1s; }
+@keyframes sway { 0%, 100% { transform: rotate(-1.4deg); } 50% { transform: rotate(1.4deg); } }
+.sheet .pin { position: absolute; z-index: 2; top: -8px; width: 12px; height: 26px; }
+.sheet .pin rect { fill: #c9955c; stroke: #7a5430; stroke-width: 1; } .sheet .pin .pin-gap { fill: #7a5430; stroke: none; }
+.sheet .pin .pin-spring { fill: #9aa3ab; }
+.sheet .paper { position: relative; width: 100%; aspect-ratio: 3 / 2; margin-top: 8px; border-radius: 3px; overflow: hidden;
+  background: #f7f3ea; border: 2px solid #ddd3c2; box-shadow: 0 4px 8px rgba(60, 40, 20, .12); }
+.sheet.blank { opacity: .35; }
+.sheet.blank .paper { border-style: dashed; background: transparent; box-shadow: none; }
+/* Up next: pencil marks being sketched across a blank page. */
+.sheet.waiting .paper { background: #f7f3ea repeating-linear-gradient(-12deg, transparent 0 9px, rgba(111, 93, 74, .07) 9px 10px); }
+.sheet.waiting .paper::after { content: ""; position: absolute; inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, .7) 50%, transparent 70%);
+  transform: translateX(-100%); animation: sketch 1.8s ease-in-out infinite; }
+@keyframes sketch { to { transform: translateX(100%); } }
+.sheet .wash { position: absolute; inset: auto 0 0 0; height: 0; transition: height .6s ease;
+  background: linear-gradient(0deg, rgba(63, 154, 46, .5), rgba(124, 186, 92, .35) 60%, rgba(245, 182, 42, .28));
+  -webkit-mask-image: linear-gradient(0deg, #000 85%, transparent); mask-image: linear-gradient(0deg, #000 85%, transparent); }
+.sheet .paper img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transform: scale(1.08);
+  transition: opacity .55s ease, transform .55s ease; }
+.sheet.bloom .paper img { opacity: 1; transform: none; }
+.sheet .num { position: absolute; left: 4px; bottom: 4px; z-index: 1; font: 700 11px var(--hand); color: var(--ink);
+  background: rgba(255, 251, 242, .9); border-radius: 999px; padding: 0 6px; }
+.sheet .num:empty { display: none; }
+.sheet-line { font: 600 12.5px/1.25 var(--hand); color: var(--ink-soft); text-align: center; min-height: 2.5em;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.sheet.retrying .paper { border-color: var(--accent); }
+.sheet.torn .paper { border-color: var(--alert); box-shadow: 0 0 0 3px rgba(192, 57, 43, .2); }
+
+.pile { display: grid; justify-items: center; gap: 6px; padding-top: 12px; }
+.pile .stack { position: relative; width: 84px; height: 60px; }
+.pile .stacked { position: absolute; inset: 0; border-radius: 3px; overflow: hidden; background: #f7f3ea; border: 2px solid #fff;
+  box-shadow: 0 3px 8px rgba(60, 40, 20, .2); transform: rotate(var(--tilt, 0deg)); }
+.pile .stacked img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.done-pile .stack:empty { border: 2px dashed #ddd3c2; border-radius: 4px; }
+.pile-count { font: 700 13px var(--hand); color: var(--ink-soft); text-align: center; font-variant-numeric: tabular-nums; }
+@media (max-width: 560px) {
+  .clothesline { grid-template-columns: 64px 1fr; gap: 8px; }
+  .pile .stack { width: 60px; height: 42px; }
+}
+@media (prefers-reduced-motion: reduce) { .sheet { animation: none; } .sheet .wash { transition: none; } .sheet.waiting .paper::after { animation: none; opacity: 0; } }

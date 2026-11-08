@@ -1,4 +1,5 @@
 import hashlib
+import json
 from html import escape
 import hmac
 import io
@@ -23,7 +24,7 @@ from . import admin, auth, wallet  # noqa: E402
 from .book import jobs  # noqa: E402
 from .book.log import current_ref, new_ref, record, set_event_sink, set_ref, setup_logging, start_book, step  # noqa: E402
 from .book.providers import is_mock  # noqa: E402
-from .book.story import PRONOUNS, Story, all_stories, load_story, story_by_slug  # noqa: E402
+from .book.story import PRONOUNS, Story, all_stories, display_name, load_story, story_by_slug  # noqa: E402
 from .db.models import Book, RequestError, Review  # noqa: E402
 from .db.session import create_tables_if_sqlite, session  # noqa: E402
 from .faces import UploadError, drawn_face_x, prepare  # noqa: E402
@@ -52,7 +53,7 @@ app.add_middleware(admin.AdminHost)  # admin.jack.graydates.com/x is served from
 
 # Browsers kept running an old app.js after deploys, so a click did nothing. The page's script and
 # stylesheet links carry a content hash, and everything is served with no-cache (re-check each time).
-ASSET_FILES = ["app.js", "styles.css", "nav.html", *(str(p.relative_to(STATIC)) for p in sorted((STATIC / "themes").rglob("*.*")))]
+ASSET_FILES = ["app.js", "clothesline.js", "styles.css", "nav.html", *(str(p.relative_to(STATIC)) for p in sorted((STATIC / "themes").rglob("*.*")))]
 ASSET_VERSION = hashlib.sha1(b"".join((STATIC / f).read_bytes() for f in ASSET_FILES)).hexdigest()[:10]
 NO_CACHE = {"Cache-Control": "no-cache"}
 
@@ -99,7 +100,16 @@ def themed(page: str, story: Story | None = None) -> str:
     html = html.replace("<!--NAV-->", (STATIC / "nav.html").read_text())
     html = html.replace("{{TITLE}}", escape(story.title if story else LIBRARY_TITLE))
     html = html.replace("{{STORY}}", story.slug if story else "")
-    for asset in ("app.js", "styles.css", f"themes/{theme}/theme.css"):
+    if story:  # the story page's own words, from the story file
+        site = story.site
+        parts = [escape(p) for p in site.get("heading") or [story.title]]
+        heading = f'{parts[0]} <span class="and">{parts[1]}</span> {parts[2]}' if len(parts) == 3 else " ".join(parts)
+        html = html.replace("{{HEADING}}", heading)
+        for key in ("go", "growing", "about_placeholder", "review_placeholder"):
+            html = html.replace("{{" + key.upper() + "}}", escape(site.get(key, "")))
+        copy = json.dumps({k: site.get(k, "") for k in ("go", "going", "growing", "binding", "failed", "pdf_name")})
+        html = html.replace("{{COPY}}", copy.replace("</", "<\\/"))
+    for asset in ("app.js", "clothesline.js", "styles.css", f"themes/{theme}/theme.css"):
         html = html.replace(f"/static/{asset}\"", f"/static/{asset}?v={ASSET_VERSION}\"")
     return html
 
@@ -205,7 +215,7 @@ async def my_books(request: Request):
         art = story.cover_page and ("page", story.cover_page) in done
         cover_url = (f"/api/books/{b.id}/cover" if art else
                      f"/api/books/{b.id}/images/hero_sheet-0" if ("hero_sheet", 0) in done else None)
-        out.append({"id": b.id, "status": b.status, "title": story.title, "child_name": b.child_name,
+        out.append({"id": b.id, "status": b.status, "title": story.title, "child_name": display_name(b.child_name),
                     "hero": story.hero_names.get(b.gender, ""), "created_at": jobs._iso(b.created_at),
                     "url": f"/stories/{story.slug}#book={b.id}",
                     "cover_url": cover_url, "cover_is_art": bool(art)})
@@ -357,9 +367,7 @@ async def book_cover(request: Request, ref: str):
     """The book's cover on the bookshelf: its story's cover page (the first climb, for Jack), cropped
     upright around the hero's face, or around the middle if the face can't be found."""
     await can_see(request, ref)
-    async with session() as s:
-        story_key = (await s.execute(select(Book.story_key).where(Book.id == ref))).scalar_one()
-    story = next((s for s in all_stories() if s.key == story_key), None) or load_story()
+    story = await book_story(ref)
     data = await jobs.image_bytes(ref, "page", story.cover_page) if story.cover_page else None
     if data is None:
         raise HTTPException(404, "No cover yet.")
@@ -374,6 +382,16 @@ async def book_cover(request: Request, ref: str):
     return Response(buf.getvalue(), media_type="image/webp", headers={"Cache-Control": "private, max-age=86400"})
 
 
+async def book_story(ref: str) -> Story:
+    async with session() as s:
+        story_key = (await s.execute(select(Book.story_key).where(Book.id == ref))).scalar_one_or_none()
+    return next((s for s in all_stories() if s.key == story_key), None) or load_story()
+
+
+async def pdf_name(ref: str) -> str:
+    return (await book_story(ref)).site.get("pdf_name", "PictureBook.pdf")
+
+
 @app.get("/api/books/{ref}/pdf")
 async def book_pdf(request: Request, ref: str, inline: bool = False):
     """Downloads by default; ?inline=1 opens it in the browser (the review card's "open the PDF")."""
@@ -383,7 +401,7 @@ async def book_pdf(request: Request, ref: str, inline: bool = False):
         raise HTTPException(404, {"message": "That book isn't finished.", "ref": ref})
     disposition = "inline" if inline else "attachment"
     return Response(pdf, media_type="application/pdf",
-                    headers={"Content-Disposition": f'{disposition}; filename="{jobs.PDF_NAME}"'})
+                    headers={"Content-Disposition": f'{disposition}; filename="{await pdf_name(ref)}"'})
 
 
 @app.post("/api/books/{ref}/retry", status_code=202)

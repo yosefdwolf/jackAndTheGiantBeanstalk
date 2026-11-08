@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#a8d4e8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0f1a36" media="(prefers-color-scheme: dark)">
-<title>Jack and the Beanstalk · a picture book starring you</title>
+<title>{{TITLE}} · a picture book starring you</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 30C16 20 10 18 10 12s4-9 6-10c2 1 6 4 6 10s-6 8-6 18z' fill='%233d8a2a'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,7 +25,7 @@
   <!--NAV-->
   <header class="masthead">
     <p class="hand kicker">a picture book starring you<span class="mock" id="mockBadge" hidden> · pretend printing, no cost</span></p>
-    <h1>Jack <span class="and">and the</span> Beanstalk</h1>
+    <h1>{{HEADING}}</h1>
   </header>
 
   <!-- The magic word comes first. Once it's right, this card goes away for good on this device. -->
@@ -95,13 +95,13 @@
       <div class="about-grid">
         <label class="box"><span class="box-label">Age</span><input type="text" name="age" maxlength="300" placeholder="7"></label>
         <label class="box wide"><span class="box-label">Favourite things</span><input type="text" name="favourites" maxlength="300" placeholder="dinosaurs, pancakes, the colour green"></label>
-        <label class="box wide"><span class="box-label">More about you</span><textarea name="about" maxlength="300" rows="2" placeholder="Wants to climb a real beanstalk one day"></textarea></label>
+        <label class="box wide"><span class="box-label">More about you</span><textarea name="about" maxlength="300" rows="2" placeholder="{{ABOUT_PLACEHOLDER}}"></textarea></label>
       </div>
       <p class="hint">All optional. We keep the photo and the book you make here.</p>
     </section>
 
     <div class="press">
-      <button class="btn bean big" id="go" type="submit" disabled>Plant the magic beans</button>
+      <button class="btn bean big" id="go" type="submit" disabled>{{GO}}</button>
       <p class="hand note" id="goNote">Add a photo and a name to begin</p>
       <p class="error" id="error" role="alert" hidden></p>
     </div>
@@ -109,10 +109,15 @@
 
   <section id="printing" class="card printing" hidden aria-live="polite">
     <div class="printing-head">
-      <h2 id="printingTitle">Growing your book</h2>
+      <h2 id="printingTitle">{{GROWING}}</h2>
       <p class="tally"><span id="tally">0 of 4</span> pictures · <span id="elapsed">0s</span></p>
     </div>
-    <ol class="plates" id="plates"></ol>
+    <!-- The whole book at a glance: which stage it's in, and a line from the story while it's drawn. -->
+    <div class="overall">
+      <p class="overall-stage"><b id="stageName">Drawing your cartoon</b><span id="stageLine"></span></p>
+      <div class="bar" role="progressbar" aria-label="The whole book" aria-valuemin="0" aria-valuemax="100"><i id="overallBar"></i></div>
+    </div>
+    <div id="line"></div>
     <p class="error" id="bookError" role="alert" hidden></p>
     <p class="ref">Reference <span id="ref"></span></p>
   </section>
@@ -167,7 +172,7 @@
           <p class="ends"><span>not yet</span><span>absolutely</span></p>
         </fieldset>
         <label class="box"><span class="box-label">What isn’t good?</span>
-          <textarea name="not_good" rows="3" maxlength="2000" required placeholder="The beans on page 3 look strange…"></textarea></label>
+          <textarea name="not_good" rows="3" maxlength="2000" required placeholder="{{REVIEW_PLACEHOLDER}}"></textarea></label>
         <button class="btn bean" type="submit" id="reviewBtn" disabled>Send my answers</button>
         <p class="hand note" id="reviewNote">Answer all four to send</p>
         <p class="error" id="reviewError" role="alert" hidden></p>
@@ -186,6 +191,8 @@
   </div>
 </dialog>
 
+<script id="storyCopy" type="application/json">{{COPY}}</script>
+<script src="/static/clothesline.js"></script>
 <script src="/static/app.js"></script>
 </body>
 </html>

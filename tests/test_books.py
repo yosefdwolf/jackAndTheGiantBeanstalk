@@ -58,6 +58,7 @@ def client(tmp_path, monkeypatch):
     fake = PreparedPhoto(full_png=png(), face_png=png())
     monkeypatch.setattr(app.main, "prepare", lambda data: fake)
     monkeypatch.setattr(jobs, "prepare", lambda data: fake)
+    monkeypatch.setattr(jobs, "RETRY_PAUSE", 0)  # no waiting between tries in tests
     monkeypatch.setenv("SESSION_SECRET", "test-secret")
     monkeypatch.setenv("ADMIN_EMAILS", ADMIN)
     for name in ("GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "DEV_LOGIN", "COOKIE_DOMAIN"):
@@ -376,6 +377,63 @@ def test_someone_elses_cover_is_hidden(client):
     wait_for(client, ref)
     sign_in(client, "someone@example.com")
     assert client.get(f"/api/books/{ref}/cover").status_code == 404
+
+
+def test_story_page_words_come_from_the_story_file(client):
+    html = client.get("/stories/jack-and-the-beanstalk").text
+    assert 'Jack <span class="and">and the</span> Beanstalk' in html and "Plant the magic beans" in html
+    assert "{{" not in html and '"pdf_name": "JackAndTheBeanstalk.pdf"' in html
+
+
+def test_each_picture_has_a_line_from_the_story_while_it_is_drawn(client):
+    data = wait_for(client, post_book(client).json()["id"])
+    lines = {(i["kind"], i["page"]): i["progress"] for i in data["images"]}
+    assert lines[("hero_sheet", 0)] == "Planting the beans…" and lines[("page", 12)] == "Stealing the golden hen…"
+    assert all(lines.values())
+
+
+def test_a_lowercase_name_gets_a_capital_everywhere(client):
+    ref = post_book(client, name="yosef wolf").json()["id"]
+    data = wait_for(client, ref)
+    assert data["book"]["child_name"] == "Yosef Wolf" and data["book"]["pages"][0]["text"].startswith("Yosef Wolf")
+    assert client.get("/api/my-books").json()["books"][0]["child_name"] == "Yosef Wolf"
+    assert "Yosef Wolf" in PdfReader(io.BytesIO(client.get(f"/api/books/{ref}/pdf").content)).pages[1].extract_text()
+
+
+def test_a_name_with_capitals_is_kept_as_typed():
+    from app.book.story import display_name
+    assert [display_name(n) for n in ("ella", "van Dyke", "McKenzie", " sam  lee ")] == \
+        ["Ella", "van Dyke", "McKenzie", "Sam Lee"]
+
+
+def flaky(monkeypatch, wanted, fail_times):
+    """The mock image service fails this picture the first `fail_times` tries."""
+    real, calls = providers.MockImageProvider.edit, {"n": 0}
+
+    async def edit(self, label=None, refs=None, prompt=None, size=None):
+        if label == wanted:
+            calls["n"] += 1
+            if calls["n"] <= fail_times:
+                raise RuntimeError("the drawing went wrong")
+        return await real(self, label, refs, prompt, size)
+    monkeypatch.setattr(providers.MockImageProvider, "edit", edit)
+    return calls
+
+
+def test_a_failed_picture_is_tried_again_by_itself(client, monkeypatch):
+    calls = flaky(monkeypatch, "page 4", 2)
+    data = wait_for(client, post_book(client).json()["id"])
+    assert data["status"] == "done" and calls["n"] == 3
+    assert next(i for i in data["images"] if i["page"] == 4 and i["kind"] == "page")["attempt"] == 3
+
+
+def test_three_failed_tries_stop_the_book_for_a_manual_retry(client, monkeypatch):
+    calls = flaky(monkeypatch, "page 4", 3)
+    ref = post_book(client).json()["id"]
+    data = wait_for(client, ref)
+    assert data["status"] == "failed" and calls["n"] == 3  # never more than 3 calls for one picture
+    assert client.post(f"/api/books/{ref}/retry", headers={"X-App-Password": PASSWORD}).status_code == 202
+    assert wait_for(client, ref)["status"] == "done"
 
 
 def test_a_made_up_story_is_refused(client):

@@ -12,6 +12,19 @@ blurb: You trade the family cow for five magic beans. By morning, nothing will e
 library_cover: /static/themes/jack/art/cover.webp   # the library's cover (the site sets the title on it)
 cover_page: 5   # each book's cover on the bookshelf is this page, cropped upright around the hero
 
+# The story page's own words. Everything on the site that belongs to this story lives here.
+site:
+  heading: [Jack, and the, Beanstalk]   # the big title; the middle part is set small
+  go: Plant the magic beans              # the button that starts a book
+  going: Planting the beans…             # the button while the book is being sent
+  growing: Growing your book             # the progress card's title
+  binding: Binding your book…            # once every picture is drawn
+  failed: Oh no, the beans didn’t grow   # when a book can't be finished
+  hero_progress: Planting the beans…     # while your cartoon is drawn
+  about_placeholder: Wants to climb a real beanstalk one day
+  review_placeholder: The beans on page 3 look strange…
+  pdf_name: JackAndTheBeanstalk.pdf
+
 world: >-
   a fairy tale about a very poor family in a hard year. Crooked cottages, twisted trees, slightly
   exaggerated storybook shapes. Everything old, worn, dusty and patched; muted earthy colours;
@@ -59,6 +72,7 @@ characters:
 
 pages:
   - type: illustrated
+    progress: "Checking the empty cupboard…"   # shown while this picture is being drawn
     text: "{hero} and {his} mother had nothing left to sell but Milky-White."
     cast: [hero, mother, milky_white]
     scene: >-
@@ -76,6 +90,7 @@ pages:
     text_zone: bottom
 
   - type: illustrated
+    progress: "Swapping the cow for beans…"   # shown while this picture is being drawn
     text: "“Five magic beans,” said the old man. “For one cow.”"
     cast: [hero, old_man, milky_white]
     scene: >-
@@ -94,6 +109,7 @@ pages:
     text_zone: top
 
   - type: illustrated
+    progress: "Throwing the beans out the window…"   # shown while this picture is being drawn
     text: "“Beans!” she cried. And out the window they went."
     cast: [hero, mother]
     scene: >-
@@ -108,6 +124,7 @@ pages:
     text_zone: bottom-dark
 
   - type: illustrated
+    progress: "Waiting for the beans to sprout…"   # shown while this picture is being drawn
     text: "In the morning, a beanstalk stood where the beans had fallen, reaching up into the clouds."
     cast: [hero]
     scene: >-
@@ -124,6 +141,7 @@ pages:
     text_zone: top
 
   - type: illustrated
+    progress: "Climbing past the birds…"   # shown while this picture is being drawn
     text: "Up and up {hero} climbed, past the birds and into the clouds."
     cast: [hero]
     scene: >-
@@ -138,6 +156,7 @@ pages:
     text_zone: bottom
 
   - type: illustrated
+    progress: "Knocking on a very big door…"   # shown while this picture is being drawn
     text: "Above the clouds stood a castle so big its door could have swallowed the cottage. {He} crept inside."
     cast: [hero]
     scene: >-
@@ -153,6 +172,7 @@ pages:
     text_zone: bottom
 
   - type: illustrated
+    progress: "Hiding in the oven…"   # shown while this picture is being drawn
     text: "“Fee-fi-fo-fum!” thundered the giant. {hero} hid in the oven, shaking."
     cast: [hero, giant]
     scene: >-
@@ -167,6 +187,7 @@ pages:
     text_zone: top
 
   - type: illustrated
+    progress: "Counting the giant’s gold…"   # shown while this picture is being drawn
     text: "The giant counted his gold, coin by coin, until his head drooped and he began to snore."
     cast: [hero, giant]
     scene: >-
@@ -181,6 +202,7 @@ pages:
     text_zone: bottom
 
   - type: illustrated
+    progress: "Tiptoeing off with the gold…"   # shown while this picture is being drawn
     text: "Quiet as a mouse, {hero} crept out and grabbed a bag of gold."
     cast: [hero, giant]
     scene: >-
@@ -195,6 +217,7 @@ pages:
     text_zone: bottom
 
   - type: illustrated
+    progress: "Running all the way home…"   # shown while this picture is being drawn
     text: "Down the beanstalk {he} climbed and ran all the way home. {His} mother wept for joy."
     cast: [hero, mother]
     scene: >-
@@ -209,6 +232,7 @@ pages:
     text_zone: bottom
 
   - type: illustrated
+    progress: "Spending the very last coin…"   # shown while this picture is being drawn
     text: "But gold does not last forever. When the last coin was spent, {hero} climbed the beanstalk again."
     cast: [hero, mother]
     scene: >-
@@ -223,6 +247,7 @@ pages:
     text_zone: bottom
 
   - type: illustrated
+    progress: "Stealing the golden hen…"   # shown while this picture is being drawn
     text: "“Lay!” said the giant, and his hen laid an egg of solid gold. When he dozed, {hero} snatched the hen and ran."
     cast: [hero, giant, golden_hen]
     scene: >-
@@ -237,6 +262,7 @@ pages:
     text_zone: top
 
   - type: illustrated
+    progress: "Collecting golden eggs…"   # shown while this picture is being drawn
     text: "Now there was a golden egg every day. Still, {hero} kept wondering what else the giant kept up there."
     cast: [hero, mother, golden_hen]
     scene: >-
@@ -251,6 +277,7 @@ pages:
     text_zone: bottom
 
   - type: illustrated
+    progress: "Peeking at the singing harp…"   # shown while this picture is being drawn
     text: "So {hero} climbed up once more. From behind the giant's chair, {he} eyed the golden harp that sang the giant to sleep."
     cast: [hero, giant, golden_harp]
     scene: >-
@@ -266,6 +293,7 @@ pages:
     text_zone: top
 
   - type: illustrated
+    progress: "Grabbing the harp…"   # shown while this picture is being drawn
     text: "{hero} grabbed the harp, and it cried out, “Master! Master!”"
     cast: [hero, giant, golden_harp]
     scene: >-
@@ -281,6 +309,7 @@ pages:
     text_zone: top
 
   - type: illustrated
+    progress: "Outrunning a giant…"   # shown while this picture is being drawn
     text: "The giant woke with a roar and thundered after {him} across the clouds."
     cast: [hero, giant, golden_harp]
     scene: >-
@@ -295,6 +324,7 @@ pages:
     text_zone: bottom
 
   - type: illustrated
+    progress: "Scrambling down the beanstalk…"   # shown while this picture is being drawn
     text: "Down the beanstalk {hero} scrambled, and the whole stalk shook as the giant climbed after {him}."
     cast: [hero, giant, golden_harp]
     scene: >-
@@ -309,6 +339,7 @@ pages:
     text_zone: top
 
   - type: illustrated
+    progress: "Shouting for the axe…"   # shown while this picture is being drawn
     text: "“Mother, the axe!” {hero} shouted."
     cast: [hero, mother]
     scene: >-
@@ -323,6 +354,7 @@ pages:
     text_zone: bottom
 
   - type: illustrated
+    progress: "Chop! Chop! Chop!…"   # shown while this picture is being drawn
     text: "Chop! Chop! The beanstalk cracked and came crashing down, and the giant tumbled far away, never to be seen again."
     cast: [hero, mother, giant]
     scene: >-
@@ -337,6 +369,7 @@ pages:
     text_zone: top
 
   - type: illustrated
+    progress: "Living happily ever after…"   # shown while this picture is being drawn
     text: "And {hero} and {his} mother lived happily ever after, with a golden hen, a singing harp, and never an empty cupboard again."
     cast: [hero, mother, golden_hen, golden_harp]
     scene: >-

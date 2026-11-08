@@ -2,7 +2,9 @@
 
 Every image and step is saved as it happens, so the page can show per-image progress, a dropped
 connection doesn't lose a paid book, and a restart resumes without redrawing finished images.
-One call per image, no retries.
+Each picture gets up to 3 tries (MAX_TRIES), a short pause apart: the assignment's quality loop asks
+for it, and the image service's safety filter mostly blocks by mistake. A failed try isn't charged.
+If a picture still fails, the book stops and its owner can try the missing pictures again by hand.
 """
 import asyncio
 import hashlib
@@ -25,14 +27,15 @@ from .pages import BookContext, ChildInfo, RenderedPage, make_page
 from .pdf import build_pdf
 from .prompts import PromptBuilder
 from .providers import SHEET_SIZE, MockImageProvider, get_provider
-from .story import DEFAULT_STORY, Casting, load_story
+from .story import DEFAULT_STORY, Casting, display_name, load_story
 from .styles import get_style
 
-PDF_NAME = "JackAndTheBeanstalk.pdf"
 HERO = ("hero_sheet", 0)
 DEFAULT_ETA = {"hero_sheet": 22.0, "page": 28.0}  # seconds, until there's history to go on
 # Pictures drawn at the same time. OpenAI refuses too many image calls at once, and a book now has 20.
 IMAGE_CONCURRENCY = int(os.getenv("IMAGE_CONCURRENCY", "5"))
+MAX_TRIES = 3
+RETRY_PAUSE = float(os.getenv("RETRY_PAUSE_SECONDS", "2"))
 _tasks: set[asyncio.Task] = set()  # keep references so running books aren't garbage-collected
 
 
@@ -177,8 +180,22 @@ async def _set_image(ref, key, **values):
 
 
 async def _draw(ref, key, provider, prompt, refs, call):
-    """Draw one image, saving drawing / done / failed on its row as it goes. Returns PNG bytes."""
-    await _set_image(ref, key, status="drawing", started_at=utcnow(), finished_at=None, prompt=prompt,
+    """Draw one image, up to MAX_TRIES times, a short pause apart. Returns PNG bytes, or raises the last
+    error. Never more than MAX_TRIES calls: this is the only loop around the image service."""
+    for attempt in range(1, MAX_TRIES + 1):
+        try:
+            return await _draw_once(ref, key, provider, prompt, refs, call, attempt)
+        except Exception as e:
+            code, _ = friendly_error(e)
+            await record("WARNING", f"{key[0]} {key[1]}", "try failed", attempt=attempt, error=code)
+            if attempt == MAX_TRIES:
+                raise
+            await asyncio.sleep(RETRY_PAUSE)
+
+
+async def _draw_once(ref, key, provider, prompt, refs, call, attempt):
+    """One try, saving drawing / done / failed on the image's row as it goes."""
+    await _set_image(ref, key, status="drawing", attempts=attempt, started_at=utcnow(), finished_at=None, prompt=prompt,
                      refs=refs, provider=provider.name, model=provider.model, quality=provider.quality,
                      error_code=None, error_message=None)
     try:
@@ -201,13 +218,13 @@ async def _load(ref):
 
 def _context(book, hero_png, provider):
     story = load_story()
-    casting = Casting(story, book.gender, book.child_name or None)  # the story text says their name
+    casting = Casting(story, book.gender, display_name(book.child_name) or None)  # the story text says their name
     prompts = PromptBuilder(get_style(story.style), story, Casting(story, book.gender))  # prompts say "Jack"
     fallback = None
     if isinstance(provider, MockImageProvider):  # mock books work before the real sheets exist
         def fallback(key):
             return MockImageProvider._draw(f"{key} sheet", SHEET_SIZE, None, 0)
-    child = ChildInfo(book.child_name, [tuple(d) for d in book.details])
+    child = ChildInfo(display_name(book.child_name), [tuple(d) for d in book.details])
     return story, BookContext(casting, prompts, provider, CastSheets(hero_png, fallback=fallback), child)
 
 
@@ -319,8 +336,9 @@ async def status(ref: str) -> dict | None:
     if book is None:
         return None
     story = load_story()
-    casting = Casting(story, book.gender, book.child_name or None)
+    casting = Casting(story, book.gender, display_name(book.child_name) or None)
     texts = {spec.number: casting.fill(spec.text) for spec in story.pages}
+    lines = {spec.number: spec.progress for spec in story.pages}  # the witty line while it's drawn
     etas = {}
     images = []
     for i in sorted(book.images, key=lambda i: (i.kind != "hero_sheet", i.page_number)):
@@ -329,9 +347,10 @@ async def status(ref: str) -> dict | None:
         images.append({
             "kind": i.kind, "page": i.page_number, "status": i.status,
             "label": "Your cartoon" if i.kind == "hero_sheet" else f"Page {i.page_number}",
+            "progress": story.site.get("hero_progress", "") if i.kind == "hero_sheet" else lines.get(i.page_number, ""),
             "text": texts.get(i.page_number, ""),
             "started_at": _iso(i.started_at), "finished_at": _iso(i.finished_at),
-            "eta_seconds": etas[i.kind], "error": i.error_message,
+            "eta_seconds": etas[i.kind], "error": i.error_message, "attempt": i.attempts or 1,
             "image_url": f"/api/books/{ref}/images/{i.kind}-{i.page_number}" if i.status == "done" else None,
         })
     result = {"id": book.id, "status": book.status, "hero": casting.hero_name, "error": book.error_message, "refused_reason": book.refused_reason,
@@ -354,7 +373,7 @@ def _flipbook(book, story, casting) -> dict:
                           "text_zone": spec.text_zone, "image_url": f"/api/books/{book.id}/images/page-{spec.number}"})
         else:
             pages.append({"kind": spec.type, "number": spec.number})
-    return {"title": story.title, "hero": casting.story_hero, "child_name": book.child_name,
+    return {"title": story.title, "hero": casting.story_hero, "child_name": display_name(book.child_name),
             "details": [list(d) for d in book.details], "cover_url": f"/api/books/{book.id}/images/hero_sheet-0",
             "pages": pages}
 
@@ -376,7 +395,7 @@ async def pdf_bytes(ref: str) -> bytes | None:
     pages = []
     for spec in story.pages:
         page = make_page(spec)
-        if page.needs_image and ("page", spec.number) not in rows:
+        if page.needs_image and (("page", spec.number) not in rows or rows[("page", spec.number)].status != "done"):
             continue  # a page added to the story after this book was made
         image = to_jpeg(rows[("page", spec.number)].image) if page.needs_image else None
         pages.append(page.layout(ctx, image))

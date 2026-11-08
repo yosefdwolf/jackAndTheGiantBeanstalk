@@ -92,6 +92,7 @@ class BookImage(Base):
     kind: Mapped[str] = mapped_column(String(16))  # hero_sheet | page
     page_number: Mapped[int] = mapped_column(Integer, default=0)  # 0 for the hero sheet
     status: Mapped[str] = mapped_column(String(16), default="waiting")  # waiting | drawing | done | failed
+    attempts: Mapped[int] = mapped_column(Integer, default=0, server_default="0")  # tries so far (up to 3)
     prompt: Mapped[str | None] = mapped_column(Text)
     refs: Mapped[list | None] = mapped_column(Json)
     image: Mapped[bytes | None] = mapped_column(Bytes)  # WebP

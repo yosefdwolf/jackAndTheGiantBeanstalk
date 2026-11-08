@@ -10,14 +10,15 @@ type or image provider is one new class.
 
 | Piece | File | What it does |
 |---|---|---|
-| Story | `stories/jack_and_the_beanstalk.yaml` | The storyboard. Per page: text, cast, scene, mood, composition, and where the text goes. |
+| Story | `stories/jack_and_the_beanstalk.yaml` | The storyboard. Per page: text, cast, scene, mood, composition, where the text goes, and the line the progress card shows while it's drawn. Also everything on the site that belongs to the story (`site:`: the title, the button, the progress words, placeholders, the PDF name), its library blurb and cover, and which page becomes each book's cover on the bookshelf. |
 | Style | `app/book/styles.py` | `ArtStyle` abstract class. `Animated3DStyle` is the book's style; its wording is sent unchanged in every call. |
 | Cast | `app/book/cast.py` | Reference sheets. The child's is drawn from the upload. The mother's, Milky-White's and the old man's are drawn once and kept in `assets/characters/`. |
 | Prompts | `app/book/prompts.py` | Builds every prompt: reference images, style, world, scene, mood, composition, then "only these characters appear." |
 | Pages | `app/book/pages.py` | `Page` abstract class. `IllustratedPage` and `AboutMePage` are registered by type name. |
 | Providers | `app/book/providers.py` | `ImageProvider` abstract class. OpenAI (`gpt-image-2.5-flare`) and a free mock. |
 | PDF | `app/book/pdf.py` | Full-bleed art, with the story text drawn on top in a real font. The image model never draws text. About Me is last. |
-| Builder | `app/book/builder.py` | Makes the hero sheet, renders every page in parallel (one call each, no retries), then builds the PDF. |
+| Jobs | `app/book/jobs.py` | Draws the hero sheet, then every page, 5 at a time. Each picture gets up to 3 tries a short pause apart (a failed try isn't charged); if one still fails, the book stops and its owner can retry the missing pictures by hand. |
+| Progress | `static/clothesline.js` | The pages "drying on a line" while a book is drawn: each fills with colour, the left-most takes each finished picture onto the stack, a failed try tears. Above it, one bar names the stage. |
 
 **Keeping the child the same on every page:** one hero sheet and one style string, reused on every
 call. Each page sends only the sheets for the characters in it, so nobody shows up who shouldn't (for
