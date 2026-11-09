@@ -23,7 +23,7 @@ from sqlalchemy.orm import selectinload
 
 from ..db.models import Activity, Book, BookEvent, BookImage, SharedPage, Upload
 from ..db.session import session
-from ..faces import PreparedPhoto, UploadError, choose_zone, clear_zone, from_saved, prepare, zone_clear_of
+from ..faces import ZONE_BANDS, PreparedPhoto, UploadError, choose_zone, clear_zone, from_saved, prepare, zone_clear_of
 from . import bible, scenes
 from .cast import CastSheets, MissingSheetError
 from .log import record, start_book, step
@@ -255,7 +255,7 @@ async def _draw(ref, key, provider, prompt, refs, call, check=None, deadline=Non
         if attempt == MAX_TRIES:
             break
         attempt += 1
-    await _set_image(ref, key, status="done", attempts=attempt, image=to_webp(best[1]))  # the best try
+    await _set_image(ref, key, status="done", attempts=attempt, image=await asyncio.to_thread(to_webp, best[1]))
     await record("WARNING", f"{key[0]} {key[1]}", "kept the best try", note="no try passed the picture check")
     return best[1]
 
@@ -280,7 +280,7 @@ async def _draw_once(ref, key, provider, prompt, refs, call, attempt):
         await _set_image(ref, key, status="failed", finished_at=utcnow(), error_code=code, error_message=message,
                          provider_request_id=getattr(e, "request_id", None))
         raise
-    await _set_image(ref, key, status="done", finished_at=utcnow(), image=to_webp(result.png),
+    await _set_image(ref, key, status="done", finished_at=utcnow(), image=await asyncio.to_thread(to_webp, result.png),
                      cost=result.cost, tokens=result.tokens or None, provider_request_id=result.request_id)
     return result.png
 
@@ -302,6 +302,12 @@ def verdict(seen: dict, expect_children: int, zone: str) -> Verdict:
     if seen.get("faces") and clear_zone(seen["faces"], zone) is None:
         return Verdict(False, -1, "faces at both ends of the page, where the words go")
     return Verdict(True, 0)
+
+
+def saved_zone(zone: str | None, spec) -> str:
+    """Where a drawn page's words go: the place saved when it was drawn, unless that's missing or a layout that
+    no longer exists (a few books saved "paper", words below a shrunk picture); then the story file's place."""
+    return zone if zone in ZONE_BANDS else spec.text_zone
 
 
 def _shared_key(story, page, ctx, provider) -> tuple[str, str, list]:
@@ -424,15 +430,24 @@ async def _run(ref: str) -> None:
                         if k == HERO_CAST or k in story.characters)
         looked = {}
 
-        async def check(png):  # extra children are redrawn; where the faces are decides where the words go
-            looked[id(png)] = seen = await provider.look_at_page(png, who, p.spec.focus)
-            spans = lambda boxes: " ".join(f"{f['top']:.2f}-{f['bottom']:.2f}" for f in boxes or []) or None
-            await record("INFO", f"page {number}", "looked", children=seen.get("children"),
+        async def look(png, event):
+            seen = await provider.look_at_page(png, who, p.spec.focus)
+            spans = lambda boxes: " ".join((f"{f['who']} " if f.get("who") else "") + f"{f['top']:.2f}-{f['bottom']:.2f}"
+                                           for f in boxes or []) or None
+            await record("INFO", f"page {number}", event, children=seen.get("children"),
                          faces=spans(seen.get("faces")), things=spans(seen.get("things")))
+            return seen
+
+        async def check(png):  # extra children are redrawn; where the faces are decides where the words go
+            looked[id(png)] = seen = await look(png, "looked")
             result = verdict(seen, expect, p.spec.text_zone)
-            if result.problem.startswith("faces"):
-                if number in ctx.keep_clear:  # only where the words go: one redraw, then they go below the picture
-                    await record("INFO", f"page {number}", "words moved", note="faces at both ends again: words below the picture")
+            if result.problem.startswith("faces"):  # often a misplaced box (the giant's feet): a second opinion
+                again = await look(png, "looked again")
+                if verdict(again, expect, p.spec.text_zone).ok:
+                    looked[id(png)] = again
+                    return Verdict(True, 0)
+                if number in ctx.keep_clear:  # only where the words go: one redraw, then smaller words at the edge
+                    await record("INFO", f"page {number}", "words moved", note="faces at both ends again: smaller words in a thin strip")
                     return Verdict(True, 0)
                 ctx.keep_clear.add(number)  # the next try is asked to keep faces out of the words' band
             return result
@@ -448,7 +463,7 @@ async def _run(ref: str) -> None:
                                   lambda: p.draw(ctx), check, deadline)
         seen = looked.get(id(png))
         zone = zone_clear_of(seen["faces"], p.spec.text_zone, seen.get("things") or ()) \
-            if seen and (seen["faces"] or seen.get("things")) else choose_zone(png, p.spec.text_zone)
+            if seen and (seen["faces"] or seen.get("things")) else choose_zone(png, p.spec.text_zone)  # OpenCV: not in threads
         await _set_image(ref, ("page", number), text_zone=zone)
         return png
 
@@ -534,7 +549,7 @@ def _flipbook(book, story, casting) -> dict:
             if spec.number not in drawn:
                 continue  # a page added to the story after this book was made
             pages.append({"kind": "illustrated", "number": spec.number, "text": casting.fill(spec.text),
-                          "text_zone": drawn[spec.number].text_zone or spec.text_zone, "image_url": f"/api/books/{book.id}/images/page-{spec.number}"})
+                          "text_zone": saved_zone(drawn[spec.number].text_zone, spec), "image_url": f"/api/books/{book.id}/images/page-{spec.number}"})
         else:
             pages.append({"kind": spec.type, "number": spec.number})
     return {"title": story.title, "hero": casting.story_hero, "child_name": display_name(book.child_name),
@@ -563,8 +578,8 @@ async def pdf_bytes(ref: str) -> bytes | None:
             continue  # a page added to the story after this book was made
         image = to_jpeg(rows[("page", spec.number)].image) if page.needs_image else None
         laid = page.layout(ctx, image)
-        if page.needs_image and rows[("page", spec.number)].text_zone:  # moved off a face when it was drawn
-            laid.text_zone = rows[("page", spec.number)].text_zone
+        if page.needs_image:  # moved off a face when it was drawn
+            laid.text_zone = saved_zone(rows[("page", spec.number)].text_zone, spec)
         pages.append(laid)
     cover = RenderedPage(0, "cover", image=ctx.sheets.hero_sheet, child=ctx.child)
     return build_pdf(pages, story.title, cover=cover)

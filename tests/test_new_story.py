@@ -425,7 +425,11 @@ def test_words_go_where_no_face_is():
     high = [{"top": 0.1, "bottom": 0.25, "left": 0.4, "right": 0.5}]
     assert zone_clear_of(low, "bottom") == "top" and zone_clear_of(low, "top") == "top"
     assert zone_clear_of(high, "top") == "bottom" and zone_clear_of(high, "bottom") == "bottom"
-    assert zone_clear_of(low + high, "bottom") == "paper"  # faces at both ends: the words go below the picture
+    assert zone_clear_of(low + high, "bottom") == "bottom-small"  # neither end clear: the strip covering less face
+    edges = [{"top": 0.3, "bottom": 0.45}, {"top": 0.55, "bottom": 0.75}]
+    assert zone_clear_of(edges, "top") == "top-small"  # the thirds hold faces, but a thin strip misses them
+    crowded = [{"top": 0.05, "bottom": 0.3}, {"top": 0.75, "bottom": 0.95}]
+    assert zone_clear_of(crowded, "bottom") == "top-small"  # neither strip clear: the one covering less face
     assert zone_clear_of([], "bottom-dark") == "bottom-dark"
 
 
@@ -520,8 +524,8 @@ def test_faces_at_both_ends_get_one_redraw_then_the_words_move(client, monkeypat
     page7 = next(i for i in run(rows(BookImage, book_id=ref)) if i.kind == "page" and i.page_number == 7)
     assert page7.attempts == 2  # one redraw, not two
     moved = [e for e in run(rows(BookEvent, book_id=ref)) if e.event == "words moved" and e.step == "page 7"]
-    assert len(moved) == 1 and page7.text_zone == "paper"
-    pdf = client.get(f"/api/books/{ref}/pdf")  # the words sit below the shrunk picture
+    assert len(moved) == 1 and page7.text_zone == "bottom-small"  # less face in the bottom strip
+    pdf = client.get(f"/api/books/{ref}/pdf")  # smaller words in a thin strip
     assert pdf.status_code == 200 and pdf.headers["content-type"] == "application/pdf"
 
 
@@ -542,3 +546,55 @@ def test_no_retry_starts_without_time_to_finish(client, monkeypatch):
     assert pages and all(i.attempts == 1 and i.image for i in pages)  # each kept its first try
     late = [e for e in run(rows(BookEvent, book_id=ref)) if e.event == "out of time"]
     assert len(late) == len(pages)
+
+
+def test_a_second_look_can_find_a_clear_end_without_a_redraw(client, monkeypatch):
+    from tests.test_books import ADMIN, post_book, rows, sign_in, wait_for
+    from app.book import jobs
+    from app.book.providers import MockImageProvider
+    from app.db.models import BookEvent, BookImage
+    looks = []
+
+    async def look(self, png, who="", focus=""):  # page 8's first look boxes the giant's feet as a face
+        looks.append(png)
+        giant = {"who": "giant", "top": 0.15, "bottom": 0.3, "left": 0.4, "right": 0.6}
+        feet = {"who": "giant", "top": 0.7, "bottom": 0.85, "left": 0.4, "right": 0.6}
+        first = looks.count(png) == 1 and self._last == "page 8"
+        return {"faces": [giant, feet] if first else [giant], "things": [], "children": 1}
+    original = MockImageProvider.edit
+
+    async def edit(self, label, refs, prompt, size):
+        self._last = label
+        return await original(self, label, refs, prompt, size)
+    monkeypatch.setattr(MockImageProvider, "edit", edit)
+    monkeypatch.setattr(MockImageProvider, "look_at_page", look)
+    monkeypatch.setattr(jobs, "IMAGE_CONCURRENCY", 1)
+    sign_in(client, ADMIN)
+    ref = post_book(client).json()["id"]
+    assert wait_for(client, ref, timeout=30)["status"] == "done"
+    page8 = next(i for i in run(rows(BookImage, book_id=ref)) if i.kind == "page" and i.page_number == 8)
+    assert page8.attempts == 1 and page8.text_zone == "bottom"  # no redraw; the words stay on the picture
+    events = [e for e in run(rows(BookEvent, book_id=ref)) if e.step == "page 8"]
+    assert [e.event for e in events if e.event.startswith("looked")] == ["looked", "looked again"]
+    first = next(e for e in events if e.event == "looked")
+    assert first.fields["faces"] == "giant 0.15-0.30 giant 0.70-0.85"  # each box says what it is
+
+
+def test_a_page_saved_with_the_old_paper_layout_uses_the_story_files_place(client):
+    from tests.test_books import ADMIN, post_book, rows, sign_in, wait_for
+    from app.db.models import BookImage
+    from app.db.session import session
+    from sqlalchemy import update
+    sign_in(client, ADMIN)
+    ref = post_book(client).json()["id"]
+    assert wait_for(client, ref, timeout=30)["status"] == "done"
+
+    async def paper():
+        async with session() as s:
+            await s.execute(update(BookImage).where(BookImage.book_id == ref, BookImage.page_number == 8)
+                            .values(text_zone="paper"))
+            await s.commit()
+    run(paper())
+    pages = {p["number"]: p for p in client.get(f"/api/books/{ref}").json()["book"]["pages"] if p.get("number")}
+    assert pages[8]["text_zone"] == "bottom"  # page 8's place in the story file
+    assert client.get(f"/api/books/{ref}/pdf").status_code == 200

@@ -21,7 +21,10 @@ ZONES = {
     "bottom": (0.0, 1 / 3, "bottom", 0.55),
     "top": (2 / 3, 1.0, "top", 0.45),
     "bottom-dark": (0.0, 0.25, "bottom", 0.30),
+    "top-small": (0.8, 1.0, "top", 0.45),  # faces at both ends: smaller words in a thin strip (faces.py)
+    "bottom-small": (0.0, 0.2, "bottom", 0.55),
 }
+SMALL_SIZE, SMALL_LEADING = 21, 25
 
 
 def build_pdf(pages: list[RenderedPage], title: str, cover: RenderedPage | None = None) -> bytes:
@@ -104,50 +107,26 @@ def shaded(image: bytes, zone: str) -> Image.Image:
     return img
 
 
-PAPER_BAND = 0.27  # the share of the page under the picture when the words can't go on it
-
-
-def _on_paper(c: Canvas, page: RenderedPage) -> None:
-    """Faces at both ends of the picture: it shrinks, framed on cream, and the words go on the paper below."""
-    c.setFillColor(CREAM)
-    c.rect(0, 0, W, H, stroke=0, fill=1)
-    margin = H * 0.04
-    art_h = H * (1 - PAPER_BAND) - margin
-    art_w = art_h * W / H  # the art keeps its shape
-    x0, y0 = (W - art_w) / 2, H - margin - art_h
-    buf = io.BytesIO()
-    Image.open(io.BytesIO(page.image)).convert("RGB").save(buf, "JPEG", quality=88)
-    c.drawImage(ImageReader(io.BytesIO(buf.getvalue())), x0, y0, art_w, art_h)
-    c.setStrokeColor(HexColor("#ffffff"))
-    c.setLineWidth(5)
-    c.rect(x0, y0, art_w, art_h, stroke=1, fill=0)
-    size, leading = STORY_SIZE - 6, STORY_LEADING - 7
-    lines = simpleSplit(page.text, STORY_FONT, size, W * 0.84)
-    y = y0 / 2 + len(lines) * leading / 2 - size * 0.8
-    c.setFillColor(INK)
+def _words(c: Canvas, text: str, middle: float, size: int, leading: int) -> None:
+    """The story's words, white with a soft shadow, centred on `middle` (points from the bottom of the page)."""
+    lines = simpleSplit(text, STORY_FONT, size, W * (0.86 if size < STORY_SIZE else 0.78))
+    y = middle + len(lines) * leading / 2 - size * 0.8
     c.setFont(STORY_FONT, size)
-    for line in lines:
-        c.drawCentredString(W / 2, y, line)
-        y -= leading
-
-
-def _illustrated(c: Canvas, page: RenderedPage) -> None:
-    if page.text_zone == "paper":
-        return _on_paper(c, page)
-    buf = io.BytesIO()
-    shaded(page.image, page.text_zone).save(buf, "JPEG", quality=88)  # JPEG keeps the PDF small
-    c.drawImage(ImageReader(io.BytesIO(buf.getvalue())), 0, 0, W, H)
-    lo, hi, edge, strength = ZONES[page.text_zone]
-    lines = simpleSplit(page.text, STORY_FONT, STORY_SIZE, W * 0.78)
-    block = len(lines) * STORY_LEADING
-    y = (lo + hi) / 2 * H + block / 2 - STORY_SIZE * 0.8
-    c.setFont(STORY_FONT, STORY_SIZE)
     for line in lines:
         c.setFillColor(Color(0, 0, 0, alpha=0.6))
         c.drawCentredString(W / 2 + 1.5, y - 1.5, line)
         c.setFillColor(Color(1, 1, 1))
         c.drawCentredString(W / 2, y, line)
-        y -= STORY_LEADING
+        y -= leading
+
+
+def _illustrated(c: Canvas, page: RenderedPage) -> None:
+    buf = io.BytesIO()
+    shaded(page.image, page.text_zone).save(buf, "JPEG", quality=88)  # JPEG keeps the PDF small
+    c.drawImage(ImageReader(io.BytesIO(buf.getvalue())), 0, 0, W, H)
+    lo, hi, edge, strength = ZONES[page.text_zone]
+    small = page.text_zone.endswith("-small")
+    _words(c, page.text, (lo + hi) / 2 * H, *((SMALL_SIZE, SMALL_LEADING) if small else (STORY_SIZE, STORY_LEADING)))
 
 
 def _about_me(c: Canvas, page: RenderedPage) -> None:

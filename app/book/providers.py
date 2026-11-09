@@ -13,7 +13,7 @@ import random
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 
-from PIL import Image, ImageDraw, ImageOps
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 from .log import add_cost, record, step
 
@@ -104,17 +104,13 @@ class OpenAIImageProvider(ImageProvider):
         return (resp.choices[0].message.content or "").strip()
 
     async def look_at_page(self, png, who="", focus=""):
-        img = Image.open(io.BytesIO(png)).convert("RGB")
-        img.thumbnail((768, 768))  # plenty to place faces, and a fraction of a cent
-        buf = io.BytesIO()
-        img.save(buf, "JPEG", quality=85)
-        b64 = base64.b64encode(buf.getvalue()).decode()
+        b64 = await asyncio.to_thread(_small_jpeg_b64, png)  # off the event loop: 20 pages arrive at once
         async with step("picture check", call="chat.completions", model=self.vision_model):
             resp = await self.client.chat.completions.create(
                 model=self.vision_model, max_tokens=400, response_format={"type": "json_object"},
                 messages=[{"role": "user", "content": [
                     {"type": "text", "text": LOOK_AT_PAGE + (f" The characters on this page: {who}." if who else "")
-                     + (f' Also give "things": the box around each of these, where shown: {focus}.' if focus else "")},
+                     + (f' Also give "things": the bands each of these covers, where shown: {focus}.' if focus else "")},
                     {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}},
                 ]}],
             )
@@ -128,9 +124,17 @@ class OpenAIImageProvider(ImageProvider):
         except ValueError:
             return {"faces": [], "things": [], "children": None}
 
-        def boxes(name):
-            return [{k: min(1.0, max(0.0, float(f.get(k, 0)))) for k in ("top", "bottom", "left", "right")}
-                    for f in found.get(name) or [] if isinstance(f, dict)]
+        def boxes(name):  # bands 1-10 back to fractions of the page's height
+            out = []
+            for f in found.get(name) or []:
+                try:
+                    first, last = sorted((int(f["first_band"]), int(f["last_band"])))
+                except (KeyError, TypeError, ValueError):
+                    continue
+                first, last = max(1, min(BANDS, first)), max(1, min(BANDS, last))
+                out.append({"who": str(f.get("who") or "")[:40], "top": (first - 1) / BANDS, "bottom": last / BANDS,
+                            "left": 0.0, "right": 1.0})
+            return out
         faces, things = boxes("faces"), boxes("things")
         for f in faces:  # a box taller than a head is a whole body (the giant's came back 0.10-0.70): keep its top
             f["bottom"] = min(f["bottom"], f["top"] + MAX_FACE)
@@ -152,12 +156,31 @@ class OpenAIImageProvider(ImageProvider):
         return ImageResult(png, cost, tokens, resp._request_id)
 
 
+BANDS = 10  # numbered stripes drawn on the copy the vision model sees
+
+
+def _small_jpeg_b64(png: bytes) -> str:
+    """A small copy of the page with 10 numbered bands drawn across it. Vision models are poor at coordinates
+    (Jack's face, at 0.38-0.45, came back as 0.6-0.8 every time) but read off a numbered band reliably."""
+    img = Image.open(io.BytesIO(png)).convert("RGB")
+    img.thumbnail((768, 768))  # plenty to place faces, and a fraction of a cent
+    draw, (width, height) = ImageDraw.Draw(img), img.size
+    font = ImageFont.load_default(size=22)
+    for band in range(BANDS):
+        y = band * height // BANDS
+        draw.line([(0, y), (width, y)], fill=(255, 0, 255), width=2)
+        draw.text((6, y + 4), str(band + 1), fill=(255, 0, 255), font=font, stroke_width=2, stroke_fill=(0, 0, 0))
+    buf = io.BytesIO()
+    img.save(buf, "JPEG", quality=85)
+    return base64.b64encode(buf.getvalue()).decode()
+
+
 LOOK_AT_PAGE = (
-    "This is one page of a children's picture book. Answer in JSON only: "
-    '{"faces": [{"who": "short label", "top": 0.0, "bottom": 0.0, "left": 0.0, "right": 0.0}], "children": 0}. '
-    "faces: every face in the picture (people and animal characters), each as the box around the face only, in "
-    "fractions of the picture (0 = top or left edge, 1 = bottom or right edge). Faces are small: the box goes from "
-    "the top of the hair to the chin, never the body. children: how many human children are in the picture (count "
+    "This is one page of a children's picture book, with 10 numbered horizontal bands drawn across it (magenta "
+    "lines, numbers on the left; 1 = top, 10 = bottom). Answer in JSON only: "
+    '{"faces": [{"who": "short label", "first_band": 1, "last_band": 1}], "children": 0}. '
+    "faces: every face in the picture (people and animal characters), with the bands the face covers, from the top "
+    "of the hair to the chin only, never the body. children: how many human children are in the picture (count "
     "every child, even small, partly hidden or in the background). The story's hero counts as one child even if drawn "
     "looking older; a listed grown-up is not a child even if drawn looking young."
 )

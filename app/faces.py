@@ -113,8 +113,10 @@ def drawn_face_x(img: Image.Image) -> float | None:
 
 
 # Where each text zone sits on a page, top to bottom (0 = top edge). Matches ZONES in app/book/pdf.py.
-ZONE_BANDS = {"top": (0.0, 1 / 3), "bottom": (2 / 3, 1.0), "bottom-dark": (0.75, 1.0)}
+ZONE_BANDS = {"top": (0.0, 1 / 3), "bottom": (2 / 3, 1.0), "bottom-dark": (0.75, 1.0),
+              "top-small": (0.0, 0.2), "bottom-small": (0.8, 1.0)}  # smaller words in a thin strip
 OTHER_ZONE = {"top": "bottom", "bottom": "top", "bottom-dark": "top"}
+SMALL = {"top": "top-small", "bottom": "bottom-small", "bottom-dark": "bottom-small"}
 
 
 def drawn_faces(img: Image.Image) -> list[tuple[int, int, int, int]]:
@@ -147,17 +149,19 @@ def clear_zone(faces: list[dict], zone: str) -> str | None:
     return OTHER_ZONE[zone] if _covered(faces, OTHER_ZONE[zone]) <= CLEAR else None
 
 
-PAPER = "paper"  # neither end is clear: the picture shrinks and the words go on paper below it (pdf.py)
-
-
 def zone_clear_of(faces: list[dict], zone: str, things: list[dict] = ()) -> str:
     """Where a page's words go, given where faces are ({"top", "bottom"} as fractions, 0 = top edge): the clear
-    end of the page, or if neither is clear, PAPER, below the picture, so words never sit on a face. `things`
-    (what the page is about, like the axe biting the stalk) are kept clear too, when an end clear of both exists."""
+    end of the page. If neither end is clear, smaller words in a thin strip at the very top or bottom, which
+    often misses the faces; if even that isn't clear, the thin strip covering the least face. `things` (what the
+    page is about, like the axe biting the stalk) are kept clear too, when an end clear of both exists."""
     for end in (zone, OTHER_ZONE[zone]):
         if things and _covered(faces, end) <= CLEAR and _covered(list(things), end) <= CLEAR:
             return end
-    return clear_zone(faces, zone) or PAPER
+    clear = clear_zone(faces, zone)
+    if clear:
+        return clear
+    strips = (SMALL[zone], SMALL[OTHER_ZONE[zone]])
+    return min(strips, key=lambda strip: _covered(faces, strip))  # the template's end first when they tie
 
 
 def choose_zone(png: bytes, zone: str) -> str:
