@@ -153,14 +153,16 @@ def zone_clear_of(faces: list[dict], zone: str, things: list[dict] = ()) -> str:
     """Where a page's words go, given where faces are ({"top", "bottom"} as fractions, 0 = top edge): the clear
     end of the page. If neither end is clear, smaller words in a thin strip at the very top or bottom, which
     often misses the faces; if even that isn't clear, the thin strip covering the least face. `things` (what the
-    page is about, like the axe biting the stalk) are kept clear too, when an end clear of both exists."""
-    for end in (zone, OTHER_ZONE[zone]):
-        if things and _covered(faces, end) <= CLEAR and _covered(list(things), end) <= CLEAR:
-            return end
+    page is about, like the axe biting the stalk) are kept clear too: first an end clear of both, then a thin strip
+    clear of both (smaller words beat covering the axe), and only then an end clear of faces alone."""
+    strips = (SMALL[zone], SMALL[OTHER_ZONE[zone]])
+    if things:
+        for place in (zone, OTHER_ZONE[zone]) + strips:
+            if _covered(faces, place) <= CLEAR and _covered(list(things), place) <= CLEAR:
+                return place
     clear = clear_zone(faces, zone)
     if clear:
         return clear
-    strips = (SMALL[zone], SMALL[OTHER_ZONE[zone]])
     return min(strips, key=lambda strip: _covered(faces, strip))  # the template's end first when they tie
 
 

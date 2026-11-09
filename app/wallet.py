@@ -98,6 +98,22 @@ async def charge_for_book(user: User, ref: str) -> bool:
     return True
 
 
+COST_SAMPLE = 20  # recent books the average cost to make one is taken over
+
+
+async def cost_per_book() -> dict:
+    """What making a book costs us in API calls, on average over the last COST_SAMPLE finished books drawn by a
+    real image model: every picture and every retry, the picture checks and the face description (Book.total_cost).
+    Shown beside the price."""
+    async with session() as s:
+        costs = (await s.execute(select(Book.total_cost).where(Book.status == "done", Book.provider != "mock",
+                                                               Book.total_cost > 0)
+                                 .order_by(Book.finished_at.desc()).limit(COST_SAMPLE))).scalars().all()
+    if not costs:
+        return {"average": None, "books": 0}
+    return {"average": round(sum(float(c) for c in costs) / len(costs), 3), "books": len(costs)}
+
+
 def no_money_message() -> str:
     return f"A book costs {dollars(BOOK_PRICE_CENTS)}. Add money to your wallet to make one."
 
@@ -219,6 +235,7 @@ async def wallet(request: Request, paid: str | None = None):
                                  .where(Book.id.in_(paid_for)))).all() if paid_for else []
     return {"balance_cents": bal, "refundable_cents": max(0, min(bal, card)), "price_cents": BOOK_PRICE_CENTS,
             "top_ups": TOP_UPS, "min_top_up": MIN_TOP_UP, "max_top_up": MAX_TOP_UP, "free": await is_free(user),
+            "cost_to_make": await cost_per_book(),
             "transactions": [_tx_out(t) for t in txs], "refund_requests": [_request_out(r) for r in reqs],
             "books_to_ask_about": [{"id": b.id, "name": b.child_name, "at": b.created_at.isoformat()}
                                    for b in sorted(books, key=lambda b: b.created_at, reverse=True)]}

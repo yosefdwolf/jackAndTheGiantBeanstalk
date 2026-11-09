@@ -62,3 +62,35 @@ Fix first:
    check finds it, and the words go at whichever end of the page keeps it clear (it never causes a redraw).
 4. Checked locally at 390px: library, story page, bookshelf, wallet and the flip book all fit with no sideways
    scroll.
+
+## Run 3 — 2026-11-09 — reviewer: self — browser: Claude in Chrome
+Total 94/100 (was 83/94 measured)
+PDF 36/40 · UI 20/20 · Money 19/20 · Engineering 19/20
+Upload 13:28:22 → PDF ≤13:29:06 (≤44 s, Red b302b0d7) · 13:31:12 → PDF 13:31:57–13:32:10 (45–58 s, Jack faef47ac)
+Balance: 3.02 → fund 8.02 → Red 7.03 → Jack 6.04 → refund 0.00 (two rows, −5.00 and −1.04; history reconciles back to Nov 7)
+Avg cost per book: not shown in the app (admin API 403 for this account; see Fix first 2) (price $0.99)
+Not measured: none. 400px measured at 396px in a same-origin iframe (side panel stops the window narrowing): no
+sideways scroll, every field and the submit button inside x 16–380. Account was the builder's own, not a first-time
+user. Photo: one the builder never developed with (adult man, entered as Daniel, 19).
+Changed since run 2: both books under 60 s (93 s in run 2); "try 2 of 3" seen live on Jack p.14; Jack p.15 caption
+now sits at the top, clear of the harp; empty wallet greys out the button with "A book costs $0.99. Add money to your
+wallet", and the server refuses with 402 (main.py:352, :369) under a per-user lock (wallet.py:92).
+Checked: both PDFs are cover + 20 story pages + About Me + The End (23 pp.), same layout; no text over any face on
+any page of either; text is ReportLab Times-Bold (clean at zoom on Jack p.20); About Me shows Daniel / 19 /
+basketball, hiking, pizza / Loves the beach; no keys in HEAD or any of 54 commits; character bible in stories /
+characters / character_pictures; Daniel recognizably the same person on every page; after sign-out and sign-in,
+b302b0d7's PDF still downloads (200, 23 pp.).
+Fix first:
+1. Caption over the thing the page is about (PDF -4): Jack PDF p.20 (story p.19), "cracked" runs across the axe blade
+   where it bites the stalk. The story file says `text_zone: top`, `focus: the axe biting into the beanstalk`
+   (stories/jack_and_the_beanstalk.yaml:434-435), but the face check found the giant up top and moved the words down
+   onto the focus. When the faces-free band holds the focus, don't settle: redraw once asking for the axe low and the
+   sky clear, or set the words smaller in the clear corner. Minor: Red p.3, the bottom of the basket is under the words.
+2. Cost per book isn't tracked in full and isn't shown (Money -2). One image row per picture, and each try overwrites
+   its cost (app/book/jobs.py:283), so retries vanish; vision-check calls go into log.add_cost, but log.total_cost()
+   is never read, so Book.total_cost (jobs.py:510) is images only. Save every try and every vision call, and show
+   "average $X over N books vs $0.99" in admin.
+3. to-do.md's Defects list is stale (Eng -1): its one item (giant's whole body boxed as a face) was fixed in run 2;
+   items 1–2 above aren't there.
+4. Speed has little margin (0 pts now): Jack took 45–58 s with one retry (p.14, try 2). A second retry or a slow
+   provider minute puts it over 60 s. Watch the slowest page in each book.

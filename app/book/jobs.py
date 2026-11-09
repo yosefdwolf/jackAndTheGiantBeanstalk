@@ -26,7 +26,7 @@ from ..db.session import session
 from ..faces import ZONE_BANDS, PreparedPhoto, UploadError, choose_zone, clear_zone, from_saved, prepare, zone_clear_of
 from . import bible, scenes
 from .cast import CastSheets, MissingSheetError
-from .log import record, start_book, step
+from .log import record, start_book, step, total_cost
 from .pages import BookContext, ChildInfo, RenderedPage, make_page
 from .pdf import build_pdf
 from .prompts import PromptBuilder
@@ -209,6 +209,7 @@ async def _draw(ref, key, provider, prompt, refs, call, check=None, deadline=Non
     only if it can finish by then (PICTURES_DONE_BY)."""
     loop = asyncio.get_running_loop()
     best, waited, attempt, took = None, 0.0, 1, None
+    spent = [0.0]  # every try's cost, added up on the image's row (a retry used to overwrite the first's)
     while attempt <= MAX_TRIES:
         if best is not None and deadline is not None and loop.time() + (took or 0) > deadline:
             await record("INFO", f"{key[0]} {key[1]}", "out of time", note=f"no time for try {attempt}")
@@ -216,7 +217,7 @@ async def _draw(ref, key, provider, prompt, refs, call, check=None, deadline=Non
             break
         started = loop.time()
         try:
-            draw = _draw_once(ref, key, provider, prompt, refs, call, attempt)
+            draw = _draw_once(ref, key, provider, prompt, refs, call, attempt, spent)
             if best is not None and deadline is not None:  # a retry: dropped if it runs past the deadline
                 png = await asyncio.wait_for(draw, max(1.0, deadline - loop.time()))
             else:
@@ -268,7 +269,7 @@ def _retry_after(e) -> float:
         return 5.0
 
 
-async def _draw_once(ref, key, provider, prompt, refs, call, attempt):
+async def _draw_once(ref, key, provider, prompt, refs, call, attempt, spent=None):
     """One try, saving drawing / done / failed on the image's row as it goes."""
     await _set_image(ref, key, status="drawing", attempts=attempt, started_at=utcnow(), finished_at=None, prompt=prompt,
                      refs=refs, provider=provider.name, model=provider.model, quality=provider.quality,
@@ -280,8 +281,10 @@ async def _draw_once(ref, key, provider, prompt, refs, call, attempt):
         await _set_image(ref, key, status="failed", finished_at=utcnow(), error_code=code, error_message=message,
                          provider_request_id=getattr(e, "request_id", None))
         raise
+    spent = spent if spent is not None else [0.0]
+    spent[0] += float(result.cost or 0)
     await _set_image(ref, key, status="done", finished_at=utcnow(), image=await asyncio.to_thread(to_webp, result.png),
-                     cost=result.cost, tokens=result.tokens or None, provider_request_id=result.request_id)
+                     cost=spent[0], tokens=result.tokens or None, provider_request_id=result.request_id)
     return result.png
 
 
@@ -507,7 +510,10 @@ async def _run(ref: str) -> None:
     async with session() as s:
         row = await s.get(Book, ref)
         images = (await s.execute(select(BookImage).where(BookImage.book_id == ref))).scalars().all()
-        row.total_cost = sum(float(i.cost or 0) for i in images)
+        # Everything this run paid for: every try of every picture, the picture checks, the face description and
+        # any character picture drawn for it (log.add_cost). A book resumed after a restart only tallied its second
+        # run, so the saved pictures' own costs are the floor.
+        row.total_cost = max(total_cost(), sum(float(i.cost or 0) for i in images))
         row.finished_at = utcnow()
         if failures:
             row.status = "failed"

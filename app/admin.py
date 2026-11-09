@@ -315,7 +315,7 @@ async def activity(kind: str = "", q: str = "", days: int = 7, limit: int = 300,
                        "step": a.step, "event": a.event, "fields": a.fields or {}} for a, email in rows],
             "money": {"added": money.get("deposit", 0), "spent": -money.get("book", 0),
                       "refunded_to_cards": -money.get("refund", 0), "books_refunded": money.get("book_refund", 0),
-                      "in_wallets": held}}
+                      "in_wallets": held, "cost_per_book": await wallet.cost_per_book()}}
 
 
 # --- the character bible --------------------------------------------------------------------------

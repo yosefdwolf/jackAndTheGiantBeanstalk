@@ -623,3 +623,57 @@ def test_an_admin_can_place_a_finished_books_words_again(client, monkeypatch):
     assert page20.text_zone == "top"
     assert any(e.event == "words placed again" for e in run(rows(BookEvent, book_id=ref)))
     assert client.post("/admin/api/books/nope/words").status_code == 404
+
+
+def test_a_book_costs_every_try_and_check_and_the_average_is_shown(client, monkeypatch):
+    from tests.test_books import ADMIN, post_book, rows, sign_in, wait_for
+    from app.book import jobs
+    from app.book.log import add_cost
+    from app.book.providers import ImageResult, MockImageProvider
+    from app.db.models import Book, BookImage
+    original = MockImageProvider.edit
+    looks = []
+
+    async def edit(self, label, refs, prompt, size):  # every picture costs 2 cents
+        result = await original(self, label, refs, prompt, size)
+        add_cost(0.02)
+        return ImageResult(result.png, 0.02)
+
+    async def look(self, png, who="", focus=""):  # every check costs 0.04 cents; page 5's first try fails
+        add_cost(0.0004)
+        looks.append(self._last if hasattr(self, "_last") else "")
+        return {"faces": [], "things": [], "children": 2 if looks.count("page 5") == 1 and looks[-1] == "page 5" else 1}
+
+    async def tracked(self, label, refs, prompt, size):
+        self._last = label
+        return await edit(self, label, refs, prompt, size)
+    monkeypatch.setattr(MockImageProvider, "edit", tracked)
+    monkeypatch.setattr(MockImageProvider, "look_at_page", look)
+    monkeypatch.setattr(jobs, "IMAGE_CONCURRENCY", 1)
+    sign_in(client, ADMIN)
+    ref = post_book(client).json()["id"]
+    assert wait_for(client, ref, timeout=30)["status"] == "done"
+    images = {(i.kind, i.page_number): i for i in run(rows(BookImage, book_id=ref))}
+    assert images[("page", 5)].attempts == 2 and float(images[("page", 5)].cost) == 0.04  # both tries counted
+    book = run(rows(Book, id=ref))[0]
+    pictures = sum(float(i.cost or 0) for i in images.values())
+    assert float(book.total_cost) > pictures  # the picture checks are in the book's cost too
+
+    async def real():  # the average is over books drawn by a real image model
+        from app.db.session import session
+        from sqlalchemy import update
+        async with session() as s:
+            await s.execute(update(Book).where(Book.id == ref).values(provider="openai"))
+            await s.commit()
+    run(real())
+    made = client.get("/api/wallet").json()["cost_to_make"]
+    assert made["books"] >= 1 and made["average"] > 0
+
+
+def test_the_focus_gets_smaller_words_before_it_gets_covered():
+    from app.faces import zone_clear_of
+    # Jack p.19 as the check saw it: the giant up top, Jack and his mother mid-page, the axe low down
+    faces = [{"top": 0.1, "bottom": 0.3}, {"top": 0.3, "bottom": 0.6}, {"top": 0.3, "bottom": 0.6}]
+    axe = [{"top": 0.6, "bottom": 0.8}]
+    assert zone_clear_of(faces, "top") == "bottom"  # faces alone: the bottom third, on the axe
+    assert zone_clear_of(faces, "top", axe) == "bottom-small"  # with the focus: a thin strip below it

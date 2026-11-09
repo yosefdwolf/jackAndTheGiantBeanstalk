@@ -345,11 +345,14 @@
     const p = new URLSearchParams([...new FormData(activityFilters)].filter(([, v]) => v));
     const d = await api('/activity?' + p);
     const m = d.money, period = activityFilters.days.selectedOptions[0].text;
+    const made = m.cost_per_book;  // what drawing a book costs us, beside its price
     $('moneyTotals').replaceChildren(...[
       ['Added', m.added], ['Spent on books', m.spent], ['Back to cards', m.refunded_to_cards],
       ['Book refunds', m.books_refunded], ['In wallets now', m.in_wallets, true],
     ].map(([label, c, now]) => el('div', { class: 'stat' }, el('b', { text: usd(c) }),
-      el('span', { text: now ? label : `${label}, last ${period}` }))));
+      el('span', { text: now ? label : `${label}, last ${period}` }))),
+    ...(made.average == null ? [] : [el('div', { class: 'stat' }, el('b', { text: fmt.cost(made.average) }),
+      el('span', { text: `Average cost to make a book (last ${made.books}), vs $0.99 price` }))]));
     $('activityTable').tBodies[0].replaceChildren(...(d.items.length ? d.items.map((a) => {
       const say = SAYS[`${a.step} ${a.event}`];
       const [text, flow] = say ? say(a.fields) : [`${a.step} ${a.event}`];
