@@ -2,7 +2,11 @@
 
 ## Defects
 
-- **Finding faces, and so where the words go, is unreliable.** The photo face detector missed cartoon faces, so a vision model now marks where faces are on each page. It still gets them wrong: it boxed the giant's whole body as his face (Jack p.7), so a page can be drawn again for nothing, or the words placed over a face it missed.
+- **Words can still land on a face the check misses.** The picture check finds faces from 10 numbered bands across a copy of the page, which placed them correctly where coordinates were off by a quarter of the page (Jack p.8, p.20). A face it doesn't list at all can still end up under the words. *Better since 2026-11-09; not gone.*
+- **Little speed margin.** A Jack book took 45–58 s with one retry. Two retries, or a slow minute at OpenAI, would go past 60 s. The retry deadline (50 s) keeps it close, but can't stop a slow first try.
+- **The safety filter blocks pages by mistake.** About one page a book (Jack pp. 12, 15, 20) is refused and drawn again, which costs time.
+- **Fixed 2026-11-09: words over the page's focus.** "Chop! Chop!" covered the axe (Jack p.19) because the only end clear of faces held it. Now the words go smaller in a thin strip clear of both.
+- **Fixed 2026-11-09: a book's cost missed its retries and picture checks.** Each retry overwrote the picture's cost, and the checks weren't counted. Now everything is added up, and the average is shown beside the $0.99 price.
 
 ## Next assignment (agreed 2026-11-07)
 
