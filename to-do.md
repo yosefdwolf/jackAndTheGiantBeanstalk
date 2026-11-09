@@ -1,5 +1,9 @@
 # To do
 
+## Defects
+
+- **Finding faces, and so where the words go, is unreliable.** The photo face detector missed cartoon faces, so a vision model now marks where faces are on each page. It still gets them wrong: it boxed the giant's whole body as his face (Jack p.7), so a page can be drawn again for nothing, or the words placed over a face it missed.
+
 ## Next assignment (agreed 2026-11-07)
 
 - **Wallet with Stripe (test mode).** *Built 2026-11-07; the refund email waits on the Gmail app password.* Add funds, see the balance, and a history page listing every credit and debit with its cause. Each book costs $0.99, which replaces the one-a-day limit; admins and the unlimited list stay free. Unspent money goes back to the card straight away; a book that came out wrong is reviewed, and if approved its price goes back in the wallet. Requests appear in a Refunds tab in admin, the admin approves or denies them, and an email goes to the admin when one comes in.

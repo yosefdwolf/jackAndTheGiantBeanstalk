@@ -124,6 +124,7 @@ pages:
       Characters in the upper two-thirds. The lower third is the plain stone path and grass in soft
       shadow, low in detail, for text added later.
     text_zone: bottom
+    focus: the red cape
 
   - type: illustrated
     progress: "Packing bread and honey…"
@@ -138,6 +139,7 @@ pages:
       Characters in the lower two-thirds. The top third is a plain, softly lit plaster wall and
       wooden beams, for text added later.
     text_zone: top
+    focus: the basket
 
   - type: illustrated
     progress: "Following the path into the woods…"
@@ -192,6 +194,7 @@ pages:
       Characters in the upper two-thirds. The lower third is plain, shadowed grass at the path's edge,
       low in detail, for text added later.
     text_zone: bottom
+    focus: the wildflowers in the clearing
 
   - type: illustrated
     progress: "Wandering off the path…"
@@ -206,6 +209,7 @@ pages:
       Characters in the lower two-thirds. The top third is plain, soft summer sky with no birds or
       detail, for text added later.
     text_zone: top
+    focus: the bunch of flowers
 
   - type: illustrated
     progress: "Knocking at Grandmother’s door…"
@@ -220,6 +224,7 @@ pages:
       The wolf and door in the upper two-thirds. The lower third is the plain stone doorstep and
       grass, low in detail, for text added later.
     text_zone: bottom
+    focus: the wolf's paw knocking on the door
 
   - type: illustrated
     progress: "Hiding Grandmother in the wardrobe…"
@@ -234,6 +239,7 @@ pages:
       Characters in the upper two-thirds. The lower third is the plain wooden floor and a rag rug, low
       in detail, for text added later.
     text_zone: bottom
+    focus: the wardrobe door
 
   - type: illustrated
     progress: "Trying on Grandmother’s nightcap…"
@@ -253,6 +259,7 @@ pages:
       The bed in the upper two-thirds. The lower third is the plain wooden floor at the foot of the
       bed, low in detail, for text added later.
     text_zone: bottom
+    focus: the nightgown, nightcap and spectacles
 
   - type: illustrated
     progress: "Arriving with a big bunch of flowers…"
@@ -267,6 +274,7 @@ pages:
       {hero} in the upper two-thirds. The lower third is the plain stone doorstep and grass, low in
       detail, for text added later.
     text_zone: bottom
+    focus: the bunch of flowers
 
   - type: illustrated
     progress: "Noticing Grandmother’s big ears…"
@@ -283,6 +291,7 @@ pages:
       Characters in the lower two-thirds. The top third is the plain bedroom wall and a beam, softly
       lit, for text added later.
     text_zone: top
+    focus: the wolf's big ears
 
   - type: illustrated
     progress: "Noticing Grandmother’s big eyes…"
@@ -300,6 +309,7 @@ pages:
       Characters in the upper two-thirds. The lower third is the plain patchwork quilt in soft shadow,
       low in detail, for text added later.
     text_zone: bottom
+    focus: the wolf's big eyes
 
   - type: illustrated
     progress: "Noticing Grandmother’s very big teeth…"
@@ -315,6 +325,7 @@ pages:
       Characters in the lower two-thirds. The top third is the plain bedroom wall and beams, for text
       added later.
     text_zone: top
+    focus: the wolf's big teeth
 
   - type: illustrated
     progress: "Running for help…"
@@ -345,6 +356,7 @@ pages:
       Characters in the upper two-thirds. The lower third is the plain grassy ground, low in detail,
       for text added later.
     text_zone: bottom
+    focus: the woodcutter's axe
 
   - type: illustrated
     progress: "Chasing the wolf away…"
@@ -373,6 +385,7 @@ pages:
       Characters in the upper two-thirds. The lower third is the plain wooden floor, low in detail,
       for text added later.
     text_zone: bottom
+    focus: the open wardrobe
 
   - type: illustrated
     progress: "Sharing bread, honey and soup…"
@@ -387,6 +400,7 @@ pages:
       Characters in the lower two-thirds. The top third is the plain wall and window light, for text
       added later.
     text_zone: top
+    focus: the bread, the honey and the soup
 
   - type: illustrated
     progress: "Staying on the path, all the way home…"
@@ -400,5 +414,6 @@ pages:
       Characters in the upper two-thirds. The lower third is the plain path and grass in soft evening
       shadow, low in detail, for text added later.
     text_zone: bottom
+    focus: the empty basket
 
   - type: about_me

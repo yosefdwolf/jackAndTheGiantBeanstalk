@@ -147,13 +147,17 @@ def clear_zone(faces: list[dict], zone: str) -> str | None:
     return OTHER_ZONE[zone] if _covered(faces, OTHER_ZONE[zone]) <= CLEAR else None
 
 
-def zone_clear_of(faces: list[dict], zone: str) -> str:
+PAPER = "paper"  # neither end is clear: the picture shrinks and the words go on paper below it (pdf.py)
+
+
+def zone_clear_of(faces: list[dict], zone: str, things: list[dict] = ()) -> str:
     """Where a page's words go, given where faces are ({"top", "bottom"} as fractions, 0 = top edge): the clear
-    end of the page, or if neither is clear, whichever end covers less of the faces."""
-    clear = clear_zone(faces, zone)
-    if clear:
-        return clear
-    return zone if _covered(faces, zone) <= _covered(faces, OTHER_ZONE[zone]) else OTHER_ZONE[zone]
+    end of the page, or if neither is clear, PAPER, below the picture, so words never sit on a face. `things`
+    (what the page is about, like the axe biting the stalk) are kept clear too, when an end clear of both exists."""
+    for end in (zone, OTHER_ZONE[zone]):
+        if things and _covered(faces, end) <= CLEAR and _covered(list(things), end) <= CLEAR:
+            return end
+    return clear_zone(faces, zone) or PAPER
 
 
 def choose_zone(png: bytes, zone: str) -> str:

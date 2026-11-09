@@ -48,11 +48,13 @@ class ImageProvider(ABC):
         """Short text description of a face, added to the hero sheet prompt. Optional."""
         return ""
 
-    async def look_at_page(self, png: bytes) -> dict:
+    async def look_at_page(self, png: bytes, who: str = "", focus: str = "") -> dict:
         """What's on a finished page, for the picture check (jobs.check_page): every face's place as fractions
         of the picture ({"top", "bottom", "left", "right"}, 0 = top/left edge) and how many children are in it.
+        `who` lists the characters the page should show, so a young-looking mother isn't counted as a child.
+        `focus` names what the page is about; its boxes come back as "things", so the words can stay off it.
         Without a vision model: nothing found, so the check passes and the words stay in the template's place."""
-        return {"faces": [], "children": None}
+        return {"faces": [], "things": [], "children": None}
 
 
 class OpenAIImageProvider(ImageProvider):
@@ -101,7 +103,7 @@ class OpenAIImageProvider(ImageProvider):
                          tokens_out=resp.usage.completion_tokens, provider_request=resp._request_id)
         return (resp.choices[0].message.content or "").strip()
 
-    async def look_at_page(self, png):
+    async def look_at_page(self, png, who="", focus=""):
         img = Image.open(io.BytesIO(png)).convert("RGB")
         img.thumbnail((768, 768))  # plenty to place faces, and a fraction of a cent
         buf = io.BytesIO()
@@ -111,7 +113,8 @@ class OpenAIImageProvider(ImageProvider):
             resp = await self.client.chat.completions.create(
                 model=self.vision_model, max_tokens=400, response_format={"type": "json_object"},
                 messages=[{"role": "user", "content": [
-                    {"type": "text", "text": LOOK_AT_PAGE},
+                    {"type": "text", "text": LOOK_AT_PAGE + (f" The characters on this page: {who}." if who else "")
+                     + (f' Also give "things": the box around each of these, where shown: {focus}.' if focus else "")},
                     {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}},
                 ]}],
             )
@@ -123,11 +126,17 @@ class OpenAIImageProvider(ImageProvider):
         try:
             found = json.loads(resp.choices[0].message.content or "{}")
         except ValueError:
-            return {"faces": [], "children": None}
-        faces = [{k: min(1.0, max(0.0, float(f.get(k, 0)))) for k in ("top", "bottom", "left", "right")}
-                 for f in found.get("faces") or [] if isinstance(f, dict)]
+            return {"faces": [], "things": [], "children": None}
+
+        def boxes(name):
+            return [{k: min(1.0, max(0.0, float(f.get(k, 0)))) for k in ("top", "bottom", "left", "right")}
+                    for f in found.get(name) or [] if isinstance(f, dict)]
+        faces, things = boxes("faces"), boxes("things")
+        for f in faces:  # a box taller than a head is a whole body (the giant's came back 0.10-0.70): keep its top
+            f["bottom"] = min(f["bottom"], f["top"] + MAX_FACE)
         children = found.get("children")
-        return {"faces": faces, "children": int(children) if isinstance(children, (int, float)) else None}
+        return {"faces": faces, "things": things,
+                "children": int(children) if isinstance(children, (int, float)) else None}
 
     async def _result(self, label, resp) -> ImageResult:
         png = base64.b64decode(resp.data[0].b64_json)
@@ -147,9 +156,12 @@ LOOK_AT_PAGE = (
     "This is one page of a children's picture book. Answer in JSON only: "
     '{"faces": [{"who": "short label", "top": 0.0, "bottom": 0.0, "left": 0.0, "right": 0.0}], "children": 0}. '
     "faces: every face in the picture (people and animal characters), each as the box around the face only, in "
-    "fractions of the picture (0 = top or left edge, 1 = bottom or right edge). children: how many human children "
-    "are in the picture (count every child, even small, partly hidden or in the background)."
+    "fractions of the picture (0 = top or left edge, 1 = bottom or right edge). Faces are small: the box goes from "
+    "the top of the hair to the chin, never the body. children: how many human children are in the picture (count "
+    "every child, even small, partly hidden or in the background). The story's hero counts as one child even if drawn "
+    "looking older; a listed grown-up is not a child even if drawn looking young."
 )
+MAX_FACE = 0.3  # the tallest a face box can be, as a share of the page (a close-up head)
 
 
 class MockImageProvider(ImageProvider):

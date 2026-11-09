@@ -1,6 +1,6 @@
 # Review log
 
-Each run of the instructor-rubric review, newest first, with what was changed in response.
+Each run of the instructor-rubric review, oldest first, with what was changed in response.
 
 ## Run 1 — 2026-11-08 — reviewer: Claude (instructor rubric) — browser: Claude in Chrome
 Total 64/98 measured (was: none, first run)
@@ -33,3 +33,32 @@ Also costing: a second, stock Little Red girl appears beside Sam on Red pp. 5 an
   Now a page with faces at both ends is drawn again, asked to keep faces out of the words' band, and page 12's
   scene has one hen.
 
+## Run 2 — 2026-11-08 — reviewer: self — browser: Claude in Chrome
+Total 83/94 measured (was 64/98 measured)
+PDF 32/36 · UI 18/18 · Money 20/20 · Engineering 13/20
+Upload 17:21:56 → PDF 17:23:29 (93 s, Jack; run 1 Jack was 146–155 s)
+Balance: 0.00 → fund 5.00 → 2 builder books 3.02 → generate 2.03 → refund 0.00 (history reconciles back to Nov 7)
+Not measured: one template shared by both stories (PDF 4), only Jack tested; usable at 400px (UI 2), the window
+would not narrow below 589px
+Changed since run 1: pages drawn at once; no text over any face on all 20 pages; "try N of 3" shown; nav balance
+updates without a reload; review-log.md committed
+Fix first:
+1. Still over 60 s: 93 s (Eng -6). At 66 s five pages were on "try 3 of 3". Fix the most common `picture check
+   failed` problem; where the only problem is placing the text, move the text instead of redrawing.
+2. Captions cover what the page is about (PDF -4): "Chop! Chop!" over the axe hitting the stalk (story p.19);
+   "the golden harp" into the top of the harp (story p.14).
+3. to-do.md is still a feature plan, not a defect list (Eng -1).
+4. The 400px layout is unverified (UI 2 unmeasured).
+
+### What changed in response
+1. Speed: book f03afd13's log showed the picture check failing pages wrongly. It counted Jack (drawn looking about
+   16) as no child (pp. 2, 17) and his young-looking mother as a second child (pp. 10, 11, 18, 20), so those pages
+   were drawn three times for nothing. The check is now told who belongs on the page (the hero counts as the child
+   even if drawn older; a listed grown-up never does). On p.7 it boxed the giant's whole body as his "face", so a
+   face box is now capped at a head's height. Faces at both ends of a page get one redraw at most; after that the
+   words go where they cover less. The `picture check failed` and `kept the best try` events weren't being saved
+   (the column was 16 characters); it's 32 now.
+2. Each page in both story files names its `focus:` ("the axe biting into the beanstalk", "the golden harp"). The
+   check finds it, and the words go at whichever end of the page keeps it clear (it never causes a redraw).
+4. Checked locally at 390px: library, story page, bookshelf, wallet and the flip book all fit with no sideways
+   scroll.

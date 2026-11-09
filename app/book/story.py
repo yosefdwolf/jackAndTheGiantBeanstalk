@@ -40,6 +40,7 @@ class PageSpec:
     progress: str = ""  # the witty line the progress card shows while this picture is drawn
     costume: str = ""   # what characters wear on this page, worded the same on every page they wear it
     see: tuple[int, ...] = ()  # earlier pages sent along as pictures, to keep the same place (see_pages:)
+    focus: str = ""  # what the page is about; the words go where they don't cover it
 
 
 @dataclass(frozen=True)
@@ -91,7 +92,7 @@ def load_story(path: Path = DEFAULT_STORY) -> Story:
                         scene=p.get("scene", ""), mood=p.get("mood", ""),
                         composition=p.get("composition", ""), text_zone=p.get("text_zone", "bottom"),
                         progress=p.get("progress", ""), costume=" ".join(str(p.get("costume", "")).split()),
-                        see=tuple(int(n) for n in p.get("see_pages", ()) or ()))
+                        see=tuple(int(n) for n in p.get("see_pages", ()) or ()), focus=p.get("focus", ""))
         unknown = [c for c in spec.cast if c != HERO and c not in characters]
         if unknown:
             raise ValueError(f"Page {i} casts unknown characters: {unknown}")

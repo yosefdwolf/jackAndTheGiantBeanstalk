@@ -104,7 +104,36 @@ def shaded(image: bytes, zone: str) -> Image.Image:
     return img
 
 
+PAPER_BAND = 0.27  # the share of the page under the picture when the words can't go on it
+
+
+def _on_paper(c: Canvas, page: RenderedPage) -> None:
+    """Faces at both ends of the picture: it shrinks, framed on cream, and the words go on the paper below."""
+    c.setFillColor(CREAM)
+    c.rect(0, 0, W, H, stroke=0, fill=1)
+    margin = H * 0.04
+    art_h = H * (1 - PAPER_BAND) - margin
+    art_w = art_h * W / H  # the art keeps its shape
+    x0, y0 = (W - art_w) / 2, H - margin - art_h
+    buf = io.BytesIO()
+    Image.open(io.BytesIO(page.image)).convert("RGB").save(buf, "JPEG", quality=88)
+    c.drawImage(ImageReader(io.BytesIO(buf.getvalue())), x0, y0, art_w, art_h)
+    c.setStrokeColor(HexColor("#ffffff"))
+    c.setLineWidth(5)
+    c.rect(x0, y0, art_w, art_h, stroke=1, fill=0)
+    size, leading = STORY_SIZE - 6, STORY_LEADING - 7
+    lines = simpleSplit(page.text, STORY_FONT, size, W * 0.84)
+    y = y0 / 2 + len(lines) * leading / 2 - size * 0.8
+    c.setFillColor(INK)
+    c.setFont(STORY_FONT, size)
+    for line in lines:
+        c.drawCentredString(W / 2, y, line)
+        y -= leading
+
+
 def _illustrated(c: Canvas, page: RenderedPage) -> None:
+    if page.text_zone == "paper":
+        return _on_paper(c, page)
     buf = io.BytesIO()
     shaded(page.image, page.text_zone).save(buf, "JPEG", quality=88)  # JPEG keeps the PDF small
     c.drawImage(ImageReader(io.BytesIO(buf.getvalue())), 0, 0, W, H)

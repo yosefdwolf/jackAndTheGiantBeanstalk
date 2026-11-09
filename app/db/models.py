@@ -206,7 +206,7 @@ class BookEvent(Base):
     at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, index=True)
     level: Mapped[str] = mapped_column(String(8))
     step: Mapped[str] = mapped_column(String(64))
-    event: Mapped[str] = mapped_column(String(16))  # start | done | failed | info | refused
+    event: Mapped[str] = mapped_column(String(32))  # start | done | failed | looked | picture check failed ...
     duration_ms: Mapped[int | None] = mapped_column(Integer)
     fields: Mapped[dict | None] = mapped_column(Json)
 

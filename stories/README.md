@@ -12,7 +12,7 @@ Everything the site says about a story comes from its file:
 | `hero` | the hero's name in the pictures and the outfit they wear on every page |
 | `site` | the story page's words: big heading, button, progress titles, placeholders, PDF name, and `musing`, the little jobs shown while the book is drawn |
 | `world`, `characters` | what the pictures look like and who is in them |
-| `pages` | the 20 pages: words, where the words go, who's in the picture, the scene, and the line shown while it's drawn. Optional per page: `costume:` (what someone wears, worded the same on every page; use a YAML `&anchor` / `*anchor` to repeat it exactly) and `see_pages: [12]` (draw this page after page 12, with page 12 sent along as a picture, to keep the same place) |
+| `pages` | the 20 pages: words, where the words go, who's in the picture, the scene, and the line shown while it's drawn. Optional per page: `costume:` (what someone wears, worded the same on every page; use a YAML `&anchor` / `*anchor` to repeat it exactly) `see_pages: [12]` (draw this page after page 12, with page 12 sent along as a picture, to keep the same place) and `focus:` (what the page is about, such as "the axe biting into the beanstalk": the words go at whichever end of the page keeps it clear) |
 | `cover_page` | which page becomes each book's cover on the bookshelf |
 | `look` | the story page's colours and its painted backdrop (plus optional extras like the little picture riding the progress bar) |
 | `cover` | the library's cover picture: its scene, mood and composition |

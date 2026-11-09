@@ -399,7 +399,7 @@ def test_a_page_with_an_extra_child_is_drawn_again(client, monkeypatch):
         calls.append(label)
         return await original(self, label, refs, prompt, size)
 
-    async def look_counting(self, png):  # page 5's first try shows two children
+    async def look_counting(self, png, who="", focus=""):  # page 5's first try shows two children
         label_tries = calls.count("page 5")
         two = calls and calls[-1] == "page 5" and label_tries == 1
         return {"faces": [{"top": 0.75, "bottom": 0.9, "left": 0.4, "right": 0.5}], "children": 2 if two else 1}
@@ -425,7 +425,7 @@ def test_words_go_where_no_face_is():
     high = [{"top": 0.1, "bottom": 0.25, "left": 0.4, "right": 0.5}]
     assert zone_clear_of(low, "bottom") == "top" and zone_clear_of(low, "top") == "top"
     assert zone_clear_of(high, "top") == "bottom" and zone_clear_of(high, "bottom") == "bottom"
-    assert zone_clear_of(low + high, "bottom") in ("top", "bottom")  # faces at both ends: the lesser overlap
+    assert zone_clear_of(low + high, "bottom") == "paper"  # faces at both ends: the words go below the picture
     assert zone_clear_of([], "bottom-dark") == "bottom-dark"
 
 
@@ -465,7 +465,7 @@ def test_faces_at_both_ends_draw_the_page_again(client, monkeypatch):
             prompts.append(prompt)
         return await original(self, label, refs, prompt, size)
 
-    async def look(self, png):  # page 7's first try has the giant's face up top and the hero's down low
+    async def look(self, png, who="", focus=""):  # page 7's first try has the giant's face up top and the hero's down low
         crowded = len(prompts) == 1 and self._last == "page 7"
         faces = [{"top": 0.05, "bottom": 0.25, "left": 0.2, "right": 0.4}]
         if crowded:
@@ -490,3 +490,55 @@ def test_faces_at_both_ends_draw_the_page_again(client, monkeypatch):
     assert page7.text_zone == "bottom"  # the redraw's only face is up top, so the words go below
     looked = [e for e in run(rows(BookEvent, book_id=ref)) if e.event == "looked" and e.step == "page 7"]
     assert looked and looked[0].fields["faces"] == "0.05-0.25 0.75-0.90"
+
+
+def test_words_stay_off_what_the_page_is_about():
+    from app.faces import zone_clear_of
+    from app.book.story import story_for
+    axe = [{"top": 0.1, "bottom": 0.3, "left": 0.3, "right": 0.6}]  # up top, where page 19's words would go
+    assert zone_clear_of([], "top", axe) == "bottom"
+    assert zone_clear_of([{"top": 0.4, "bottom": 0.55}], "top", axe) == "bottom"
+    tall = [{"top": 0.0, "bottom": 1.0, "left": 0.4, "right": 0.6}]  # the whole beanstalk: no end is clear of it
+    assert zone_clear_of([{"top": 0.75, "bottom": 0.9}], "bottom", tall) == "top"  # faces still decide
+    pages = {p.number: p for p in story_for("jack_and_the_beanstalk").pages}
+    assert pages[19].focus == "the axe biting into the beanstalk"
+
+
+def test_faces_at_both_ends_get_one_redraw_then_the_words_move(client, monkeypatch):
+    from tests.test_books import ADMIN, post_book, rows, sign_in, wait_for
+    from app.book.providers import MockImageProvider
+    from app.db.models import BookEvent, BookImage
+    both_ends = [{"top": 0.05, "bottom": 0.25, "left": 0.2, "right": 0.4},
+                 {"top": 0.75, "bottom": 0.9, "left": 0.6, "right": 0.7}]
+
+    async def look(self, png, who="", focus=""):  # every try of every page: faces up top and down low
+        return {"faces": both_ends, "things": [], "children": None}
+    monkeypatch.setattr(MockImageProvider, "look_at_page", look)
+    sign_in(client, ADMIN)
+    ref = post_book(client).json()["id"]
+    assert wait_for(client, ref, timeout=30)["status"] == "done"
+    page7 = next(i for i in run(rows(BookImage, book_id=ref)) if i.kind == "page" and i.page_number == 7)
+    assert page7.attempts == 2  # one redraw, not two
+    moved = [e for e in run(rows(BookEvent, book_id=ref)) if e.event == "words moved" and e.step == "page 7"]
+    assert len(moved) == 1 and page7.text_zone == "paper"
+    pdf = client.get(f"/api/books/{ref}/pdf")  # the words sit below the shrunk picture
+    assert pdf.status_code == 200 and pdf.headers["content-type"] == "application/pdf"
+
+
+def test_no_retry_starts_without_time_to_finish(client, monkeypatch):
+    from tests.test_books import ADMIN, post_book, rows, sign_in, wait_for
+    from app.book import jobs
+    from app.book.providers import MockImageProvider
+    from app.db.models import BookEvent, BookImage
+
+    async def look(self, png, who="", focus=""):  # every page fails its check
+        return {"faces": [], "things": [], "children": 3}
+    monkeypatch.setattr(MockImageProvider, "look_at_page", look)
+    monkeypatch.setattr(jobs, "PICTURES_DONE_BY", 0)  # the deadline has passed as soon as the book starts
+    sign_in(client, ADMIN)
+    ref = post_book(client).json()["id"]
+    assert wait_for(client, ref, timeout=30)["status"] == "done"
+    pages = [i for i in run(rows(BookImage, book_id=ref)) if i.kind == "page"]
+    assert pages and all(i.attempts == 1 and i.image for i in pages)  # each kept its first try
+    late = [e for e in run(rows(BookEvent, book_id=ref)) if e.event == "out of time"]
+    assert len(late) == len(pages)
