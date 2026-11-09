@@ -304,6 +304,43 @@ def verdict(seen: dict, expect_children: int, zone: str) -> Verdict:
     return Verdict(True, 0)
 
 
+def _who(story, gender: str, spec) -> str:
+    """The characters a page should show, for the picture check, named as in the story (never the reader's
+    typed name): "Jack, the hero: a boy; Jack's mother: a thin, tired woman ..."."""
+    named = Casting(story, gender)
+    return "; ".join(f"{named.story_hero}, the hero: a {named.gender}" if k == HERO_CAST else
+                     f"{named.name_of(k)}: {named.fill(story.characters[k].description)}" for k in spec.cast
+                     if k == HERO_CAST or k in story.characters)
+
+
+async def place_words_again(ref: str) -> list[dict]:
+    """Look at a finished book's saved pages again with today's picture check and move each page's words to where
+    it now says is clear. Nothing is redrawn: about 0.04 cents a page. For books whose words were placed by an
+    older, less accurate check. Returns each page's place before and after."""
+    book = await _load(ref)
+    story = story_for(book.story_key)
+    provider = get_provider(book.provider, book.model, book.quality)
+    rows = {i.page_number: i for i in book.images if i.kind == "page" and i.status == "done" and i.image}
+    gate = asyncio.Semaphore(IMAGE_CONCURRENCY)
+
+    async def place(spec):
+        row = rows[spec.number]
+        png = await asyncio.to_thread(to_png, row.image)
+        async with gate:
+            seen = await provider.look_at_page(png, _who(story, book.gender, spec), spec.focus)
+        zone = zone_clear_of(seen["faces"], spec.text_zone, seen.get("things") or ()) \
+            if seen["faces"] or seen.get("things") else spec.text_zone
+        before = saved_zone(row.text_zone, spec)
+        await record("INFO", f"page {spec.number}", "words placed again", was=before, now=zone,
+                     faces=" ".join(f"{f.get('who', '')} {f['top']:.2f}-{f['bottom']:.2f}".strip() for f in seen["faces"]) or None)
+        if zone != row.text_zone:
+            await _set_image(ref, ("page", spec.number), text_zone=zone)
+        return {"page": spec.number, "was": before, "now": zone}
+
+    start_book(ref)  # its events go on the book's timeline
+    return await asyncio.gather(*(place(spec) for spec in story.pages if spec.number in rows))
+
+
 def saved_zone(zone: str | None, spec) -> str:
     """Where a drawn page's words go: the place saved when it was drawn, unless that's missing or a layout that
     no longer exists (a few books saved "paper", words below a shrunk picture); then the story file's place."""
@@ -424,10 +461,7 @@ async def _run(ref: str) -> None:
     async def draw_page(p):
         number = p.spec.number
         expect = 1 if HERO_CAST in p.spec.cast else 0  # the hero is the only child in any story
-        named = Casting(story, ctx.casting.gender)  # the story's hero, never the name the reader typed
-        who = "; ".join(f"{named.story_hero}, the hero: a {named.gender}" if k == HERO_CAST else
-                        f"{named.name_of(k)}: {named.fill(story.characters[k].description)}" for k in p.spec.cast
-                        if k == HERO_CAST or k in story.characters)
+        who = _who(story, ctx.casting.gender, p.spec)
         looked = {}
 
         async def look(png, event):

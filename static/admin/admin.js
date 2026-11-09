@@ -137,6 +137,7 @@
     const parts = [
       el('dl', { class: 'facts' }, facts.map(([k, v]) => el('div', {}, el('dt', { text: k }), el('dd', { text: v || '—' })))),
       (b.reason || b.message) && el('p', { class: 'alert', text: [b.reason, b.message].filter(Boolean).join(': ') }),
+      b.status === 'done' && wordsButton(b.id),
       el('h3', { text: 'Pictures' }),
       el('div', { class: 'pictures' },
         d.photo_url && el('div', { class: 'pic square' }, el('img', { src: d.photo_url, alt: 'Uploaded photo', loading: 'lazy' }),
@@ -155,7 +156,24 @@
     $('drawerBody').replaceChildren(...parts.filter(Boolean));
   }
 
-  function imageCard(i) {
+  // Looks at the finished pages again with today's picture check and moves the words off any face (no redrawing).
+  function wordsButton(ref) {
+    const note = el('span', { class: 'soft' });
+    const button = el('button', { type: 'button', class: 'btn', text: 'Check the words again (about 1¢)' });
+    button.addEventListener('click', async () => {
+      button.disabled = true;
+      note.textContent = 'Looking at every page…';
+      try {
+        const r = await api(`/books/${encodeURIComponent(ref)}/words`, { method: 'POST' });
+        const moved = r.pages.filter((p) => p.was !== p.now).map((p) => `p.${p.page} ${p.was} → ${p.now}`);
+        note.textContent = moved.length ? `Moved: ${moved.join(', ')}` : 'Every page’s words were already clear.';
+      } catch (e) { note.textContent = e.message; }
+      button.disabled = false;
+    });
+    return el('p', { class: 'line' }, button, ' ', note);
+  }
+
+    function imageCard(i) {
     const label = i.kind === 'hero_sheet' ? 'Cartoon (hero sheet)' : `Page ${i.page}`;
     const tokens = i.tokens ? Object.entries(i.tokens).map(([k, v]) => `${k} ${v}`).join(' · ') : '';
     return el('div', { class: 'pic' + (i.kind === 'hero_sheet' ? ' square' : '') },

@@ -598,3 +598,28 @@ def test_a_page_saved_with_the_old_paper_layout_uses_the_story_files_place(clien
     pages = {p["number"]: p for p in client.get(f"/api/books/{ref}").json()["book"]["pages"] if p.get("number")}
     assert pages[8]["text_zone"] == "bottom"  # page 8's place in the story file
     assert client.get(f"/api/books/{ref}/pdf").status_code == 200
+
+
+def test_an_admin_can_place_a_finished_books_words_again(client, monkeypatch):
+    from tests.test_books import ADMIN, post_book, rows, sign_in, wait_for
+    from app.book.providers import MockImageProvider
+    from app.db.models import BookEvent, BookImage
+    sign_in(client, ADMIN)
+    ref = post_book(client).json()["id"]
+    assert wait_for(client, ref, timeout=30)["status"] == "done"
+    page20 = next(i for i in run(rows(BookImage, book_id=ref)) if i.kind == "page" and i.page_number == 20)
+    assert page20.text_zone == "bottom"
+
+    async def look(self, png, who="", focus=""):  # now the check sees a face low on every page
+        assert "the hero" in who
+        return {"faces": [{"who": "Jack", "top": 0.7, "bottom": 0.85}], "things": [], "children": 1}
+    monkeypatch.setattr(MockImageProvider, "look_at_page", look)
+    r = client.post(f"/admin/api/books/{ref}/words")
+    assert r.status_code == 200
+    body = r.json()
+    p20 = next(p for p in body["pages"] if p["page"] == 20)
+    assert p20 == {"page": 20, "was": "bottom", "now": "top"} and body["moved"] >= 1
+    page20 = next(i for i in run(rows(BookImage, book_id=ref)) if i.kind == "page" and i.page_number == 20)
+    assert page20.text_zone == "top"
+    assert any(e.event == "words placed again" for e in run(rows(BookEvent, book_id=ref)))
+    assert client.post("/admin/api/books/nope/words").status_code == 404

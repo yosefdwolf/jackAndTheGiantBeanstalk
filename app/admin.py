@@ -232,6 +232,18 @@ async def book(ref: str, _=Depends(require_admin)):
     }
 
 
+@router.post("/api/books/{ref}/words")
+async def place_words_again(ref: str, _=Depends(require_admin)):
+    """Check a finished book's pages again and move the words where they're clear (about 1 cent, no redrawing)."""
+    async with session() as s:
+        b = await s.get(Book, ref)
+    if b is None or b.status != "done":
+        raise HTTPException(404, {"message": "No finished book with that reference.", "ref": ref})
+    from .book.jobs import place_words_again as place
+    pages = await place(ref)
+    return {"pages": sorted(pages, key=lambda p: p["page"]), "moved": sum(p["was"] != p["now"] for p in pages)}
+
+
 @router.get("/api/books/{ref}/photo")
 async def photo(ref: str, _=Depends(require_admin)):
     async with session() as s:
