@@ -193,7 +193,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     if (me && me.left === 0) {  // not enough in the wallet for a book
       if (!toldNoMoney) { toldNoMoney = true; track('no_money'); }
       go.disabled = true;
-      $('goNote').replaceChildren(`A book costs ${money(me.price_cents)}. `,
+      $('goNote').replaceChildren(  // the price is already shown above the form
         Object.assign(document.createElement('a'), { href: '/wallet', textContent: 'Add money to your wallet' }));
       return;
     }
