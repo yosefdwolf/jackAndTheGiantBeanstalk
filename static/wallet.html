@@ -25,8 +25,6 @@
   .amounts { display: flex; flex-wrap: wrap; gap: 12px; margin: 14px 0 6px; }
   .amounts .btn { min-width: 92px; }
   .row { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin: 12px 0 6px; }
-  .test-card { font-size: 15px; color: var(--ink-soft); }
-  .test-card code { font-size: 15px; background: #fff; border: 1px solid var(--card-edge); border-radius: 6px; padding: 1px 6px; }
   .flash { background: #e9f6df; border: 2px solid #b9dca3; border-radius: 12px; padding: 10px 14px; margin-top: 12px; }
   .wallet .field { display: grid; justify-items: start; gap: 6px; margin: 10px 0; font-size: 17px; }
   /* A dollar box: the $ sits inside the field, and only a plain amount can be typed. */
@@ -94,8 +92,6 @@
         <button class="btn bean" type="submit" id="customBtn">Add</button>
       </form>
       <p class="hint" id="customHint"></p>
-      <p class="test-card">This is a class project in Stripe’s test mode, so no real money moves. Pay with the test card
-        <code>4242 4242 4242 4242</code>, any future date and any 3 digits.</p>
       <p class="error" id="addError" role="alert" hidden></p>
     </section>
 
