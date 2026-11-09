@@ -666,7 +666,7 @@ def test_a_book_costs_every_try_and_check_and_the_average_is_shown(client, monke
             await s.execute(update(Book).where(Book.id == ref).values(provider="openai"))
             await s.commit()
     run(real())
-    made = client.get("/api/wallet").json()["cost_to_make"]
+    made = client.get("/admin/api/activity").json()["money"]["cost_per_book"]
     assert made["books"] >= 1 and made["average"] > 0
 
 

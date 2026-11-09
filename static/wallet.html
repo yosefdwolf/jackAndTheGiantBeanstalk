@@ -21,7 +21,6 @@
   @media (max-width: 420px) { .purse-card .purse { width: 84px; height: 84px; } }
   .wallet .balance { font-family: var(--display); font-size: 56px; line-height: 1; color: var(--leaf-deep); margin: 8px 0 6px; }
   .wallet p { font-size: 17px; }
-  .wallet .cost-note { font-size: 15px; color: var(--ink-soft); margin-top: 4px; }
   .amounts { display: flex; flex-wrap: wrap; gap: 12px; margin: 14px 0 6px; }
   .amounts .btn { min-width: 92px; }
   .row { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin: 12px 0 6px; }
@@ -83,7 +82,6 @@
     <section class="card wallet" id="addCard">
       <h2>Add money</h2>
       <p>Each book costs <b id="price">$0.99</b>. You’ll pay on Stripe’s page and come straight back.</p>
-      <p class="cost-note" id="costNote" hidden></p>
       <div class="amounts" id="amounts"></div>
       <form class="row" id="customForm" novalidate>
         <label class="field">Or another amount
@@ -230,13 +228,6 @@
     $('main').hidden = false;
     $('balance').textContent = money(data.balance_cents);
     $('price').textContent = money(data.price_cents);
-    const made = data.cost_to_make;  // what drawing a book costs us, beside what it costs you
-    $('costNote').hidden = !made || made.average == null;
-    if (made && made.average != null) {
-      $('costNote').textContent = `Making a book costs us about $${made.average.toFixed(2)} on average: every picture, `
-        + `every retry and every picture check, over our last ${made.books} book${made.books === 1 ? '' : 's'}. `
-        + `You pay ${money(data.price_cents)}.`;
-    }
     const books = Math.floor(data.balance_cents / data.price_cents);
     $('balanceNote').textContent = data.free ? 'Your books are free (you’re on the unlimited list).'
       : `Enough for ${books} book${books === 1 ? '' : 's'}.`;
