@@ -1,8 +1,10 @@
 # Jack and the Beanstalk — a picture book starring your child
 
-Upload a child's photo, add their name and a few details, and download `JackAndTheBeanstalk.pdf`: a
-cartoon picture book where the child is Jack (or Jane), with an About Me page at the end. This build
-makes the first three pages of the storyboard.
+Upload a child's photo, add their name and a few details, and download a picture book where the child is
+the hero: Jack and the Beanstalk or Little Red Riding Hood. Each book is a real book of 25 pages: a cover
+("Little Red Riding Hood, starring Sarah"), a title page, a copyright page from the publisher
+(YWolfpublishing), 20 story pages, The End, and About Me on the back cover. A finished book can be ordered as
+a printed hardcover, shipped to a US address (Lulu's sandbox: nothing is really printed).
 
 ## How it's built
 The book is data; the code is generic. To add a page, add an entry to the story file. A new style, page
@@ -134,8 +136,42 @@ WARNING book=3f9a1c2e refused status=504 reason=timeout
 Never logged: the password, the API key, the photo, or the child's name and details. `LOG_LEVEL` sets
 the level (default `INFO`).
 
+## Printed books (Lulu)
+"Order a printed copy" under a finished book opens `/print?book=<ref>` (`static/print.html`,
+`app/printing.py`):
+1. **Look it over.** The PDF shows in the page (and the flip book is a click away). Nothing can be priced or
+   ordered until the reader ticks that it's ready to print.
+2. **Address.** US only, checked field by field (state, ZIP, a 10-digit phone), each problem shown under its
+   field.
+3. **Price.** Lulu quotes printing, shipping and tax for that address. The price is that quote, plus Stripe's
+   fee on the money added (2.9% + 30¢), plus `PRINT_PROFIT_CENTS` ($5), rounded up to the next .99. Pricing
+   charges nothing.
+4. **Place it.** The wallet is charged (with a one-click card top-up for just the difference if it's short),
+   and Lulu gets a print job. If Lulu refuses it, the money goes straight back into the wallet.
+5. **Status.** The order page asks Lulu for news at most once a minute and shows it in plain words
+   (being checked, accepted, printing, shipped with tracking, delivered). Admin's **Printed** tab lists every
+   order with what Lulu charged, what the book cost to draw, Stripe's fee and what we kept.
+
+**The print files.** Lulu downloads two PDFs from signed links on this site (good for 14 days), built fresh
+from the saved pictures: the inside pages (11.25 × 8.75 in with bleed, padded to Lulu's 24-page hardcover
+minimum) and a wraparound cover (About Me on the back, a spine, the front cover), sized by Lulu's
+cover-dimensions call. Every font is embedded (DejaVu Serif and Vera Sans; Lulu refuses PDFs that only name a
+font), and a test checks it.
+
+**The sandbox.** `LULU_API` is Lulu's sandbox: jobs go through Lulu's file checks but are never printed or
+shipped. A sandbox job waits as "UNPAID" until it's paid in the sandbox developer portal with a test card. To
+go live: production keys from developers.lulu.com, `LULU_API=https://api.lulu.com`, and a payment card on that
+Lulu account.
+
+**Names and About Me are checked before anything is charged or drawn** (`app/book/about_check.py`): OpenAI's
+free moderation model, then a cheap question to gpt-4.1-mini (is the name a real-sounding name, not an insult
+or keyboard mashing; is every answer fine to print in a child's book). If OpenAI can't be reached, a word list
+does the job. A refusal names the field and says what to change.
+
 ## Cost
-About $0.12 per book (measured): the hero sheet plus three wide pages at medium quality. Each call's
-cost is in the logs, and each book's total is on its `book done` line.
+Drawing a book costs us under the $0.99 price: $0.59 for the book in the first test print order (21
+pictures, any retries, and the picture checks). Each call's
+cost is in the logs, each book's total is on its `book done` line, and admin's Money panel shows the average
+beside the $0.99 price. A printed book's costs are in [WRITEUP.md](WRITEUP.md).
 
 See [to-do.md](to-do.md) for what still needs work.

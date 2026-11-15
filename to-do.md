@@ -2,6 +2,7 @@
 
 ## Defects
 
+- **Words over the axe again (Jack p.19).** Run 4 (2026-11-15), Jack PDF p.22: "Chop! Chop! The beanstalk cracked…" covers Leo's hands and the axe where it bites the stalk, the page's `focus`. The 2026-11-09 fix (smaller words in a thin strip) didn't hold on a picture where the action fills the lower half and the top is open sky. Put the words at the top when the focus is low, or redraw once asking for the axe low and the sky clear.
 - **Words can still land on a face the check misses.** The picture check finds faces from 10 numbered bands across a copy of the page, which placed them correctly where coordinates were off by a quarter of the page (Jack p.8, p.20). A face it doesn't list at all can still end up under the words. *Better since 2026-11-09; not gone.*
 - **Little speed margin.** A Jack book took 45–58 s with one retry. Two retries, or a slow minute at OpenAI, would go past 60 s. The retry deadline (50 s) keeps it close, but can't stop a slow first try.
 - **The safety filter blocks pages by mistake.** About one page a book (Jack pp. 12, 15, 20) is refused and drawn again, which costs time.

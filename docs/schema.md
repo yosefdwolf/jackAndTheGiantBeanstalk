@@ -22,7 +22,7 @@ starts (`Procfile`).
 | `unlimited_emails` | email whose books are free | managed in the admin site; can be added before the person signs in |
 | `books` | book request | `id` is the ref. `status`: queued, running, done, failed, interrupted, refused. Also holds which provider and model drew it, the prompt version, the child's name and About Me details, and the total cost. |
 | `uploads` | book | the photo the model saw (1024px, WebP), kept for debugging |
-| `images` | generated image | the hero sheet (page 0) and each page: status (waiting, drawing, done, failed), the exact prompt, the attached character sheets, the image (WebP), tokens, cost, the provider's request ID, any error, and timings. Unique on (book, kind, page), so a resumed book can't duplicate an image. |
+| `images` | generated image | the hero sheet (page 0) and each page: status (waiting, drawing, done, failed), the exact prompt, the attached character sheets, the image (WebP), tokens, cost, the provider's request ID, any error, and timings. `words` is the page's text as it was when the picture was drawn, so a later change to the story file can't put the wrong words on a finished book. Unique on (book, kind, page), so a resumed book can't duplicate an image. |
 | `book_events` | step event | the trail: start, done, failed, info, refused, with a duration and fields. Never holds the password, the photo, or the child's name and details. |
 | `request_errors` | failure outside a book | the ref, path, status, error type, message, traceback and browser |
 | `activity` | something a person did | sign-ins, money in and out, books asked for, finished and failed, reviews: everything logged outside a book, plus a book's milestones. The admin's Activity tab. |
@@ -31,8 +31,9 @@ starts (`Procfile`).
 | `reviews` | review response | three 1–5 ratings plus "what isn't good", by the book's owner only. `respondent_key` is the user's id (one review per person; answering again, on any of their books, replaces it). `source` is `site` or `connect`; `connect_id` is the crowd participant ID from the study link |
 | `settings` | site-wide value | e.g. `featured_review_book_id` |
 | `payments` | Stripe Checkout session | `id` is Stripe's session id. `status`: open, paid, expired. `refunded_cents` is how much of it has gone back to the card. |
-| `transactions` | change to a wallet | `amount_cents` is + for a credit, − for a debit; the balance is the sum. `kind`: deposit, book, refund (to the card), book_refund (to the wallet), with the book, payment, Stripe refund or refund request that caused it. |
+| `transactions` | change to a wallet | `amount_cents` is + for a credit, − for a debit; the balance is the sum. `kind`: deposit, book, refund (to the card), book_refund (to the wallet), print (a printed copy), print_refund (Lulu refused it), with the book, payment, Stripe refund or refund request that caused it. |
 | `refund_requests` | book someone says came out wrong | the book, its price, what they said, and the admin's answer. `status`: pending, approved (the price goes back in their wallet), denied. Unspent money back to the card needs no request: it's a `refund` row in `transactions` with Stripe's refund id. |
+| `print_orders` | printed copy someone priced or ordered | the book, the owner, the shipping address, the shipping level, Lulu's quote and what it charges us (`lulu_cost_cents`), our price, and Lulu's job id, status, message and tracking. `status`: draft (priced, not ordered), placed, failed (Lulu refused it; the money went back). `approved_at` is when they ticked that the PDF is ready to print. The charge is a `print` row in `transactions`; money back after a refusal is `print_refund`. |
 
 ## Decisions
 - **Images are stored in Postgres as WebP (quality 90)**, about 1.5 MB per book. PDFs aren't stored:
