@@ -202,6 +202,16 @@ p { margin: 0; }
 .about-page dl { margin: 0; font-size: clamp(13px, 2.2vw, 16px); }
 .about-page dt { font: 600 .85em var(--hand); color: var(--ink-soft); margin-top: 6px; }
 .about-page dd { margin: 0; }
+.title-page { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 6%;
+  background: var(--card); }
+.title-page h3 { font-size: clamp(26px, 5.6vw, 46px); color: var(--leaf-deep); }
+.title-page p { font: 600 clamp(15px, 3vw, 24px) var(--hand); color: var(--accent-deep); margin-top: 10px; }
+.title-page small { position: absolute; bottom: 7%; font-size: clamp(12px, 2vw, 15px); color: var(--ink-soft); }
+/* Small and low on the page, as a printed book sets it. */
+.copyright-page { display: flex; align-items: flex-end; justify-content: center; text-align: center; padding: 8% 12%;
+  background: var(--card); font-size: clamp(10px, 1.7vw, 13px); line-height: 1.45; color: var(--ink-soft); }
+.copyright-page p { margin: 0 0 .7em; }
+.copyright-page p:first-child { font-style: italic; color: var(--ink); }
 .end-page { display: grid; place-items: center; text-align: center; background: var(--card); }
 .end-page h3 { font-size: clamp(30px, 7vw, 56px); color: var(--leaf-deep); }
 .end-page::before { content: ""; width: 34%; aspect-ratio: 1;

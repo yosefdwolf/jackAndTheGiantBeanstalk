@@ -28,7 +28,7 @@ from . import bible, scenes
 from .cast import CastSheets, MissingSheetError
 from .log import record, start_book, step, total_cost
 from .pages import BookContext, ChildInfo, RenderedPage, make_page
-from .pdf import build_pdf
+from .pdf import PUBLISHER, build_pdf, print_files
 from .prompts import PromptBuilder
 from .providers import SHEET_SIZE, MockImageProvider, get_provider
 from .story import HERO as HERO_CAST, DEFAULT_STORY, Casting, display_name, story_file, story_for
@@ -344,6 +344,12 @@ async def place_words_again(ref: str) -> list[dict]:
     return await asyncio.gather(*(place(spec) for spec in story.pages if spec.number in rows))
 
 
+def saved_words(row, casting, spec) -> str:
+    """A drawn page's words: those saved when it was drawn, so a later edit to the story file (a page added or
+    moved) never shifts a finished book's words. Books from before words were saved use the story file."""
+    return row.words or casting.fill(spec.text)
+
+
 def saved_zone(zone: str | None, spec) -> str:
     """Where a drawn page's words go: the place saved when it was drawn, unless that's missing or a layout that
     no longer exists (a few books saved "paper", words below a shrunk picture); then the story file's place."""
@@ -501,7 +507,7 @@ async def _run(ref: str) -> None:
         seen = looked.get(id(png))
         zone = zone_clear_of(seen["faces"], p.spec.text_zone, seen.get("things") or ()) \
             if seen and (seen["faces"] or seen.get("things")) else choose_zone(png, p.spec.text_zone)  # OpenCV: not in threads
-        await _set_image(ref, ("page", number), text_zone=zone)
+        await _set_image(ref, ("page", number), text_zone=zone, words=ctx.casting.fill(p.spec.text))
         return png
 
     outcomes = await asyncio.gather(*(draw_page(p) for p in todo), return_exceptions=True)
@@ -557,6 +563,7 @@ async def status(ref: str) -> dict | None:
     story = story_for(book.story_key)
     casting = Casting(story, book.gender, display_name(book.child_name) or None)
     texts = {spec.number: casting.fill(spec.text) for spec in story.pages}
+    texts.update({i.page_number: i.words for i in book.images if i.kind == "page" and i.words})
     lines = {spec.number: spec.progress for spec in story.pages}  # the witty line while it's drawn
     etas = {}
     images = []
@@ -581,20 +588,20 @@ async def status(ref: str) -> dict | None:
 
 
 def _flipbook(book, story, casting) -> dict:
-    """What the on-site flip book shows: the same pages and text as the PDF, plus a cover."""
+    """What the on-site flip book shows: the same pages, text and order as the PDF."""
     drawn = {i.page_number: i for i in book.images if i.kind == "page" and i.status == "done"}
     pages = []
     for spec in story.pages:
         if make_page(spec).needs_image:
             if spec.number not in drawn:
                 continue  # a page added to the story after this book was made
-            pages.append({"kind": "illustrated", "number": spec.number, "text": casting.fill(spec.text),
+            pages.append({"kind": "illustrated", "number": spec.number, "text": saved_words(drawn[spec.number], casting, spec),
                           "text_zone": saved_zone(drawn[spec.number].text_zone, spec), "image_url": f"/api/books/{book.id}/images/page-{spec.number}"})
         else:
             pages.append({"kind": spec.type, "number": spec.number})
     return {"title": story.title, "hero": casting.story_hero, "child_name": display_name(book.child_name),
             "details": [list(d) for d in book.details], "cover_url": f"/api/books/{book.id}/images/hero_sheet-0",
-            "pages": pages}
+            "publisher": PUBLISHER, "year": (book.created_at or utcnow()).year, "pages": pages}
 
 
 async def image_bytes(ref: str, kind: str, page: int) -> bytes | None:
@@ -606,6 +613,24 @@ async def image_bytes(ref: str, kind: str, page: int) -> bytes | None:
 
 async def pdf_bytes(ref: str) -> bytes | None:
     """Rebuilt from the saved images on each download, so PDFs don't take up database space."""
+    laid = await _laid_out(ref)
+    if laid is None:
+        return None
+    pages, title, cover, year = laid
+    return build_pdf(pages, title, cover=cover, year=year)
+
+
+async def print_pdfs(ref: str, cover_size: tuple[float, float] | None = None) -> tuple[bytes, bytes] | None:
+    """The printer's two files (inside pages, wraparound cover), rebuilt from the saved images like the PDF."""
+    laid = await _laid_out(ref)
+    if laid is None:
+        return None
+    pages, title, cover, year = laid
+    return print_files(pages, title, cover, year, cover_size)
+
+
+async def _laid_out(ref: str):
+    """A finished book's pages as the PDF lays them out, its title, its cover and the year it was made."""
     book = await _load(ref)
     if book.status != "done":
         return None
@@ -618,11 +643,12 @@ async def pdf_bytes(ref: str) -> bytes | None:
             continue  # a page added to the story after this book was made
         image = to_jpeg(rows[("page", spec.number)].image) if page.needs_image else None
         laid = page.layout(ctx, image)
-        if page.needs_image:  # moved off a face when it was drawn
+        if page.needs_image:  # moved off a face when it was drawn, and the words it was drawn for
             laid.text_zone = saved_zone(rows[("page", spec.number)].text_zone, spec)
+            laid.text = saved_words(rows[("page", spec.number)], ctx.casting, spec)
         pages.append(laid)
     cover = RenderedPage(0, "cover", image=ctx.sheets.hero_sheet, child=ctx.child)
-    return build_pdf(pages, story.title, cover=cover)
+    return pages, story.title, cover, (book.created_at or utcnow()).year
 
 
 async def resume_unfinished() -> None:

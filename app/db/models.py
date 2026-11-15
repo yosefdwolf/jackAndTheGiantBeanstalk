@@ -181,6 +181,7 @@ class BookImage(Base):
     page_number: Mapped[int] = mapped_column(Integer, default=0)  # 0 for the hero sheet
     status: Mapped[str] = mapped_column(String(16), default="waiting")  # waiting | drawing | done | failed
     text_zone: Mapped[str | None] = mapped_column(String(16))  # where the words went (moved off a face if needed)
+    words: Mapped[str | None] = mapped_column(Text)  # the page's words as they were when it was drawn
     attempts: Mapped[int] = mapped_column(Integer, default=0, server_default="0")  # tries so far (up to 3)
     prompt: Mapped[str | None] = mapped_column(Text)
     refs: Mapped[list | None] = mapped_column(Json)

@@ -478,7 +478,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
 
   // --- the flip book --------------------------------------------------------------------------------
 
-  let leaves = [], current = 0;
+  let leaves = [], leafKinds = [], storyNumber = {}, current = 0;
 
   function el(tag, cls, text) {
     const n = document.createElement(tag);
@@ -508,6 +508,17 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
       for (const [label, value] of info.details) dl.append(el('dt', null, label), el('dd', null, value));
       words.append(dl);
       face.append(img, words);
+    } else if (spec.kind === 'title') {
+      face.classList.add('title-page');
+      face.append(el('h3', null, info.title), el('p', null, `starring ${info.child_name}`), el('small', null, info.publisher));
+    } else if (spec.kind === 'copyright') {
+      face.classList.add('copyright-page');
+      const notice = el('div');
+      for (const line of [`${info.title}, starring ${info.child_name}`,
+        `Text and illustrations copyright \u00a9 ${info.year} ${info.publisher}. All rights reserved. No part of this book may be reproduced in any form without written permission from the publisher.`,
+        'Retold from the traditional fairy tale, with pictures made for this reader.',
+        `Published by ${info.publisher}`, `First edition, ${info.year}`]) notice.append(el('p', null, line));
+      face.append(notice);
     } else {
       face.classList.add('end-page');
       face.append(el('h3', null, 'The End'));
@@ -523,7 +534,10 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
 
   async function openReader(data) {
     const info = data.book;
-    const specs = [{ kind: 'cover' }, ...info.pages, { kind: 'end' }];
+    // As in the printed book: cover, title page, copyright, the story, The End, and About Me on the back cover.
+    const story = info.pages.filter((p) => p.kind !== 'about_me');
+    const about = info.pages.filter((p) => p.kind === 'about_me');
+    const specs = [{ kind: 'cover' }, { kind: 'title' }, { kind: 'copyright' }, ...story, { kind: 'end' }, ...about];
     const bookEl = $('flipbook');
     bookEl.replaceChildren();
     leaves = specs.map((spec, i) => {
@@ -533,6 +547,9 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
       bookEl.append(leaf);
       return leaf;
     });
+    leafKinds = specs.map((spec) => spec.kind);
+    storyNumber = { total: story.length };
+    specs.forEach((spec, i) => { if (spec.kind === 'illustrated') storyNumber[i] = story.indexOf(spec) + 1; });
     current = 0;
     readToEnd = false;
     $('printingTitle').textContent = COPY.binding;
@@ -561,7 +578,9 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     stack();
     $('prevPage').disabled = current === 0;
     $('nextPage').disabled = current >= leaves.length - 1;
-    $('pageCount').textContent = current === 0 ? 'Cover' : current === leaves.length - 1 ? 'The End' : `Page ${current} of ${leaves.length - 2}`;
+    const kind = leafKinds[current];
+    $('pageCount').textContent = kind === 'cover' ? 'Cover' : kind === 'about_me' ? 'Back cover' : kind === 'end' ? 'The End'
+      : kind === 'title' ? 'Title page' : kind === 'copyright' ? 'Copyright' : `Page ${storyNumber[current]} of ${storyNumber.total}`;
   }
 
   let readToEnd = false;
