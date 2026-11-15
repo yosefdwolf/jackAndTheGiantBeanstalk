@@ -21,7 +21,8 @@ class FakeStripe:
         if method == "POST" and path == "/checkout/sessions":
             sid = f"cs_test_{next(self.ids)}"
             self.sessions[sid] = {"id": sid, "url": f"https://checkout.stripe.com/{sid}", "payment_status": "unpaid",
-                                  "status": "open", "payment_intent": None, "amount": data["line_items[0][price_data][unit_amount]"]}
+                                  "status": "open", "payment_intent": None, "amount": data["line_items[0][price_data][unit_amount]"],
+                                  "success_url": data["success_url"], "cancel_url": data["cancel_url"]}
             return self.sessions[sid]
         if method == "GET" and path.startswith("/checkout/sessions/"):
             return self.sessions[path.rsplit("/", 1)[1]]
@@ -80,6 +81,19 @@ def top_up(client, stripe, cents=500):
 
 
 # --- adding money ---------------------------------------------------------------------------------
+
+def test_a_top_up_for_a_printed_book_comes_back_to_the_order(client, stripe):
+    """Short for a printed copy: Stripe for the difference, then straight back to the waiting order. Only our own
+    order pages can be the way back, never somewhere else."""
+    r = client.post("/api/wallet/checkout", json={"cents": 1200, "back": "/print?book=ab12cd34&order=0f0f0f0f"})
+    s = stripe.sessions[r.json()["url"].rsplit("/", 1)[1]]
+    assert s["success_url"].endswith("/print?book=ab12cd34&order=0f0f0f0f&paid={CHECKOUT_SESSION_ID}")
+    assert s["cancel_url"].endswith("/print?book=ab12cd34&order=0f0f0f0f")
+    for elsewhere in ("https://evil.example/print?book=ab12cd34&order=0f0f0f0f", "//evil.example", "/admin"):
+        r = client.post("/api/wallet/checkout", json={"cents": 1200, "back": elsewhere})
+        s = stripe.sessions[r.json()["url"].rsplit("/", 1)[1]]
+        assert s["success_url"].endswith("/wallet?paid={CHECKOUT_SESSION_ID}") and s["cancel_url"].endswith("/wallet")
+
 
 def test_a_paid_checkout_is_credited_once(client, stripe):
     broke(client)

@@ -577,6 +577,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     $('printing').hidden = true;
     $('bookLoading').hidden = true;
     Object.assign($('download'), { href: data.pdf_url, download: PDF_NAME });
+    $('printCopy').href = `/print?book=${data.id}`;
     $('reader').hidden = false;
     $('reader').classList.add('reveal');
     showPage();

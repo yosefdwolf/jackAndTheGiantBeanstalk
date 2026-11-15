@@ -16,7 +16,7 @@ from pydantic import BaseModel
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import selectinload
 
-from . import auth, wallet
+from . import auth, printing, wallet
 from .book import bible, scenes
 from .book.prompts import PromptBuilder
 from .book.styles import get_style
@@ -680,6 +680,11 @@ async def remove_unlimited(email: str, _=Depends(require_admin)):
 async def refunds(status: str = "", _=Depends(require_admin)):
     items = await wallet.admin_requests(status)
     return {"items": items, "pending": sum(1 for i in items if i["status"] == "pending") if not status else None}
+
+
+@router.get("/api/print-orders")
+async def print_orders(_=Depends(require_admin)):
+    return {"items": await printing.admin_orders()}
 
 
 class DecisionIn(BaseModel):

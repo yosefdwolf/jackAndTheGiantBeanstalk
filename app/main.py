@@ -21,7 +21,7 @@ from pydantic import BaseModel, Field  # noqa: E402
 from sqlalchemy import select  # noqa: E402
 from sqlalchemy.orm import selectinload  # noqa: E402
 
-from . import admin, auth, tracking, wallet  # noqa: E402
+from . import admin, auth, printing, tracking, wallet  # noqa: E402
 from .book import about_check, bible, jobs  # noqa: E402
 from .book.log import current_ref, new_ref, record, set_activity_sink, set_event_sink, set_ref, setup_logging, start_book, step  # noqa: E402
 from .book.providers import is_mock  # noqa: E402
@@ -53,6 +53,7 @@ app.mount("/static", StaticFiles(directory=STATIC), name="static")
 app.include_router(auth.router)
 app.include_router(admin.router)
 app.include_router(wallet.router)
+app.include_router(printing.router)
 app.include_router(tracking.router)
 app.add_middleware(admin.AdminHost)  # admin.jack.graydates.com/x is served from /admin/x
 
@@ -193,6 +194,12 @@ async def story_page(request: Request, slug: str):
 def bookshelf_page():
     """Every book the signed-in person has made, from every story."""
     return HTMLResponse(themed("bookshelf.html"), headers=NO_CACHE)
+
+
+@app.get("/print")
+def print_page():
+    """Order a printed copy of a finished book (?book=<ref>): look it over, approve it, address, pay."""
+    return HTMLResponse(themed("print.html"), headers=NO_CACHE)
 
 
 @app.get("/wallet")

@@ -14,6 +14,7 @@ they come back we ask Stripe whether it was paid before crediting it (once, what
 Open sessions are checked again whenever the wallet loads, so closing the tab after paying is fine.
 """
 import os
+import re
 
 import httpx
 from fastapi import APIRouter, HTTPException, Request
@@ -164,6 +165,10 @@ async def _signed_in(request: Request) -> User:
 
 class TopUpIn(BaseModel):
     cents: int
+    back: str = ""  # a page of ours to come back to after paying (a printed-book order); else the wallet
+
+
+BACK_PAGES = re.compile(r"/print\?book=[a-f0-9]{8}&order=[a-f0-9]{8}")
 
 
 @router.post("/api/wallet/checkout")
@@ -174,6 +179,7 @@ async def checkout(request: Request, body: TopUpIn):
         raise HTTPException(400, {"message": f"Add between {dollars(MIN_TOP_UP)} and {dollars(MAX_TOP_UP)}.",
                                   "ref": current_ref(), "reason": "bad_amount"})
     site = _site(request)
+    back = body.back if BACK_PAGES.fullmatch(body.back) else "/wallet"  # never a page somewhere else
     try:
         cs = await stripe("POST", "/checkout/sessions", {
             "mode": "payment",
@@ -184,8 +190,8 @@ async def checkout(request: Request, body: TopUpIn):
             "customer_email": user.email,
             "client_reference_id": str(user.id),
             "metadata[user_id]": str(user.id),
-            "success_url": f"{site}/wallet?paid={{CHECKOUT_SESSION_ID}}",
-            "cancel_url": f"{site}/wallet",
+            "success_url": f"{site}{back}{'&' if '?' in back else '?'}paid={{CHECKOUT_SESSION_ID}}",
+            "cancel_url": f"{site}{back}",
         })
     except StripeError as e:
         await record("ERROR", "wallet", "checkout failed", error=str(e))
@@ -200,7 +206,8 @@ async def checkout(request: Request, body: TopUpIn):
 # --- what the wallet page shows ------------------------------------------------------------------
 
 KIND_LABELS = {"deposit": "Added money", "book": "Book", "refund": "Back to your card",
-               "book_refund": "Book refunded to your wallet"}
+               "book_refund": "Book refunded to your wallet", "print": "Printed book",
+               "print_refund": "Printed book order didn't go through"}
 
 
 def _tx_out(t: Transaction) -> dict:

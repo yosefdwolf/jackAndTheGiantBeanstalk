@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>A printed copy · {{TITLE}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Grandstander:wght@600;800&family=Shantell+Sans:wght@400;600&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/styles.css">
+<!--THEME_CSS-->
+<style>
+  .shop h2 { margin-bottom: 6px; }
+  .shop p { font-size: 17px; }
+  .book-look { display: grid; grid-template-columns: 150px 1fr; gap: 20px; align-items: start; }
+  .book-look img { width: 150px; aspect-ratio: 1; object-fit: cover; border-radius: 50%; border: 5px solid #fff;
+    box-shadow: 0 6px 14px rgba(0,0,0,.16); }
+  @media (max-width: 520px) { .book-look { grid-template-columns: 1fr; justify-items: center; text-align: center; } }
+  .pdf-frame { width: 100%; aspect-ratio: 3 / 2; border: 2px solid var(--card-edge); border-radius: 12px; background: #fff; margin: 12px 0; }
+  @media (max-width: 640px) { .pdf-frame { display: none; } }
+  .facts { margin: 8px 0 14px; padding-left: 1.2em; }
+  .facts li { margin: 2px 0; }
+  .approve { display: flex; gap: 12px; align-items: flex-start; font: 600 17px/1.4 var(--hand); margin: 12px 0 4px;
+    padding: 12px 14px; border: 2px dashed var(--card-edge); border-radius: 12px; cursor: pointer; }
+  .approve input { width: 26px; height: 26px; flex: none; margin-top: 1px; accent-color: var(--leaf-deep); }
+  .address { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; }
+  .address .wide { grid-column: 1 / -1; }
+  @media (max-width: 520px) { .address { grid-template-columns: 1fr; } }
+  .price-box { display: grid; gap: 6px; padding: 14px 16px; border-radius: 14px; background: #fff8e3;
+    border: 2px solid var(--card-edge); margin: 14px 0; }
+  .price-box .big { font: 800 40px/1 var(--display); color: var(--leaf-deep); }
+  .order-row { border-top: 1px solid var(--card-edge); padding: 10px 0; }
+  .order-row b { font-family: var(--display); }
+  .sandbox { font-size: 15px; color: var(--ink-soft); }
+  .error { color: var(--alert); font: 600 15px/1.35 var(--hand); }
+</style>
+</head>
+<body>
+<!--SCENE-->
+<main class="stand">
+  <!--NAV-->
+  <header class="masthead">
+    <p class="hand kicker">a real book for the shelf</p>
+    <h1>A printed copy</h1>
+  </header>
+
+  <section class="card shop" id="signin" hidden>
+    <h2>Sign in first</h2>
+    <p>Printed copies are made from the books on your bookshelf.</p>
+    <a class="btn bean" id="signinLink" href="/auth/login">Sign in with Google</a>
+  </section>
+
+  <p class="card shop error" id="loadError" role="alert" hidden></p>
+
+  <div id="main" hidden>
+    <section class="card shop">
+      <div class="book-look">
+        <img id="coverImg" alt="">
+        <div>
+          <h2>Look it over first</h2>
+          <p>We print exactly what’s in the PDF, so please read every page before you order.</p>
+          <ul class="facts">
+            <li>A hardcover, 11 × 8.5 inches, in full colour on thick glossy paper</li>
+            <li>Your cover, a title page and a copyright page, the 20-page story, and About Me on the back</li>
+            <li>Priced for your address: what the printer charges to print and ship it, plus <span id="profit">$5</span></li>
+          </ul>
+          <a class="btn plain" id="pdfLink" target="_blank" rel="noopener">Open the PDF</a>
+        </div>
+      </div>
+      <iframe class="pdf-frame" id="pdfFrame" title="The book's PDF"></iframe>
+      <label class="approve"><input type="checkbox" id="approved">
+        <span>I’ve looked through every page, and this book is ready to print.</span></label>
+      <p class="error" id="approvedNote" role="alert" hidden></p>
+    </section>
+
+    <section class="card shop">
+      <h2>Where should it go?</h2>
+      <p class="hint">We ship in the US for now. The phone number is for the delivery company.</p>
+      <form class="address" id="addressForm" novalidate>
+        <label class="box wide"><span class="box-label">Who it’s for</span><input name="name" autocomplete="name" maxlength="80"></label>
+        <label class="box wide"><span class="box-label">Street</span><input name="street1" autocomplete="address-line1" maxlength="80"></label>
+        <label class="box wide"><span class="box-label">Apartment, suite (optional)</span><input name="street2" autocomplete="address-line2" maxlength="80"></label>
+        <label class="box"><span class="box-label">City</span><input name="city" autocomplete="address-level2" maxlength="80"></label>
+        <label class="box"><span class="box-label">State</span><input name="state_code" autocomplete="address-level1" maxlength="2" placeholder="NY"></label>
+        <label class="box"><span class="box-label">ZIP code</span><input name="postcode" autocomplete="postal-code" inputmode="numeric" maxlength="10"></label>
+        <label class="box"><span class="box-label">Phone</span><input name="phone_number" autocomplete="tel" inputmode="tel" maxlength="20"></label>
+      </form>
+      <p class="error" id="addressNote" role="alert" hidden></p>
+      <button class="btn bean" type="button" id="priceBtn">See the price</button>
+
+      <div class="price-box" id="priceBox" hidden>
+        <span>Printed hardcover, delivered to <b id="shipTo"></b></span>
+        <span class="big" id="priceBig"></span>
+        <span id="walletLine"></span>
+        <div><button class="btn bean" type="button" id="placeBtn">Place the order</button>
+          <button class="btn bean" type="button" id="payBtn" hidden></button></div>
+        <p class="error" id="placeNote" role="alert" hidden></p>
+        <p class="sandbox">This is a class project using Lulu’s test system: the order goes through every step, but
+          nothing is really printed or shipped.</p>
+      </div>
+    </section>
+
+    <section class="card shop" id="ordersCard" hidden>
+      <h2>Your orders for this book</h2>
+      <div id="orders" role="status"></div>
+    </section>
+
+    <a class="btn plain back" id="backLink" href="/bookshelf">Back to your bookshelf</a>
+  </div>
+</main>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const params = new URLSearchParams(location.search);
+  const ref = (params.get('book') || '').replace(/[^a-f0-9]/g, '').slice(0, 16);
+  const track = window.track || (() => {});
+  const form = $('addressForm');
+  let info = null, order = null;
+
+  // What Lulu's job status means, said the way a parent would want to hear it.
+  const STEPS = {
+    CREATED: 'The printer is checking the pages', UNPAID: 'Accepted by the printer, waiting to be paid for (test system)',
+    PAYMENT_IN_PROGRESS: 'Being paid for', PRODUCTION_DELAYED: 'Getting ready to print', PRODUCTION_READY: 'Getting ready to print',
+    IN_PRODUCTION: 'Being printed and bound', SHIPPED: 'On its way', DELIVERED: 'Delivered',
+    REJECTED: 'The printer found a problem with it', CANCELED: 'Canceled', ERROR: 'The printer found a problem with it',
+  };
+
+  function el(tag, cls, text) {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function note(id, msg) { $(id).textContent = msg || ''; $(id).hidden = !msg; }
+  function detail(body, fallback) {
+    const d = body && body.detail;
+    if (!d || typeof d !== 'object' || Array.isArray(d)) return { message: typeof d === 'string' ? d : fallback };
+    return { ...d, message: d.ref ? `${d.message} (reference ${d.ref})` : d.message };
+  }
+  async function call(url, body) {
+    const res = await fetch(url, body === undefined ? { cache: 'no-store' }
+      : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) throw Object.assign(new Error(), { status: res.status, ...detail(out, 'Something went wrong. Try again in a moment.') });
+    return out;
+  }
+  function markField(name) {
+    form.querySelectorAll('[aria-invalid]').forEach((f) => f.removeAttribute('aria-invalid'));
+    if (name && form[name]) { form[name].setAttribute('aria-invalid', 'true'); form[name].focus(); }
+  }
+
+  function paintOrders(list) {
+    $('ordersCard').hidden = !list.length;
+    $('orders').replaceChildren(...list.map((o) => {
+      const row = el('div', 'order-row');
+      const state = o.status === 'failed' ? (o.error || 'It didn’t go through.') : (STEPS[o.lulu_status] || 'Sent to the printer');
+      row.append(el('b', null, `Order ${o.id}`), document.createTextNode(` · ${o.price} · to ${o.ship_to}`),
+        el('div', null, state));
+      for (const t of o.tracking || []) for (const url of t.urls || []) {
+        const a = el('a', null, `Track it${t.carrier ? ` (${t.carrier})` : ''}`); a.href = url; a.target = '_blank'; a.rel = 'noopener';
+        row.append(a);
+      }
+      return row;
+    }));
+  }
+
+  async function load() {
+    if (!ref) { note('loadError', 'Which book? Open a book from your bookshelf and choose “Order a printed copy”.'); return; }
+    const paid = params.get('paid');
+    if (paid) {  // back from Stripe: count the money in before reading the balance
+      await fetch(`/api/wallet?paid=${encodeURIComponent(paid)}`, { cache: 'no-store' }).catch(() => {});
+      params.delete('paid');
+      history.replaceState(null, '', `${location.pathname}?${params}`);
+      if (window.refreshNav) window.refreshNav();
+    }
+    try {
+      info = await call(`/api/printing?book=${ref}`);
+    } catch (e) {
+      if (e.status === 401) {
+        $('signinLink').href = `/auth/login?next=${encodeURIComponent(location.pathname + location.search)}`;
+        $('signin').hidden = false;
+      } else note('loadError', e.message);
+      return;
+    }
+    $('coverImg').src = `/api/books/${ref}/images/hero_sheet-0?w=300`;
+    $('pdfLink').href = info.pdf_url;
+    $('pdfFrame').src = info.pdf_url;
+    $('profit').textContent = info.profit;
+    $('main').hidden = false;
+    paintOrders(info.orders);
+    const waiting = (params.get('order') || '').replace(/[^a-f0-9]/g, '');
+    if (waiting) {  // the order they were paying for: show it again, ready to place
+      const o = await call(`/api/print-orders/${waiting}`).catch(() => null);
+      if (o && o.status === 'draft') { order = o; $('approved').checked = true; showPrice(); }
+    }
+    if (!info.ready) {
+      note('addressNote', 'Printed books aren’t switched on yet. Please check back soon.');
+      $('priceBtn').disabled = true;
+    }
+    // Keep the news about a placed order fresh while the page is open.
+    for (const o of info.orders.filter((o) => o.status === 'placed' && !['SHIPPED', 'DELIVERED', 'CANCELED', 'REJECTED'].includes(o.lulu_status))) {
+      call(`/api/print-orders/${o.id}`).then((fresh) => {
+        info.orders = info.orders.map((x) => (x.id === fresh.id ? fresh : x));
+        paintOrders(info.orders);
+      }).catch(() => {});
+    }
+  }
+
+  $('approved').addEventListener('change', () => note('approvedNote', ''));
+  form.addEventListener('input', () => { order = null; $('priceBox').hidden = true; note('addressNote', ''); markField(null); });
+
+  function showPrice() {
+    $('shipTo').textContent = order.ship_to;
+    $('priceBig').textContent = order.price;
+    const short = info.free ? 0 : Math.max(0, order.price_cents - info.balance_cents);
+    $('walletLine').textContent = info.free ? 'Free for you (admin).'
+      : `It comes out of your wallet, which has $${(info.balance_cents / 100).toFixed(2)}.`;
+    $('placeBtn').hidden = short > 0;
+    $('payBtn').hidden = short === 0;
+    // Stripe's smallest charge here is $1, so a few cents short still adds a dollar.
+    if (short) $('payBtn').textContent = `Pay the $${(Math.max(short, 100) / 100).toFixed(2)} difference with your card`;
+    note('placeNote', '');
+    $('priceBox').hidden = false;
+    $('priceBox').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  // Short on money: Stripe for just the difference, then straight back here with the order still waiting.
+  $('payBtn').addEventListener('click', async () => {
+    $('payBtn').disabled = true;
+    try {
+      const short = Math.max(100, order.price_cents - info.balance_cents);
+      const { url } = await call('/api/wallet/checkout', { cents: short, back: `/print?book=${ref}&order=${order.id}` });
+      track('print_top_up', { ref });
+      location.href = url;
+    } catch (e) {
+      note('placeNote', e.message);
+      $('payBtn').disabled = false;
+    }
+  });
+
+  $('priceBtn').addEventListener('click', async () => {
+    note('addressNote', ''); note('approvedNote', ''); markField(null);
+    if (!$('approved').checked) {
+      note('approvedNote', 'Please look through every page and tick the box above when it’s ready to print.');
+      $('approved').focus();
+      return;
+    }
+    $('priceBtn').disabled = true;
+    try {
+      order = await call('/api/print-orders', { book: ref, approved: true, address: Object.fromEntries(new FormData(form)) });
+      track('print_priced', { ref });
+      showPrice();
+    } catch (e) {
+      if (e.field === 'approved') note('approvedNote', e.message);
+      else { note('addressNote', e.message); markField(e.field); }
+    } finally {
+      $('priceBtn').disabled = !info.ready;
+    }
+  });
+
+  $('placeBtn').addEventListener('click', async () => {
+    if (!order) return;
+    $('placeBtn').disabled = true;
+    note('placeNote', '');
+    try {
+      const placed = await call(`/api/print-orders/${order.id}/place`, {});
+      track('print_ordered', { ref });
+      info.orders = [placed, ...info.orders.filter((o) => o.id !== placed.id)];
+      if (!info.free) info.balance_cents -= placed.price_cents;
+      paintOrders(info.orders);
+      $('priceBox').hidden = true;
+      form.reset();
+      $('approved').checked = false;
+      order = null;
+      if (window.refreshNav) window.refreshNav();
+      $('ordersCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } catch (e) {
+      note('placeNote', e.message);
+    } finally {
+      $('placeBtn').disabled = false;
+    }
+  });
+
+  load();
+})();
+</script>
+</body>
+</html>

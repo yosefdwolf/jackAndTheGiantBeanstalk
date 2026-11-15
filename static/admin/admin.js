@@ -44,7 +44,7 @@
   function showTab(name) {
     tabs.forEach((t) => t.setAttribute('aria-selected', String(t.dataset.tab === name)));
     document.querySelectorAll('.tab').forEach((s) => { s.hidden = s.id !== `tab-${name}`; });
-    ({ books: loadBooks, activity: loadActivity, funnel: loadFunnel, characters: loadCharacters, reviews: loadReviews, refunds: loadRefunds, days: loadDays, errors: loadErrors, settings: loadSettings })[name]();
+    ({ books: loadBooks, activity: loadActivity, funnel: loadFunnel, characters: loadCharacters, reviews: loadReviews, refunds: loadRefunds, orders: loadOrders, days: loadDays, errors: loadErrors, settings: loadSettings })[name]();
   }
   tabs.forEach((t) => t.addEventListener('click', () => { setHash({ tab: t.dataset.tab, book: '' }); }));
 
@@ -296,6 +296,24 @@
     $('refundBadge').hidden = n === 0;
   }
   refundFilters.addEventListener('change', loadRefunds);
+
+  // --- printed books -----------------------------------------------------------------------------
+  async function loadOrders() {
+    const d = await api('/print-orders');
+    $('orderTable').tBodies[0].replaceChildren(...(d.items.length ? d.items.map((o) => el('tr', {},
+      el('td', { class: 'when', text: fmt.when(o.placed_at || o.created_at) }),
+      el('td', { class: 'mono', text: o.id }),
+      el('td', {}, el('a', { class: 'mono', href: `#tab=books&book=${o.book_id}`, text: o.book_id })),
+      el('td', { text: o.ship_to }),
+      el('td', {}, pill(o.status === 'failed' ? 'failed' : (o.lulu_status || o.status)),
+        el('div', { class: 'kv', text: [o.lulu_job_id && `job ${o.lulu_job_id}`, o.lulu_message || o.error].filter(Boolean).join(' · ') })),
+      el('td', { class: 'num', text: dollars(o.price_cents) }),
+      el('td', { class: 'num', text: dollars(o.lulu_cost_cents) }),
+      el('td', { class: 'num', text: dollars(o.making_cents) }),
+      el('td', { class: 'num', text: dollars(o.stripe_fee_cents) }),
+      el('td', { class: 'num', text: dollars(o.margin_cents) })))
+      : [el('tr', { class: 'empty' }, el('td', { colspan: 10, text: 'No printed books ordered yet.' }))]));
+  }
   refreshBadge();
 
   // --- days --------------------------------------------------------------------------------------

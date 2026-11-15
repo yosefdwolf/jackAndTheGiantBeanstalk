@@ -22,6 +22,7 @@
     <button role="tab" data-tab="characters">Story art</button>
     <button role="tab" data-tab="reviews">Reviews</button>
     <button role="tab" data-tab="refunds">Refunds <span class="count" id="refundBadge" hidden></span></button>
+    <button role="tab" data-tab="orders">Printed</button>
     <button role="tab" data-tab="days">Days</button>
     <button role="tab" data-tab="errors">Errors</button>
     <button role="tab" data-tab="settings">Settings</button>
@@ -143,6 +144,18 @@
           <span class="mono" id="studyUrl"></span> so each answer carries the participant’s ID.</p>
         <a class="btn plain small" id="qrDownload" download="jack-qr.svg">Download QR</a>
       </div>
+    </div>
+  </section>
+
+  <section id="tab-orders" class="tab" hidden>
+    <p class="summary soft">Printed hardcovers sent to Lulu (sandbox: never really printed or shipped). What we keep
+      is the price, less Lulu's printing, shipping and tax, the pictures, and Stripe's fee on the money added.</p>
+    <div class="table-wrap">
+      <table class="grid" id="orderTable">
+        <thead><tr><th>When</th><th>Order</th><th>Book</th><th>Ship to</th><th>Lulu</th><th class="num">Price</th>
+          <th class="num">Lulu</th><th class="num">Pictures</th><th class="num">Stripe</th><th class="num">We keep</th></tr></thead>
+        <tbody></tbody>
+      </table>
     </div>
   </section>
 

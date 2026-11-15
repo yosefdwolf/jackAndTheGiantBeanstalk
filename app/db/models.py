@@ -329,3 +329,28 @@ class RefundRequest(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, index=True)
     decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     decided_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"))
+
+
+class PrintOrder(Base):
+    """A printed, hardcover copy of a finished book, made and shipped by Lulu (sandbox: never really printed).
+    A draft holds the reader's approval of the PDF, the address and Lulu's quote; placing it charges the wallet
+    and creates Lulu's print job, whose status is copied here each time the order is looked at."""
+    __tablename__ = "print_orders"
+    id: Mapped[str] = mapped_column(String(16), primary_key=True)
+    book_id: Mapped[str] = mapped_column(ForeignKey("books.id"), index=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True)
+    status: Mapped[str] = mapped_column(String(16), default="draft", index=True)  # draft | placed | failed
+    address: Mapped[dict] = mapped_column(Json)
+    shipping_level: Mapped[str] = mapped_column(String(16))
+    price_cents: Mapped[int] = mapped_column(Integer)  # what the reader pays
+    lulu_cost_cents: Mapped[int] = mapped_column(Integer)  # what Lulu charges us: printing, shipping, tax
+    quote: Mapped[dict | None] = mapped_column(Json)  # Lulu's cost calculation, as it came
+    lulu_job_id: Mapped[str | None] = mapped_column(String(32))
+    lulu_status: Mapped[str | None] = mapped_column(String(32))
+    lulu_message: Mapped[str | None] = mapped_column(Text)
+    tracking: Mapped[list | None] = mapped_column(Json)
+    error: Mapped[str | None] = mapped_column(Text)
+    approved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    placed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    checked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, index=True)
