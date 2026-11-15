@@ -94,3 +94,41 @@ Fix first:
    items 1–2 above aren't there.
 4. Speed has little margin (0 pts now): Jack took 45–58 s with one retry (p.14, try 2). A second retry or a slow
    provider minute puts it over 60 s. Watch the slowest page in each book.
+
+## Run 4 — 2026-11-15 — reviewer: self — browser: Claude's built-in browser (Claude desktop app)
+Total 94/100 (was 94/100)
+PDF 36/40 · UI 19/20 · Money 20/20 · Engineering 19/20
+Upload 14:23:59 → PDF 14:24:43 (44 s, Red ce56a19e, every picture on try 1) · 14:26:19 → PDF 14:27:07 (48 s, Jack
+71565b18, one picture on try 2). Start times are the wallet charge, about 1 s after the button was pressed.
+Balance: 0.00 → fund 5.00 → Red 4.01 → Jack 3.02 → refund 0.00 (history: +5.00, −0.99, −0.99, −3.02; reconciles)
+Avg cost per book: shown in admin's Money panel beside the $0.99 price (static/admin/admin.js:366, wallet.cost_per_book);
+the number wasn't read this run because the reviewer account isn't an admin (price $0.99)
+Not measured: none. A brand-new non-admin Google account, signed out at the start. The site's first paint took
+0.56 s. The photo is one the builder never developed with (a young man, entered as Leo, 18). The browser pane's file
+picker didn't attach it, so the same file was put into the upload box by script; everything after that went through
+the page as normal. The user typed the Stripe test card and the magic word. 400px measured by emulating a 400×844
+viewport: no sideways scroll (page width 400), inputs 54px tall at 18px, the button spans x 16–384.
+Changed since run 3: the PDF is now a real book of 25 pages (cover; title page; copyright page from YWolfpublishing;
+20 story pages; The End; About Me), with embedded fonts so a printer accepts it; the name and About Me are checked
+before anything is charged; printed hardcovers can be ordered through Lulu (sandbox). Both books stayed under 60 s.
+Checked: both PDFs are 25 pages with the same layout; Leo is recognizably the same person on every page of both
+books; no words over any face on any page of either; the words are typeset (DejaVu Serif Bold, crisp when zoomed);
+About Me shows Leo / 18 / soccer, guitar, tacos / Loves swimming in the lake every summer; signed out, the PDF
+link answers 404; signed back in, both PDFs download (200, 25 pp.) and the covers show on the bookshelf; with $0.00
+the button is greyed, and a forced submit is refused with "A book costs $0.99. Add money to your wallet to make one.
+(reference 90ccde60)", no charge and no history row; no keys in HEAD or any of 64 commits, or in static/.
+Fix first:
+1. Words over the thing the page is about (PDF -4): Jack PDF p.22 (story p.19), "Chop! Chop! The beanstalk cracked…"
+   covers Leo's hands and the axe where it bites the stalk. The story file names that focus
+   (stories/jack_and_the_beanstalk.yaml:435, `focus: the axe biting into the beanstalk`); the Run 3 fix (smaller
+   words in a thin strip) didn't hold on this picture, where the action fills the lower half and the top is open
+   sky. Put the words at the top when the focus is low, or redraw once asking for the axe low and the sky clear.
+2. The empty-wallet refusal is hard to read (UI -1): the message is red text straight on the meadow scenery under
+   the "Plant the magic beans" button, and the "Add money to your wallet" link above it is browser-default blue on
+   the same scenery (both story pages). Put the note and the link on a cream card, like every other message.
+3. to-do.md is out of step (Eng -1): it lists "Fixed 2026-11-09: words over the page's focus", which came back on
+   Jack p.22, and item 2 isn't there.
+4. Speed margin is still thin (0 pts now): 44 s and 48 s, the second with one retry. Two retries, or a slow minute
+   at OpenAI, would go past 60 s.
+5. Side character drawn at the wrong size (0 pts now): on Red PDF p.23 (story p.20) Leo's mother is drawn
+   child-sized next to him, unlike pp. 4–5 where she's a grown woman.
