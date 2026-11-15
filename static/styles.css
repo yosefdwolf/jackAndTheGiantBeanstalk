@@ -135,7 +135,11 @@ p { margin: 0; }
 .about-grid .box:first-child + .wide { grid-column: 2; }
 
 .press { text-align: center; display: grid; gap: 8px; justify-items: center; padding: 6px 0; }
-.press .note { color: var(--leaf-deep); text-shadow: 0 0 6px #fff; font-weight: 600; }
+/* Notes under the button sit on the scenery, so each gets its own small card to stay readable. */
+.press .note, .press .error { background: var(--card); border-radius: 12px; padding: 6px 16px; margin: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .12); }
+.press .note { color: var(--leaf-deep); font-weight: 600; }
+.press .note a { color: inherit; text-decoration-thickness: 2px; text-underline-offset: 3px; }
 
 /* Growing the book */
 .printing-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
