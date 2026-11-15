@@ -83,7 +83,7 @@ p { margin: 0; }
   background: #fff; border: 2.5px solid #d9c7a2; border-radius: 14px; padding: 12px 14px; min-height: 50px; }
 .box textarea { resize: vertical; }
 .box input:focus, .box textarea:focus { outline: none; border-color: var(--leaf); box-shadow: 0 0 0 4px color-mix(in srgb, var(--leaf) 22%, transparent); }
-.box input[aria-invalid="true"] { border-color: var(--alert); box-shadow: 0 0 0 4px color-mix(in srgb, var(--alert) 18%, transparent); }
+.box input[aria-invalid="true"], .box textarea[aria-invalid="true"] { border-color: var(--alert); box-shadow: 0 0 0 4px color-mix(in srgb, var(--alert) 18%, transparent); }
 ::placeholder { color: #b3a184; font-style: italic; }
 
 /* Buttons: chunky, friendly, pressed like a toy */
@@ -348,3 +348,6 @@ dialog#camera::backdrop { background: rgba(20, 40, 60, .55); }
 .try-badge:empty { display: none; }
 .try-badge { position: absolute; right: 4px; top: 4px; z-index: 2; font: 700 11px/1 var(--hand); color: #fff;
   background: var(--accent-deep); padding: 3px 6px; border-radius: 999px; }
+
+/* The note under an answer the book can't print (app/book/about_check.py). */
+.field-note { grid-column: 1 / -1; margin: 6px 2px 12px; font: 600 15px/1.35 var(--hand); color: var(--alert); }

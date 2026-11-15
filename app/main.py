@@ -22,7 +22,7 @@ from sqlalchemy import select  # noqa: E402
 from sqlalchemy.orm import selectinload  # noqa: E402
 
 from . import admin, auth, tracking, wallet  # noqa: E402
-from .book import bible, jobs  # noqa: E402
+from .book import about_check, bible, jobs  # noqa: E402
 from .book.log import current_ref, new_ref, record, set_activity_sink, set_event_sink, set_ref, setup_logging, start_book, step  # noqa: E402
 from .book.providers import is_mock  # noqa: E402
 from .book.story import PRONOUNS, Story, all_stories, display_name, load_story, story_by_slug  # noqa: E402
@@ -338,11 +338,12 @@ async def create_book_route(
 
     data = await photo.read()
 
-    async def refuse(status: int, reason: str, message: str):
+    async def refuse(status: int, reason: str, message: str, field: str | None = None):
         # The photo is kept whatever the reason, so the admin can always see what was sent.
         await jobs.keep_refused_photo(ref, data, photo.content_type or "image/unknown")
         await jobs.refuse(ref, reason, message)
-        raise HTTPException(status, {"message": message, "ref": ref, "reason": reason}, headers={"X-Book-Id": ref})
+        raise HTTPException(status, {"message": message, "ref": ref, "reason": reason,
+                                     **({"field": field} if field else {})}, headers={"X-Book-Id": ref})
 
     if problem := password_problem(x_app_password):
         await refuse(*problem)
@@ -361,6 +362,9 @@ async def create_book_route(
         await refuse(400, "no_name", "Please enter your name.")
     if any(len(v) > MAX_FIELD for v in (name, age, favourites, about)):
         await refuse(400, "field_too_long", f"Each answer can be up to {MAX_FIELD} characters.")
+    if problem := await about_check.check({"name": name, "age": age, "favourites": favourites, "about": about},
+                                          use_model=provider != "mock" and not is_mock()):
+        await refuse(422, "about_me", problem.message, field=problem.field)
     try:
         async with step("face check", photo_bytes=len(data)):
             prepared = prepare(data)

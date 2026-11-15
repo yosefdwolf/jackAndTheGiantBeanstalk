@@ -187,6 +187,24 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     error.hidden = !msg;
   }
 
+  // A kind note right under the answer that needs changing (the name, or an About Me answer); it goes away as
+  // soon as they edit that answer.
+  function clearFieldNotes() {
+    form.querySelectorAll('.field-note').forEach((n) => n.remove());
+    form.querySelectorAll('[aria-invalid="true"]').forEach((f) => f.removeAttribute('aria-invalid'));
+  }
+  function noteOnField(field, msg) {
+    clearFieldNotes();
+    const note = Object.assign(document.createElement('p'), { className: 'field-note', id: `${field.name}Note`, textContent: msg });
+    note.setAttribute('role', 'alert');
+    field.setAttribute('aria-invalid', 'true');
+    field.setAttribute('aria-describedby', note.id);
+    field.closest('label').after(note);
+    field.addEventListener('input', clearFieldNotes, { once: true });
+    field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    field.focus({ preventScroll: true });
+  }
+
   let toldNoMoney = false;
   function updateReady() {
     const hasName = form.name.value.trim().length > 0;
@@ -258,6 +276,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
     if (!photo) return showError('Pop in a photo of yourself first.');
     if (!form.name.value.trim()) return showError('Write your name first.');
     showError('');
+    clearFieldNotes();
     go.disabled = true;
     go.textContent = COPY.going;
     hero = form.name.value.trim();  // their own name, as in the story
@@ -274,6 +293,7 @@ window.addEventListener('unhandledrejection', (e) => reportPageError(e.reason));
         track('book_refused', { reason: d.reason });
         if (d.reason === 'wrong_password') return lockAgain(`The magic word changed. Please type it again. (reference ${d.ref})`);
         if (d.reason === 'not_signed_in') { me = null; return askToSignIn(`Please sign in again. (reference ${d.ref})`); }
+        if (d.reason === 'about_me' && form[d.field]) return noteOnField(form[d.field], `${d.message} (reference ${d.ref})`);
         showError(`${d.message}${d.ref ? ` (reference ${d.ref})` : ''}`);
         return error.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }

@@ -191,6 +191,17 @@ def test_pdf_is_rebuilt_from_saved_images(client):
     assert "About Me" in about and "Sam" in about and "dinosaurs, pancakes" in about
 
 
+def test_a_rude_name_is_refused_before_anything_is_charged(client):
+    r = post_book(client, name="Stupid")
+    assert r.status_code == 422
+    d = r.json()["detail"]
+    assert d["reason"] == "about_me" and d["field"] == "name" and "real first name" in d["message"]
+    assert run(rows(Book, id=d["ref"]))[0].status == "refused"
+    assert not run(rows(Transaction, book_id=d["ref"]))  # nothing charged
+    r = post_book(client, favourites="pizza and sh*t")
+    assert r.status_code == 422 and r.json()["detail"]["field"] == "favourites"
+
+
 def test_a_book_keeps_the_words_it_was_drawn_with(client):
     """Each page saves its words when drawn, so editing the story file later (a page added, words moved) never
     shifts a finished book's words onto the wrong picture. A Nov 4 test book showed page 14's words on page 15."""
