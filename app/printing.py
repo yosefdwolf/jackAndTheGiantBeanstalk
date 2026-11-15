@@ -233,13 +233,15 @@ def price_for(lulu_cents: int) -> int:
 async def printing_info(request: Request, book: str):
     """What the order page needs: the price, whether printing is set up, and this book's earlier orders."""
     user = await _signed_in(request)
-    await _own_book(user, book)
+    row = await _own_book(user, book)
+    story = story_for(row.story_key)
     async with session() as s:
         orders = (await s.execute(select(PrintOrder).where(PrintOrder.book_id == book, PrintOrder.status != "draft")
                                   .order_by(PrintOrder.created_at.desc()))).scalars().all()
         balance = await wallet.balance(s, user.id)
     return {"ready": configured(), "profit": wallet.dollars(PROFIT_CENTS), "balance_cents": balance, "free": await wallet.is_free(user), "orders": [order_out(o) for o in orders],
-            "pdf_url": f"/api/books/{book}/pdf"}
+            "pdf_url": f"/api/books/{book}/pdf?inline=1",  # shown in the page, not downloaded
+            "read_url": f"/stories/{story.slug}#book={book}"}  # the flip book
 
 
 class QuoteIn(BaseModel):

@@ -19,6 +19,7 @@
   .pdf-frame { width: 100%; aspect-ratio: 3 / 2; border: 2px solid var(--card-edge); border-radius: 12px; background: #fff; margin: 12px 0; }
   @media (max-width: 640px) { .pdf-frame { display: none; } }
   .facts { margin: 8px 0 14px; padding-left: 1.2em; }
+  .look-links { display: flex; flex-wrap: wrap; gap: 10px; }
   .facts li { margin: 2px 0; }
   .approve { display: flex; gap: 12px; align-items: flex-start; font: 600 17px/1.4 var(--hand); margin: 12px 0 4px;
     padding: 12px 14px; border: 2px dashed var(--card-edge); border-radius: 12px; cursor: pointer; }
@@ -31,7 +32,6 @@
   .price-box .big { font: 800 40px/1 var(--display); color: var(--leaf-deep); }
   .order-row { border-top: 1px solid var(--card-edge); padding: 10px 0; }
   .order-row b { font-family: var(--display); }
-  .sandbox { font-size: 15px; color: var(--ink-soft); }
   .error { color: var(--alert); font: 600 15px/1.35 var(--hand); }
 </style>
 </head>
@@ -64,7 +64,8 @@
             <li>Your cover, a title page and a copyright page, the 20-page story, and About Me on the back</li>
             <li>Priced for your address: what the printer charges to print and ship it, plus <span id="profit">$5</span></li>
           </ul>
-          <a class="btn plain" id="pdfLink" target="_blank" rel="noopener">Open the PDF</a>
+          <div class="look-links"><a class="btn plain" id="readLink">Read it page by page</a>
+            <a class="btn plain" id="pdfLink" target="_blank" rel="noopener">Open the PDF</a></div>
         </div>
       </div>
       <iframe class="pdf-frame" id="pdfFrame" title="The book's PDF"></iframe>
@@ -95,8 +96,6 @@
         <div><button class="btn bean" type="button" id="placeBtn">Place the order</button>
           <button class="btn bean" type="button" id="payBtn" hidden></button></div>
         <p class="error" id="placeNote" role="alert" hidden></p>
-        <p class="sandbox">This is a class project using Lulu’s test system: the order goes through every step, but
-          nothing is really printed or shipped.</p>
       </div>
     </section>
 
@@ -185,6 +184,7 @@
     }
     $('coverImg').src = `/api/books/${ref}/images/hero_sheet-0?w=300`;
     $('pdfLink').href = info.pdf_url;
+    $('readLink').href = info.read_url;
     $('pdfFrame').src = info.pdf_url;
     $('profit').textContent = info.profit;
     $('main').hidden = false;

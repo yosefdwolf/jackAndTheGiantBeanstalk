@@ -99,7 +99,11 @@ def test_order_a_printed_copy(client, lulu, monkeypatch):
     printing.CHECK_EVERY = printing.timedelta(0)  # as if a minute had passed
     later = client.get(f"/api/print-orders/{priced['id']}").json()
     assert later["lulu_status"] == "SHIPPED" and later["tracking"][0]["urls"] == ["https://t.example/1"]
-    assert [o["id"] for o in client.get(f"/api/printing?book={ref}").json()["orders"]] == [priced["id"]]
+    info = client.get(f"/api/printing?book={ref}").json()
+    assert [o["id"] for o in info["orders"]] == [priced["id"]]
+    assert info["read_url"] == f"/stories/jack-and-the-beanstalk#book={ref}"
+    shown = client.get(info["pdf_url"])  # shown in the page, never downloaded
+    assert shown.headers["content-disposition"].startswith("inline")
 
     sign_in(client, ADMIN)
     row = client.get("/admin/api/print-orders").json()["items"][0]

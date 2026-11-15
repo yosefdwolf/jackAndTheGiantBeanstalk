@@ -6,20 +6,34 @@ of the art), and the two files a printer needs (print_files): the inside pages w
 cover (back, spine, front). The flip book on the site shows the same order."""
 import io
 from dataclasses import dataclass
+from pathlib import Path
 
 import numpy as np
 from PIL import Image
 
+import reportlab
 from reportlab.lib.colors import Color, HexColor
 from reportlab.lib.utils import ImageReader, simpleSplit
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen.canvas import Canvas
 
 from .pages import RenderedPage
 
+# Every font is a real font file embedded in the PDF: a printer refuses a PDF that only names a font (Lulu
+# rejected our first cover for using the built-in Times). DejaVu Serif is bundled (app/book/fonts, free licence);
+# Vera Sans comes with ReportLab.
+FONTS = Path(__file__).parent / "fonts"
+for _name, _file in (("Serif", FONTS / "DejaVuSerif.ttf"), ("Serif-Bold", FONTS / "DejaVuSerif-Bold.ttf"),
+                     ("Serif-Italic", FONTS / "DejaVuSerif-Italic.ttf"),
+                     ("Sans", Path(reportlab.__file__).parent / "fonts" / "Vera.ttf"),
+                     ("Sans-Bold", Path(reportlab.__file__).parent / "fonts" / "VeraBd.ttf")):
+    pdfmetrics.registerFont(TTFont(_name, str(_file)))
+
 PUBLISHER = "YWolfpublishing"
 INCH = 72
 W, H = 792, 528  # the screen PDF: 11 x 7.33 in, the 3:2 shape of the 1536x1024 art
-STORY_FONT, STORY_SIZE, STORY_LEADING = "Times-Bold", 30, 36
+STORY_FONT, STORY_SIZE, STORY_LEADING = "Serif-Bold", 30, 36
 CREAM, INK, GREEN, GOLD = HexColor("#f6efe0"), HexColor("#2b2418"), HexColor("#2c7a1f"), HexColor("#b07a05")
 
 # The printed book: Lulu hardcover (casewrap), US Letter Landscape. Inside pages are the trim plus 0.125 in of
@@ -65,7 +79,7 @@ class BookInfo:
 def build_pdf(pages: list[RenderedPage], title: str, cover: RenderedPage | None = None, year: int = 2026) -> bytes:
     """The PDF to download and read on screen: every side of the book in order, one per page."""
     buf = io.BytesIO()
-    c = Canvas(buf, pagesize=(W, H))
+    c = Canvas(buf, pagesize=(W, H), initialFontName="Sans")
     c.setTitle(title)
     page = Box(0, 0, W, H)
     story, about = _split(pages)
@@ -98,7 +112,7 @@ def print_files(pages: list[RenderedPage], title: str, cover: RenderedPage, year
     inside = _inside(story, info)
     inside += [_blank] * (max(MIN_PRINT_PAGES, len(inside) + len(inside) % 2) - len(inside))  # an even count, 24+
     buf = io.BytesIO()
-    c = Canvas(buf, pagesize=(pw, ph))
+    c = Canvas(buf, pagesize=(pw, ph), initialFontName="Sans")
     c.setTitle(f"{title} (inside pages)")
     page = Box(0, 0, pw, ph, inset=BLEED + SAFE)
     for draw in inside:
@@ -109,7 +123,7 @@ def print_files(pages: list[RenderedPage], title: str, cover: RenderedPage, year
 
     cw, ch = cover_size or estimated_cover_size(len(inside))
     buf = io.BytesIO()
-    c = Canvas(buf, pagesize=(cw, ch))
+    c = Canvas(buf, pagesize=(cw, ch), initialFontName="Sans")
     c.setTitle(f"{title} (cover)")
     c.setFillColor(CREAM)
     c.rect(0, 0, cw, ch, stroke=0, fill=1)
@@ -185,17 +199,17 @@ def _front(c: Canvas, page: RenderedPage, info: BookInfo, box: Box, fill: bool =
     tx = x0 + side + box.w * 0.05
     width = box.x + box.w - box.inset - tx
     size = 46 if box.w > 700 else 40
-    lines = simpleSplit(info.title, "Times-Bold", size, width)
+    lines = simpleSplit(info.title, "Serif-Bold", size, width)
     y = box.y + box.h / 2 + len(lines) * size * 1.13 / 2
     c.setFillColor(GREEN)
-    c.setFont("Times-Bold", size)
+    c.setFont("Serif-Bold", size)
     for line in lines:
         y -= size * 1.13
         c.drawString(tx, y, line)
     if info.child_name:
         c.setFillColor(GOLD)
-        c.setFont("Times-Italic", 24)
-        for line in simpleSplit(f"starring {info.child_name}", "Times-Italic", 24, width):
+        c.setFont("Serif-Italic", 24)
+        for line in simpleSplit(f"starring {info.child_name}", "Serif-Italic", 24, width):
             y -= 34
             c.drawString(tx, y, line)
 
@@ -204,13 +218,13 @@ def _title_page(c: Canvas, info: BookInfo, box: Box) -> None:
     _paper(c, box)
     width = box.w - 2 * box.inset
     c.setFillColor(GREEN)
-    y = _lines(c, simpleSplit(info.title, "Times-Bold", 50, width), "Times-Bold", 50, box.mid_x, box.y + box.h * 0.62, 58)
+    y = _lines(c, simpleSplit(info.title, "Serif-Bold", 50, width), "Serif-Bold", 50, box.mid_x, box.y + box.h * 0.62, 58)
     if info.child_name:
         c.setFillColor(GOLD)
-        _lines(c, simpleSplit(f"starring {info.child_name}", "Times-Italic", 28, width), "Times-Italic", 28,
+        _lines(c, simpleSplit(f"starring {info.child_name}", "Serif-Italic", 28, width), "Serif-Italic", 28,
                box.mid_x, y - 6, 34)
     c.setFillColor(INK)
-    c.setFont("Times-Roman", 16)
+    c.setFont("Serif", 16)
     c.drawCentredString(box.mid_x, box.y + box.inset + 10, PUBLISHER)
 
 
@@ -232,14 +246,14 @@ def _copyright(c: Canvas, info: BookInfo, box: Box) -> None:
     ]
     c.setFillColor(INK)
     width = box.w - 2 * box.inset
-    lines = [part for line in notice for part in (simpleSplit(line, "Times-Roman", 13, width) or [""])]
-    _lines(c, lines, "Times-Roman", 13, box.mid_x, box.y + box.inset + 17 * len(lines), 17)
+    lines = [part for line in notice for part in (simpleSplit(line, "Serif", 13, width) or [""])]
+    _lines(c, lines, "Serif", 13, box.mid_x, box.y + box.inset + 17 * len(lines), 17)
 
 
 def _the_end(c: Canvas, box: Box) -> None:
     _paper(c, box)
     c.setFillColor(GREEN)
-    c.setFont("Times-Bold", 60)
+    c.setFont("Serif-Bold", 60)
     c.drawCentredString(box.mid_x, box.y + box.h / 2 - 20, "The End")
 
 
@@ -312,20 +326,20 @@ def _about_me(c: Canvas, page: RenderedPage, box: Box, fill: bool = True) -> Non
     width = box.x + box.w - box.inset - tx
     y = box.y + box.h * 0.78
     c.setFillColor(INK)
-    c.setFont("Times-Bold", 40)
+    c.setFont("Serif-Bold", 40)
     c.drawString(tx, y, "About Me")
     y -= 46
-    c.setFont("Times-Bold", 26)
-    for line in simpleSplit(page.child.name, "Times-Bold", 26, width):
+    c.setFont("Serif-Bold", 26)
+    for line in simpleSplit(page.child.name, "Serif-Bold", 26, width):
         c.drawString(tx, y, line)
         y -= 30
     y -= 10
     for label, value in page.child.details:
-        c.setFont("Helvetica-Bold", 13)
+        c.setFont("Sans-Bold", 13)
         c.drawString(tx, y, label.upper())
         y -= 18
-        c.setFont("Helvetica", 15)
-        for line in simpleSplit(value, "Helvetica", 15, width):
+        c.setFont("Sans", 15)
+        for line in simpleSplit(value, "Sans", 15, width):
             c.drawString(tx, y, line)
             y -= 19
         y -= 10

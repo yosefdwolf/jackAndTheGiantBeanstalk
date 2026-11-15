@@ -185,7 +185,7 @@ def test_pdf_is_rebuilt_from_saved_images(client):
     assert "starring Sam" in " ".join(pages[1].extract_text().split())
     notice = " ".join(pages[2].extract_text().split())
     assert "copyright" in notice and "Published by YWolfpublishing" in notice and "All rights reserved" in notice
-    assert "nothing left to sell" in pages[3].extract_text()  # the story starts on the page after the copyright
+    assert "nothing left to sell" in " ".join(pages[3].extract_text().split())  # the story starts on the page after the copyright
     assert "The End" in pages[-2].extract_text()
     about = pages[-1].extract_text()
     assert "About Me" in about and "Sam" in about and "dinosaurs, pancakes" in about
@@ -221,7 +221,7 @@ def test_a_book_keeps_the_words_it_was_drawn_with(client):
     assert data["book"]["pages"][0]["text"] == "The words page 1 was drawn for."
     assert next(i for i in data["images"] if i["kind"] == "page" and i["page"] == 1)["text"] == "The words page 1 was drawn for."
     pdf = PdfReader(io.BytesIO(client.get(f"/api/books/{ref}/pdf").content)).pages
-    assert "page 1 was drawn for" in pdf[3].extract_text()
+    assert "page 1 was drawn for" in " ".join(pdf[3].extract_text().split())
 
 
 def test_print_files_fit_a_lulu_hardcover(client):
@@ -233,12 +233,37 @@ def test_print_files_fit_a_lulu_hardcover(client):
     inside = PdfReader(io.BytesIO(interior)).pages
     assert len(inside) == 24  # title, copyright, 20 story pages, The End, one blank
     assert all((float(p.mediabox.width), float(p.mediabox.height)) == (810, 630) for p in inside)  # 11.25 x 8.75 in
-    assert "copyright" in inside[1].extract_text() and "nothing left to sell" in inside[2].extract_text()
+    assert "copyright" in inside[1].extract_text() and "nothing left to sell" in " ".join(inside[2].extract_text().split())
     wrap = PdfReader(io.BytesIO(cover)).pages
     assert len(wrap) == 1 and float(wrap[0].mediabox.width) > 2 * 792
     words = " ".join(wrap[0].extract_text().split())
     assert "About Me" in words and "dinosaurs, pancakes" in words and "starring Sam" in words
     assert float(PdfReader(io.BytesIO(run(jobs.print_pdfs(ref, (1700.0, 720.0)))[1])).pages[0].mediabox.width) == 1700
+
+
+def unembedded_fonts(pdf: bytes) -> set[str]:
+    """Fonts a PDF only names instead of carrying: a printer like Lulu rejects the file over any of them."""
+    missing = set()
+    for page in PdfReader(io.BytesIO(pdf)).pages:
+        for font in (page.get("/Resources", {}).get("/Font") or {}).values():
+            font = font.get_object()
+            descendants = [d.get_object() for d in font.get("/DescendantFonts", [])] or [font]
+            for f in descendants:
+                d = (f.get("/FontDescriptor") or {})
+                d = d.get_object() if d else {}
+                if not any(k in d for k in ("/FontFile", "/FontFile2", "/FontFile3")):
+                    missing.add(str(font.get("/BaseFont")))
+    return missing
+
+
+def test_every_font_is_embedded(client):
+    """Lulu rejected our first printed cover: "fonts ... need to be embedded". The PDF people download, the
+    inside pages and the cover all carry their fonts."""
+    ref = post_book(client, favourites="dinosaurs, pancakes").json()["id"]
+    wait_for(client, ref)
+    interior, cover = run(jobs.print_pdfs(ref))
+    for pdf in (client.get(f"/api/books/{ref}/pdf").content, interior, cover):
+        assert not unembedded_fonts(pdf)
 
 
 def test_story_uses_their_name_with_the_chosen_pronouns(client):
@@ -251,7 +276,7 @@ def test_story_uses_their_name_with_the_chosen_pronouns(client):
     # the image prompts still say the story's hero, never what was typed
     prompts = [i.prompt for i in run(rows(BookImage, book_id=ref))]
     assert all("Ella" not in p for p in prompts) and any("Jane" in p for p in prompts)
-    assert "Ella and her mother" in PdfReader(io.BytesIO(client.get(f"/api/books/{ref}/pdf").content)).pages[3].extract_text()
+    assert "Ella and her mother" in " ".join(PdfReader(io.BytesIO(client.get(f"/api/books/{ref}/pdf").content)).pages[3].extract_text().split())
 
 
 def test_thumbnails_are_served(client):
@@ -452,7 +477,7 @@ def test_a_lowercase_name_gets_a_capital_everywhere(client):
     data = wait_for(client, ref)
     assert data["book"]["child_name"] == "Yosef Wolf" and data["book"]["pages"][0]["text"].startswith("Yosef Wolf")
     assert client.get("/api/my-books").json()["books"][0]["child_name"] == "Yosef Wolf"
-    assert "Yosef Wolf" in PdfReader(io.BytesIO(client.get(f"/api/books/{ref}/pdf").content)).pages[3].extract_text()
+    assert "Yosef Wolf" in " ".join(PdfReader(io.BytesIO(client.get(f"/api/books/{ref}/pdf").content)).pages[3].extract_text().split())
 
 
 def test_a_name_with_capitals_is_kept_as_typed():
