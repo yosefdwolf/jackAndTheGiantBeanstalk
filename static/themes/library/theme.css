@@ -51,8 +51,13 @@ body { background: var(--sky); }
 
 /* A book standing up: its cover, a darker spine on the left, a page edge on the right. */
 .book-object { position: relative; display: block; aspect-ratio: 2 / 3; border-radius: 4px 10px 10px 4px; overflow: hidden;
+  overflow: clip;  /* a moved cover picture spills past the bottom; clip it, so nothing can scroll it under the title */
   background: var(--card); box-shadow: 6px 8px 0 -2px #f3ead8, 6px 8px 0 0 var(--card-edge), 0 14px 22px rgba(60, 35, 10, .28); }
-.book-object img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.book-object img { width: 100%; height: 100%; object-fit: cover; display: block; transform: translateY(var(--cover-shift, 0)); }
+/* library_cover_shift in the story file slides the picture down, clear of the title. The strip it leaves at the top
+   shows the picture's own top edge mirrored, so the sky (and anything reaching the edge) carries on without a seam. */
+.book-object[style*="--cover-shift"]::after { content: ""; position: absolute; inset: 0 0 auto; height: var(--cover-shift);
+  background: var(--cover-url) center top / 100% auto no-repeat; transform: scaleY(-1); }
 .book-object::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 9%; z-index: 1;
   background: linear-gradient(90deg, rgba(0, 0, 0, .32), rgba(0, 0, 0, .06) 70%, rgba(255, 255, 255, .18)); }
 

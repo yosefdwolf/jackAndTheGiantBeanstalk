@@ -156,10 +156,12 @@ def story_card(story: Story, wrapped: bool = False) -> str:
                 f'<div class="card story-info"><h2>{title}</h2><p>{escape(story.blurb)}</p>'
                 f'<p class="meta">Coming soon</p></div></li>')
     cover = story.library_cover
+    shift = story.library_cover_shift
+    moved = (f' style="--cover-shift: {shift}%; --cover-url: url({escape(cover)})"' if shift and cover else "")
     draft = ' <span class="draft-tag">Draft: only admins see this</span>' if story.draft else ""
     if not cover and (STATIC / "themes" / story.theme / "art" / "cover.webp").exists():  # the theme's cover, if any
         cover = f"/static/themes/{story.theme}/art/cover.webp"
-    return (f'<li class="story"><div class="stand-books"><a class="book-object" href="{href}" tabindex="-1" aria-hidden="true">'
+    return (f'<li class="story"><div class="stand-books"><a class="book-object" href="{href}" tabindex="-1" aria-hidden="true"{moved}>'
             + (f'<img src="{escape(cover)}" alt="" loading="lazy">' if cover else '')
             + f'<span class="cover-title">{title}</span></a></div>'
             f'<div class="plank"></div>'

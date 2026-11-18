@@ -10,6 +10,7 @@ style: animated3d
 theme: jack   # the website's look: static/themes/jack/
 blurb: You trade the family cow for five magic beans. By morning, nothing will ever be the same.
 library_cover: /static/themes/jack/art/cover.webp   # the library's cover (the site sets the title on it)
+library_cover_shift: 12   # % to slide the picture down, so Jack's face sits below the title
 # The story page's look. Jack has its own theme folder (static/themes/jack/: colours and drifting clouds), so only
 # the art painted by `python -m scripts.make_theme_art jack_and_the_beanstalk` is described here.
 look:
